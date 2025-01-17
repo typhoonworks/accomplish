@@ -6,7 +6,7 @@ defmodule Accomplish.Accounts do
   import Ecto.Query, warn: false
   alias Accomplish.Repo
 
-  alias Accomplish.Accounts.{User, UserToken, UserNotifier}
+  alias Accomplish.Accounts.{User, UserToken, UserNotifier, ApiKey}
 
   ## Database getters
 
@@ -349,5 +349,111 @@ defmodule Accomplish.Accounts do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  ## API Keys
+
+  @doc """
+  Creates an API key for the given user with the provided attributes.
+
+  ## Examples
+
+      iex> create_api_key(user, %{name: "My API Key"})
+      {:ok, %ApiKey{}}
+
+      iex> create_api_key(user, %{name: nil})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_api_key(user, attrs) do
+    {raw_key, prefix} = ApiKey.generate_key()
+    hashed_key = ApiKey.hash_key(raw_key)
+
+    attrs =
+      attrs
+      |> Map.merge(%{
+        key_hash: hashed_key,
+        key_prefix: prefix,
+        user_id: user.id
+      })
+
+    %ApiKey{}
+    |> ApiKey.changeset(attrs)
+    |> Repo.insert()
+    |> case do
+      {:ok, api_key} -> {:ok, Map.put(api_key, :raw_key, raw_key)}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  @doc """
+  Lists all API keys for the given user.
+
+  ## Examples
+
+      iex> list_api_keys(user)
+      [%ApiKey{}, ...]
+
+  """
+  def list_api_keys(user) do
+    Repo.all(from k in ApiKey, where: k.user_id == ^user.id)
+  end
+
+  @doc """
+  Finds an API key by its raw value.
+
+  ## Examples
+
+      iex> find_api_key("raw_key_value")
+      {:ok, %ApiKey{}}
+
+      iex> find_api_key("invalid_key")
+      {:error, :not_found}
+
+  """
+  def find_api_key(raw_key) do
+    hashed_key = ApiKey.hash_key(raw_key)
+
+    case Repo.get_by(ApiKey, key_hash: hashed_key) do
+      nil -> {:error, :not_found}
+      api_key -> {:ok, api_key}
+    end
+  end
+
+  @doc """
+  Deletes the API key with the given ID for the user.
+
+  ## Examples
+
+      iex> delete_api_key(user, api_key_id)
+      :ok
+
+      iex> delete_api_key(user, invalid_id)
+      {:error, :not_found}
+
+  """
+  def delete_api_key(user, api_key_id) do
+    query = from k in ApiKey, where: k.id == ^api_key_id and k.user_id == ^user.id
+
+    case Repo.delete_all(query) do
+      {1, _} -> :ok
+      _ -> {:error, :not_found}
+    end
+  end
+
+  @doc """
+  Checks if the API key has the required scope.
+
+  ## Examples
+
+      iex> valid_scope?(api_key, "repo:read")
+      true
+
+      iex> valid_scope?(api_key, "repo:write")
+      false
+
+  """
+  def valid_scope?(%ApiKey{scopes: scopes}, required_scope) do
+    Enum.any?(scopes, fn scope -> scope == required_scope || String.ends_with?(scope, ":*") end)
   end
 end

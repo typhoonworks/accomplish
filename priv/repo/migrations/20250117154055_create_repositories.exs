@@ -1,6 +1,4 @@
 defmodule Accomplish.Repo.Migrations.CreateRepositories do
-  # excellent_migrations:safety-assured-for-this-file table_dropped
-
   use Ecto.Migration
 
   @disable_ddl_transaction true
@@ -24,6 +22,7 @@ defmodule Accomplish.Repo.Migrations.CreateRepositories do
 
   def down do
     drop_if_exists unique_index(:repositories, [:name, :owner_id], concurrently: true)
+
     drop table(:repositories)
   end
 end
