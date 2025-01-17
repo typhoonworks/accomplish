@@ -1,7 +1,12 @@
 defmodule Accomplish.Repo.Migrations.CreateRepositories do
+  # excellent_migrations:safety-assured-for-this-file table_dropped
+
   use Ecto.Migration
 
-  def change do
+  @disable_ddl_transaction true
+  @disable_migration_lock true
+
+  def up do
     create table(:repositories, primary_key: false) do
       add :id, :uuid, primary_key: true
       add :name, :string, null: false
@@ -14,6 +19,11 @@ defmodule Accomplish.Repo.Migrations.CreateRepositories do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:repositories, [:name, :owner_id])
+    create unique_index(:repositories, [:name, :owner_id], concurrently: true)
+  end
+
+  def down do
+    drop_if_exists unique_index(:repositories, [:name, :owner_id], concurrently: true)
+    drop table(:repositories)
   end
 end

@@ -56,6 +56,9 @@ config :tailwind,
 # Configure SaladUI
 config :salad_ui, :error_translator_function, {AccomplishWeb.CoreComponents, :translate_error}
 
+# Configure ExcellentMigrations
+config :excellent_migrations, skip_checks: [:raw_sql_executed]
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
