@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.API.RepositoriesController do
+defmodule AccomplishWeb.API.V1.RepositoriesController do
   @moduledoc """
   Controller for managing repositories.
   """
@@ -7,12 +7,13 @@ defmodule AccomplishWeb.API.RepositoriesController do
 
   alias Accomplish.Repositories
 
-  operation :index,
+  operation(:index,
     summary: "List all repositories",
+    tags: ["Repositories"],
     responses: %{
       200 => {"List of repositories", "application/json", Schemas.Repository.ListResponse}
     }
-
+  )
 
   def index(conn, _params) do
     user = conn.assigns.authorized_user
@@ -24,18 +25,20 @@ defmodule AccomplishWeb.API.RepositoriesController do
     json(conn, %{repositories: repositories})
   end
 
-  operation :create_repository,
+  operation(:create_repository,
     summary: "Create a new repository",
+    tags: ["Repositories"],
     request_body: {"Repository creation", "application/json", Schemas.Repository.CreateRequest},
     responses: %{
       201 => {"Repository", "application/json", Schemas.Repository},
       422 => {"Validation errors", "application/json", Schemas.ValidationError}
-  }
+    }
+  )
 
-  def create_repository(%{body_params: attrs} = conn, _params) do
+  def create_repository(%{private: %{open_api_spex: %{body_params: body_params}}} = conn, _params) do
     user = conn.assigns.authorized_user
 
-    case Repositories.create_repository(user, attrs) do
+    case Repositories.create_repository(user, body_params) do
       {:ok, repository} ->
         conn
         |> put_status(:created)

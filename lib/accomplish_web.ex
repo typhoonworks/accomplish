@@ -123,7 +123,9 @@ defmodule AccomplishWeb do
       alias AccomplishWeb.API.Schemas
       alias AccomplishWeb.API.Helpers
 
-     plug(OpenApiSpex.Plug.CastAndValidate, json_render_error_v2: true, replace_params: false)
+      plug(OpenApiSpex.Plug.CastAndValidate, json_render_error_v2: true, replace_params: false)
+
+      use OpenApiSpex.ControllerSpecs
     end
   end
 

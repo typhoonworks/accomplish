@@ -17,12 +17,6 @@ defmodule AccomplishWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :public_api do
-    plug :accepts, ["json"]
-    plug(OpenApiSpex.Plug.PutApiSpec, module: AccomplishWeb.API.Spec)
-    plug(AccomplishWeb.Plugs.AuthorizePublicAPI)
-  end
-
   scope "/", AccomplishWeb do
     pipe_through :browser
 
@@ -48,6 +42,8 @@ defmodule AccomplishWeb.Router do
 
       live_dashboard "/dashboard", metrics: AccomplishWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+
+      get "/swagger-ui", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
     end
   end
 
@@ -91,12 +87,31 @@ defmodule AccomplishWeb.Router do
     end
   end
 
-  scope "/api/v1/repositories", AccomplishWeb.API do
-    pipe_through [:public_api]
+  scope "/api" do
+    pipeline :public_api do
+      plug :accepts, ["json"]
+      plug(OpenApiSpex.Plug.PutApiSpec, module: AccomplishWeb.API.Spec)
+    end
 
-    get "/", RepositoriesController, :index, assigns: %{api_scope: "repositories:read"}
+    pipeline :public_api_auth do
+      plug(AccomplishWeb.Plugs.AuthorizePublicAPI)
+    end
 
-    post "/", RepositoriesController, :create_repository,
-      assigns: %{api_scope: "repositories:write"}
+    scope "/spec" do
+      pipe_through(:public_api)
+      get "/openapi", OpenApiSpex.Plug.RenderSpec, []
+      get "/swagger-ui", OpenApiSpex.Plug.SwaggerUI, path: "/api/spec/openapi"
+    end
+
+    scope "/v1", AccomplishWeb.API.V1 do
+      pipe_through([:public_api, :public_api_auth])
+
+      scope "/repositories" do
+        get "/", RepositoriesController, :index, assigns: %{api_scope: "repositories:read"}
+
+        post "/", RepositoriesController, :create_repository,
+          assigns: %{api_scope: "repositories:write"}
+      end
+    end
   end
 end
