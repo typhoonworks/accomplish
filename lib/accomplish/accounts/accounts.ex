@@ -361,6 +361,9 @@ defmodule Accomplish.Accounts do
       iex> create_api_key(user, %{name: "My API Key"})
       {:ok, %ApiKey{}}
 
+      iex> create_api_key(user, %{name: "Custom Scopes Key", scopes: ["repositories:read", "repositories:write"]})
+      {:ok, %ApiKey{}}
+
       iex> create_api_key(user, %{name: nil})
       {:error, %Ecto.Changeset{}}
 

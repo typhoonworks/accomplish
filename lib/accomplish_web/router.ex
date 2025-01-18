@@ -95,6 +95,8 @@ defmodule AccomplishWeb.Router do
     pipe_through [:public_api]
 
     get "/", RepositoriesController, :index, assigns: %{api_scope: "repositories:read"}
-    post "/", RepositoriesController, :create_repository, assigns: %{api_scope: "repositories:write"}
+
+    post "/", RepositoriesController, :create_repository,
+      assigns: %{api_scope: "repositories:write"}
   end
 end

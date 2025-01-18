@@ -11,7 +11,7 @@ defmodule AccomplishWeb.Plugs.AuthorizePublicAPI do
 
   import Plug.Conn
   alias Accomplish.Accounts
-  alias AccomplishWeb.Api.Helpers
+  alias AccomplishWeb.API.Helpers
 
   def init(opts), do: opts
 
