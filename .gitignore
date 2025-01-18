@@ -35,3 +35,13 @@ accomplish-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Ignore Elixir Language Server files
+.elixir_ls
+plausible-report.xml
+
+.idea
+*.iml
+*.log
+*.code-workspace
+.vscode
+
