@@ -4,7 +4,7 @@ defmodule Accomplish.AccountsTest do
   alias Accomplish.Accounts
 
   import Accomplish.AccountsFixtures
-  alias Accomplish.Accounts.{User, UserToken}
+  alias Accomplish.Accounts.{User, UserToken, ApiKey}
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -503,6 +503,104 @@ defmodule Accomplish.AccountsTest do
   describe "inspect/2 for the User module" do
     test "does not include password" do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
+    end
+  end
+
+  describe "create_api_key/2" do
+    setup do
+      user = user_fixture()
+      %{user: user}
+    end
+
+    test "creates an API key with valid data", %{user: user} do
+      assert {:ok, %ApiKey{} = api_key} = Accounts.create_api_key(user, %{name: "My API Key"})
+      assert api_key.name == "My API Key"
+      assert api_key.user_id == user.id
+      assert String.length(api_key.key_prefix) == 6
+    end
+
+    test "returns an error if name is missing", %{user: user} do
+      assert {:error, changeset} = Accounts.create_api_key(user, %{})
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+  end
+
+  describe "list_api_keys/1" do
+    setup do
+      user = user_fixture()
+      %{user: user}
+    end
+
+    test "returns all API keys for the user", %{user: user} do
+      api_key = api_key_fixture(user)
+      api_key = Map.drop(api_key, [:raw_key])
+
+      assert [returned_key] = Accounts.list_api_keys(user)
+      assert Map.drop(returned_key, [:raw_key]) == api_key
+    end
+
+    test "returns an empty list if no API keys exist", %{user: user} do
+      assert [] = Accounts.list_api_keys(user)
+    end
+  end
+
+  describe "find_api_key/1" do
+    setup do
+      user = user_fixture()
+      %{user: user}
+    end
+
+    test "returns the API key for a valid raw key", %{user: user} do
+      {:ok, api_key} = Accounts.create_api_key(user, %{name: "Test Key"})
+      {:ok, found_key} = Accounts.find_api_key(api_key.raw_key)
+      assert found_key.id == api_key.id
+    end
+
+    test "returns an error for an invalid raw key" do
+      assert {:error, :not_found} = Accounts.find_api_key("invalid_key")
+    end
+  end
+
+  describe "revoke_api_key/1" do
+    setup do
+      user = user_fixture()
+      %{user: user}
+    end
+
+    test "revokes the API key", %{user: user} do
+      {:ok, api_key} = Accounts.create_api_key(user, %{name: "My API Key"})
+      assert :ok = Accounts.revoke_api_key(api_key.raw_key)
+
+      assert [] = Accounts.list_api_keys(user)
+
+      {:error, :not_found} = Accounts.find_api_key(api_key.raw_key)
+      assert Repo.get_by(ApiKey, id: api_key.id).revoked_at != nil
+    end
+
+    test "returns an error if the API key does not exist" do
+      assert {:error, :not_found} = Accounts.revoke_api_key("invalid_key")
+    end
+  end
+
+  describe "valid_scope?/2" do
+    setup do
+      user = user_fixture()
+      %{user: user}
+    end
+
+    test "returns true if the required scope is present", %{user: user} do
+      api_key = api_key_fixture(user, %{scopes: ["repo:read", "repo:write"]})
+      assert Accounts.valid_scope?(api_key, "repo:read")
+    end
+
+    test "returns false if the required scope is not present", %{user: user} do
+      api_key = api_key_fixture(user, %{scopes: ["repo:read"]})
+      refute Accounts.valid_scope?(api_key, "repo:write")
+    end
+
+    test "supports wildcard scopes", %{user: user} do
+      api_key = api_key_fixture(user, %{scopes: ["repo:*"]})
+      assert Accounts.valid_scope?(api_key, "repo:write")
     end
   end
 end

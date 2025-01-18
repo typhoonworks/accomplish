@@ -30,4 +30,19 @@ defmodule Accomplish.AccountsFixtures do
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
     token
   end
+
+  def valid_api_key_attributes(attrs \\ %{}) do
+    Enum.into(attrs, %{
+      name: "Test API Key",
+      scopes: ["repo:read", "repo:write"]
+    })
+  end
+
+  def api_key_fixture(user, attrs \\ %{}) do
+    attrs = attrs |> valid_api_key_attributes()
+
+    {:ok, api_key} = Accomplish.Accounts.create_api_key(user, attrs)
+
+    api_key
+  end
 end

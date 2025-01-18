@@ -7,7 +7,7 @@ defmodule Accomplish.Repo.Migrations.CreateUsersAuthTables do
   @disable_migration_lock true
 
   def up do
-    execute("CREATE EXTENSION IF NOT EXISTS citext", "")
+    execute("CREATE EXTENSION IF NOT EXISTS citext;")
 
     create table(:users, primary_key: false) do
       add :id, :uuid, primary_key: true
@@ -40,8 +40,10 @@ defmodule Accomplish.Repo.Migrations.CreateUsersAuthTables do
     drop_if_exists index(:users_tokens, [:user_id], concurrently: true)
     drop_if_exists unique_index(:users, [:email], concurrently: true)
     drop_if_exists unique_index(:users, [:username], concurrently: true)
+
     drop table(:users_tokens)
     drop table(:users)
-    execute("DROP EXTENSION IF EXISTS citext", "")
+
+    execute("DROP EXTENSION IF EXISTS citext;")
   end
 end

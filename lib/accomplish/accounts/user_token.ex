@@ -3,6 +3,7 @@ defmodule Accomplish.Accounts.UserToken do
 
   use Accomplish.Schema
   import Ecto.Query
+  alias Accomplish.Accounts.User
   alias Accomplish.Accounts.UserToken
 
   @hash_algorithm :sha256
@@ -19,7 +20,8 @@ defmodule Accomplish.Accounts.UserToken do
     field :token, :binary
     field :context, :string
     field :sent_to, :string
-    belongs_to :user, Accomplish.Accounts.User
+
+    belongs_to :user, User
 
     timestamps(type: :utc_datetime, updated_at: false)
   end
