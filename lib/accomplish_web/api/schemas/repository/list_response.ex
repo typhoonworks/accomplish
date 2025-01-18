@@ -12,42 +12,7 @@ defmodule AccomplishWeb.API.Schemas.Repository.ListResponse do
     properties: %{
       repositories: %Schema{
         type: :array,
-        items: %Schema{
-          type: :object,
-          required: [:id, :name, :default_branch, :git_url, :ssh_url, :clone_url],
-          properties: %{
-            id: %Schema{
-              type: :integer,
-              description: "Unique identifier of the repository",
-              example: 1
-            },
-            name: %Schema{
-              type: :string,
-              description: "Repository name",
-              example: "accomplish"
-            },
-            default_branch: %Schema{
-              type: :string,
-              description: "Default branch of the repository",
-              example: "main"
-            },
-            git_url: %Schema{
-              type: :string,
-              description: "Git URL of the repository",
-              example: "git://github.com/rodloboz/accomplish.git"
-            },
-            ssh_url: %Schema{
-              type: :string,
-              description: "SSH URL of the repository",
-              example: "git@github.com:rodloboz/accomplish.git"
-            },
-            clone_url: %Schema{
-              type: :string,
-              description: "Clone URL of the repository",
-              example: "https://github.com/rodloboz/accomplish.git"
-            }
-          }
-        },
+        items: AccomplishWeb.API.Schemas.Repository,
         description: "A list of repository objects"
       }
     },
@@ -59,7 +24,9 @@ defmodule AccomplishWeb.API.Schemas.Repository.ListResponse do
           default_branch: "main",
           git_url: "git://github.com/rodloboz/accomplish.git",
           ssh_url: "git@github.com:rodloboz/accomplish.git",
-          clone_url: "https://github.com/rodloboz/accomplish.git"
+          clone_url: "https://github.com/rodloboz/accomplish.git",
+          inserted_at: "2023-01-01T12:00:00Z",
+          updated_at: "2023-01-01T12:00:00Z"
         },
         %{
           id: 2,
@@ -67,7 +34,9 @@ defmodule AccomplishWeb.API.Schemas.Repository.ListResponse do
           default_branch: "develop",
           git_url: "git://github.com/rodloboz/another-repo.git",
           ssh_url: "git@github.com:rodloboz/another-repo.git",
-          clone_url: "https://github.com/rodloboz/another-repo.git"
+          clone_url: "https://github.com/rodloboz/another-repo.git",
+          inserted_at: "2023-01-01T12:00:00Z",
+          updated_at: "2023-01-01T12:00:00Z"
         }
       ]
     }

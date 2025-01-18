@@ -7,6 +7,13 @@ defmodule AccomplishWeb.API.RepositoriesController do
 
   alias Accomplish.Repositories
 
+  operation :index,
+    summary: "List all repositories",
+    responses: %{
+      200 => {"List of repositories", "application/json", Schemas.Repository.ListResponse}
+    }
+
+
   def index(conn, _params) do
     user = conn.assigns.authorized_user
 
@@ -25,7 +32,7 @@ defmodule AccomplishWeb.API.RepositoriesController do
       422 => {"Validation errors", "application/json", Schemas.ValidationError}
   }
 
-  def create_repository(conn = %{body_params: attrs}, _params) do
+  def create_repository(%{body_params: attrs} = conn, _params) do
     user = conn.assigns.authorized_user
 
     case Repositories.create_repository(user, attrs) do
