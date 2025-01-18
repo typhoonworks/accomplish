@@ -10,6 +10,18 @@ defmodule Accomplish.Repositories.Repository do
 
   @name_pattern ~r/^(?!-)[a-zA-Z0-9_-]+(?<!-)$/
 
+  @derive {JSON.Encoder,
+  only: [
+    :id,
+    :name,
+    :default_branch,
+    :git_url,
+    :ssh_url,
+    :clone_url,
+    :inserted_at,
+    :updated_at
+  ]}
+
   schema "repositories" do
     field :name, :string
     field :default_branch, :string

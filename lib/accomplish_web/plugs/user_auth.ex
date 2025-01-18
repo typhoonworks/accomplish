@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.UserAuth do
+defmodule AccomplishWeb.Plugs.UserAuth do
   @moduledoc false
 
   use AccomplishWeb, :verified_routes
@@ -137,13 +137,13 @@ defmodule AccomplishWeb.UserAuth do
       defmodule AccomplishWeb.PageLive do
         use AccomplishWeb, :live_view
 
-        on_mount {AccomplishWeb.UserAuth, :mount_current_user}
+        on_mount {AccomplishWeb.Plugs.UserAuth, :mount_current_user}
         ...
       end
 
   Or use the `live_session` of your router to invoke the on_mount callback:
 
-      live_session :authenticated, on_mount: [{AccomplishWeb.UserAuth, :ensure_authenticated}] do
+      live_session :authenticated, on_mount: [{AccomplishWeb.Plugs.UserAuth, :ensure_authenticated}] do
         live "/profile", ProfileLive, :index
       end
   """

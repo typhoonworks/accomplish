@@ -2,7 +2,7 @@ defmodule AccomplishWeb.UserSessionController do
   use AccomplishWeb, :controller
 
   alias Accomplish.Accounts
-  alias AccomplishWeb.UserAuth
+  alias AccomplishWeb.Plugs.UserAuth
 
   def create(conn, %{"_action" => "registered"} = params) do
     create(conn, params, "Account created successfully!")

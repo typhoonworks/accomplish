@@ -1,9 +1,9 @@
-defmodule AccomplishWeb.UserAuthTest do
+defmodule AccomplishWeb.Plugs.UserAuthTest do
   use AccomplishWeb.ConnCase, async: true
 
   alias Phoenix.LiveView
   alias Accomplish.Accounts
-  alias AccomplishWeb.UserAuth
+  alias AccomplishWeb.Plugs.UserAuth
   import Accomplish.AccountsFixtures
 
   @remember_me_cookie "_accomplish_web_user_remember_me"

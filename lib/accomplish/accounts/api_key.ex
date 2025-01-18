@@ -12,7 +12,7 @@ defmodule Accomplish.Accounts.ApiKey do
     field :name, :string
     field :key_hash, :string
     field :key_prefix, :string
-    field :scopes, {:array, :string}, default: ["default:read"]
+    field :scopes, {:array, :string}, default: ["repositories:read"]
     field :revoked_at, :utc_datetime
 
     belongs_to :user, User

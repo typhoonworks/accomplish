@@ -361,6 +361,9 @@ defmodule Accomplish.Accounts do
       iex> create_api_key(user, %{name: "My API Key"})
       {:ok, %ApiKey{}}
 
+      iex> create_api_key(user, %{name: "Custom Scopes Key", scopes: ["repositories:read", "repositories:write"]})
+      {:ok, %ApiKey{}}
+
       iex> create_api_key(user, %{name: nil})
       {:error, %Ecto.Changeset{}}
 
@@ -408,14 +411,21 @@ defmodule Accomplish.Accounts do
       {:ok, %ApiKey{}}
 
       iex> find_api_key("invalid_key")
-      {:error, :not_found}
+      {:error, :invalid_api_key}
 
   """
   def find_api_key(raw_key) do
     hashed_key = ApiKey.hash_key(raw_key)
 
-    case Repo.one(from k in ApiKey, where: k.key_hash == ^hashed_key and is_nil(k.revoked_at)) do
-      nil -> {:error, :not_found}
+    query =
+      from(k in ApiKey,
+        join: user in assoc(k, :user),
+        where: k.key_hash == ^hashed_key and is_nil(k.revoked_at),
+        preload: [user: user]
+      )
+
+    case Repo.one(query) do
+      nil -> {:error, :invalid_api_key}
       api_key -> {:ok, api_key}
     end
   end
@@ -458,6 +468,16 @@ defmodule Accomplish.Accounts do
 
   """
   def valid_scope?(%ApiKey{scopes: scopes}, required_scope) do
-    Enum.any?(scopes, fn scope -> scope == required_scope || String.ends_with?(scope, ":*") end)
+    Enum.any?(scopes, fn scope ->
+      matches_scope?(scope, required_scope) || matches_wildcard_scope?(scope, required_scope)
+    end)
+  end
+
+  defp matches_scope?(scope, required_scope) do
+    scope == required_scope
+  end
+
+  defp matches_wildcard_scope?(scope, required_scope) do
+    String.starts_with?(required_scope, String.trim_trailing(scope, "*"))
   end
 end

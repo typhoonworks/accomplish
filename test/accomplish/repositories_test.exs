@@ -9,27 +9,27 @@ defmodule Accomplish.RepositoriesTest do
     end
 
     test "lists all repositories for a given user", %{user: user} do
-      repo1 = repository_fixture(user, %{name: "repo1"})
-      repo2 = repository_fixture(user, %{name: "repo2"})
+      repository1 = repository_fixture(user, %{name: "repository1"})
+      repository2 = repository_fixture(user, %{name: "repository2"})
 
-      result = Repositories.list_repositories(user.id)
+      result = Repositories.list_repositories(user)
 
       assert length(result) == 2
-      assert Enum.any?(result, &(&1.id == repo1.id))
-      assert Enum.any?(result, &(&1.id == repo2.id))
+      assert Enum.any?(result, &(&1.id == repository1.id))
+      assert Enum.any?(result, &(&1.id == repository2.id))
     end
 
     test "returns an empty list when the user has no repositories", %{user: user} do
-      assert Repositories.list_repositories(user.id) == []
+      assert Repositories.list_repositories(user) == []
     end
   end
 
   describe "get_repository/1" do
     test "returns the repository with the given ID" do
       user = user_fixture()
-      repo = repository_fixture(user)
+      repository = repository_fixture(user)
 
-      assert Repositories.get_repository(repo.id).id == repo.id
+      assert Repositories.get_repository(repository.id).id == repository.id
     end
 
     test "returns nil if the repository does not exist" do
@@ -43,13 +43,13 @@ defmodule Accomplish.RepositoriesTest do
     end
 
     test "creates a repository with valid data", %{user: user} do
-      valid_attrs = %{name: "new-repo", default_branch: "main"}
+      valid_attrs = %{name: "new-repository", default_branch: "main"}
 
-      {:ok, repo} = Repositories.create_repository(user, valid_attrs)
+      {:ok, repository} = Repositories.create_repository(user, valid_attrs)
 
-      assert repo.name == "new-repo"
-      assert repo.default_branch == "main"
-      assert repo.owner_id == user.id
+      assert repository.name == "new-repository"
+      assert repository.default_branch == "main"
+      assert repository.owner_id == user.id
     end
 
     test "returns an error changeset with invalid data", %{user: user} do
@@ -63,7 +63,7 @@ defmodule Accomplish.RepositoriesTest do
     end
 
     test "returns an error changeset for invalid name format", %{user: user} do
-      invalid_name = "invalid-repo-name!"
+      invalid_name = "invalid-repository-name!"
       attrs = %{name: invalid_name, default_branch: "main"}
 
       {:error, changeset} = Repositories.create_repository(user, attrs)
@@ -76,9 +76,9 @@ defmodule Accomplish.RepositoriesTest do
     end
 
     test "returns an error changeset for duplicate name", %{user: user} do
-      valid_attrs = %{name: "duplicate-repo", default_branch: "main"}
+      valid_attrs = %{name: "duplicate-repository", default_branch: "main"}
 
-      {:ok, _repo} = Repositories.create_repository(user, valid_attrs)
+      {:ok, _repository} = Repositories.create_repository(user, valid_attrs)
 
       {:error, changeset} = Repositories.create_repository(user, valid_attrs)
 
@@ -90,31 +90,31 @@ defmodule Accomplish.RepositoriesTest do
   describe "update_repository/2" do
     setup do
       user = user_fixture()
-      repo = repository_fixture(user)
-      %{user: user, repo: repo}
+      repository = repository_fixture(user)
+      %{user: user, repository: repository}
     end
 
-    test "updates a repository with valid data", %{repo: repo} do
-      update_attrs = %{name: "updated-repo"}
+    test "updates a repository with valid data", %{repository: repository} do
+      update_attrs = %{name: "updated-repository"}
 
-      {:ok, updated_repo} = Repositories.update_repository(repo, update_attrs)
+      {:ok, updated_repository} = Repositories.update_repository(repository, update_attrs)
 
-      assert updated_repo.name == "updated-repo"
+      assert updated_repository.name == "updated-repository"
     end
 
-    test "returns an error changeset with invalid data", %{repo: repo} do
+    test "returns an error changeset with invalid data", %{repository: repository} do
       invalid_attrs = %{name: nil}
 
-      {:error, changeset} = Repositories.update_repository(repo, invalid_attrs)
+      {:error, changeset} = Repositories.update_repository(repository, invalid_attrs)
 
       assert changeset.valid? == false
       assert "can't be blank" in errors_on(changeset).name
     end
 
-    test "returns an error changeset with invalid name format", %{repo: repo} do
+    test "returns an error changeset with invalid name format", %{repository: repository} do
       invalid_attrs = %{name: "invalid name"}
 
-      {:error, changeset} = Repositories.update_repository(repo, invalid_attrs)
+      {:error, changeset} = Repositories.update_repository(repository, invalid_attrs)
 
       assert changeset.valid? == false
 
@@ -123,11 +123,11 @@ defmodule Accomplish.RepositoriesTest do
              ).name
     end
 
-    test "returns an error changeset for duplicate name", %{user: user, repo: repo} do
-      repository_fixture(user, %{name: "duplicate-repo"})
-      invalid_attrs = %{name: "duplicate-repo"}
+    test "returns an error changeset for duplicate name", %{user: user, repository: repository} do
+      repository_fixture(user, %{name: "duplicate-repository"})
+      invalid_attrs = %{name: "duplicate-repository"}
 
-      {:error, changeset} = Repositories.update_repository(repo, invalid_attrs)
+      {:error, changeset} = Repositories.update_repository(repository, invalid_attrs)
 
       assert changeset.valid? == false
       assert "has already been taken" in errors_on(changeset).name
@@ -137,19 +137,19 @@ defmodule Accomplish.RepositoriesTest do
   describe "delete_repository/1" do
     test "deletes a repository" do
       user = user_fixture()
-      repo = repository_fixture(user)
+      repository = repository_fixture(user)
 
-      assert {:ok, _} = Repositories.delete_repository(repo)
-      assert Repositories.get_repository(repo.id) == nil
+      assert {:ok, _} = Repositories.delete_repository(repository)
+      assert Repositories.get_repository(repository.id) == nil
     end
   end
 
   describe "change_repository/2" do
     test "returns a changeset" do
       user = user_fixture()
-      repo = repository_fixture(user)
+      repository = repository_fixture(user)
 
-      changeset = Repositories.change_repository(repo, %{name: "changed-name"})
+      changeset = Repositories.change_repository(repository, %{name: "changed-name"})
 
       assert changeset.valid?
       assert changeset.changes.name == "changed-name"

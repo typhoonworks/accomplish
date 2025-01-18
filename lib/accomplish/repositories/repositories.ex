@@ -12,10 +12,10 @@ defmodule Accomplish.Repositories do
   @doc """
    Lists all repositories owned by a specific user.
   """
-  def list_repositories(owner_id, preloads \\ []) do
+  def list_repositories(owner, preloads \\ []) do
     query =
       from r in Repository,
-        where: r.owner_id == ^owner_id,
+        where: r.owner_id == ^owner.id,
         preload: ^preloads
 
     Repo.all(query)

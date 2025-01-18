@@ -519,6 +519,17 @@ defmodule Accomplish.AccountsTest do
       assert String.length(api_key.key_prefix) == 6
     end
 
+    test "creates an API key with custom scopes", %{user: user} do
+      custom_scopes = ["repositories:read", "repositories:write"]
+
+      assert {:ok, %ApiKey{} = api_key} =
+               Accounts.create_api_key(user, %{name: "Custom Scopes Key", scopes: custom_scopes})
+
+      assert api_key.name == "Custom Scopes Key"
+      assert api_key.user_id == user.id
+      assert api_key.scopes == custom_scopes
+    end
+
     test "returns an error if name is missing", %{user: user} do
       assert {:error, changeset} = Accounts.create_api_key(user, %{})
       assert %{name: ["can't be blank"]} = errors_on(changeset)
@@ -557,7 +568,7 @@ defmodule Accomplish.AccountsTest do
     end
 
     test "returns an error for an invalid raw key" do
-      assert {:error, :not_found} = Accounts.find_api_key("invalid_key")
+      assert {:error, :invalid_api_key} = Accounts.find_api_key("invalid_key")
     end
   end
 
@@ -573,7 +584,7 @@ defmodule Accomplish.AccountsTest do
 
       assert [] = Accounts.list_api_keys(user)
 
-      {:error, :not_found} = Accounts.find_api_key(api_key.raw_key)
+      {:error, :invalid_api_key} = Accounts.find_api_key(api_key.raw_key)
       assert Repo.get_by(ApiKey, id: api_key.id).revoked_at != nil
     end
 
