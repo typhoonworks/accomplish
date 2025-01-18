@@ -8,37 +8,7 @@ defmodule AccomplishWeb.API.Helpers do
     with standardized JSON error message formats.
   - Building paginated API responses in a Stripe-like format, including metadata
     such as the resource type, request URL, and pagination status.
-
-  ## Error Responses
-
-  Error responses are structured with an `error` object containing a `message`
-  and a `type`, e.g.:
-
-  ```json
-  {
-    "error": {
-      "message": "Unauthorized access.",
-      "type": "invalid_request_error"
-    }
-  }
-
-  ## Paginated Responses
-
-  Paginated responses for lists of objects:
-
-  ```json
-  {
-    "object": "list",
-    "url": "/v1/resources",
-    "has_more": false,
-    "data": [
-      {
-        "id": 1,
-        "name": "example"
-      }
-    ]
-  }
-  ```
+  - Serializing validation errors for API responses.
   """
 
   import Plug.Conn
@@ -75,14 +45,45 @@ defmodule AccomplishWeb.API.Helpers do
     |> halt()
   end
 
-  def list_response(url, data, has_more) do
-    %{
-      object: "list",
-      url: url,
-      has_more: has_more,
-      data: data
-    }
+  def unprocessable_entity(conn, errors) do
+    conn
+    |> put_status(422)
+    |> Phoenix.Controller.json(%{errors: errors})
   end
+
+  def serialize_validation_errors(%Ecto.Changeset{} = changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", to_string(value))
+      end)
+    end)
+    |> Enum.flat_map(fn {field, messages} ->
+      Enum.map(messages, fn message ->
+        %{
+          field: field,
+          message: message,
+          type: "invalid_request_error",
+          code: map_error_to_code(field, message, %{})
+        }
+      end)
+    end)
+  end
+
+  def serialize_validation_errors(errors) when is_list(errors) do
+    Enum.map(errors, fn {field, {msg, opts}} ->
+      %{
+        field: field,
+        message: msg,
+        type: "invalid_request_error",
+        code: map_error_to_code(field, msg, opts)
+      }
+    end)
+  end
+
+  defp map_error_to_code(_field, "can't be blank", _opts), do: "parameter_missing"
+  defp map_error_to_code(_field, "is invalid", _opts), do: "parameter_invalid"
+  defp map_error_to_code(_field, "is too short", _opts), do: "parameter_invalid_string_empty"
+  defp map_error_to_code(_field, _msg, _opts), do: "parameter_invalid"
 
   defp invalid_request_error(conn, msg) do
     conn
