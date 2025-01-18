@@ -1,37 +1,35 @@
 defmodule AccomplishWeb.Plugs.AuthorizePublicAPITest do
   use AccomplishWeb.ConnCase, async: true
 
-  alias AccomplishWeb.Plugs.AuthorizePublicAPI
-
   import Accomplish.AccountsFixtures
-  # import Accomplish.RepositoriesFixtures
-
-  setup %{conn: conn} do
-    conn =
-      conn
-      |> bypass_through(AccomplishWeb.Router)
-
-    {:ok, conn: conn}
-  end
 
   test "halts with error when bearer token is missing", %{conn: conn} do
     conn =
       conn
       |> get(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:read")
-      |> AuthorizePublicAPI.call(nil)
 
     assert conn.halted
     assert json_response(conn, 401)["error"] =~ "Missing API key."
   end
 
-  test "halts with error when bearer token is invalid", %{conn: conn} do
+  test "halts with error when using bearer token authorization", %{conn: conn} do
     conn =
       conn
       |> put_req_header("authorization", "Bearer invalid_token")
       |> get(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:read")
-      |> AuthorizePublicAPI.call(nil)
+
+    assert conn.halted
+    assert json_response(conn, 401)["error"] =~ "Unsupported authentication scheme."
+  end
+
+  test "halts with error when basic token is invalid", %{conn: conn} do
+    conn =
+      conn
+      |> put_req_header("authorization", "Basic invalid_token")
+      |> get(~p"/api/v1/repositories")
+      |> assign(:api_scope, "repositories:read")
 
     assert conn.halted
     assert json_response(conn, 401)["error"] =~ "Invalid API key."
@@ -40,13 +38,13 @@ defmodule AccomplishWeb.Plugs.AuthorizePublicAPITest do
   test "halts with error when API key lacks required scope", %{conn: conn} do
     user = user_fixture()
     api_key = api_key_fixture(user, scopes: ["repositories:write"])
+    authorization =  Base.encode64("#{api_key.raw_key}:")
 
     conn =
       conn
-      |> put_req_header("authorization", "Bearer #{api_key.raw_key}")
+      |> put_req_header("authorization", "Basic #{authorization}")
       |> get(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:read")
-      |> AuthorizePublicAPI.call(nil)
 
     assert conn.halted
     assert json_response(conn, 403)["error"] =~ "Insufficient scope for this API key."
@@ -55,13 +53,13 @@ defmodule AccomplishWeb.Plugs.AuthorizePublicAPITest do
   test "passes and assigns authorized user when valid API key with required scope is provided", %{conn: conn} do
     user = user_fixture()
     api_key = api_key_fixture(user, scopes: ["repositories:read"])
+    authorization =  Base.encode64("#{api_key.raw_key}:")
 
     conn =
       conn
-      |> put_req_header("authorization", "Bearer #{api_key.raw_key}")
+      |> put_req_header("authorization", "Basic #{authorization}")
       |> get(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:read")
-      |> AuthorizePublicAPI.call(nil)
 
     refute conn.halted
     assert conn.assigns.authorized_user.id == user.id
@@ -70,13 +68,13 @@ defmodule AccomplishWeb.Plugs.AuthorizePublicAPITest do
   test "passes with wildcard scope", %{conn: conn} do
     user = user_fixture()
     api_key = api_key_fixture(user, scopes: ["repositories:*"])
+    authorization =  Base.encode64("#{api_key.raw_key}:")
 
     conn =
       conn
-      |> put_req_header("authorization", "Bearer #{api_key.raw_key}")
+      |> put_req_header("authorization", "Basic #{authorization}")
       |> get(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:read")
-      |> AuthorizePublicAPI.call(nil)
 
     refute conn.halted
     assert conn.assigns.authorized_user.id == user.id
@@ -85,13 +83,13 @@ defmodule AccomplishWeb.Plugs.AuthorizePublicAPITest do
   test "halts with error when trying to access write scope with read-only API key", %{conn: conn} do
     user = user_fixture()
     api_key = api_key_fixture(user, scopes: ["repositories:read"])
+    authorization =  Base.encode64("#{api_key.raw_key}:")
 
     conn =
       conn
-      |> put_req_header("authorization", "Bearer #{api_key.raw_key}")
+      |> put_req_header("authorization", "Basic #{authorization}")
       |> post(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:write")
-      |> AuthorizePublicAPI.call(nil)
 
     assert conn.halted
     assert json_response(conn, 403)["error"] =~ "Insufficient scope for this API key."
@@ -101,13 +99,13 @@ defmodule AccomplishWeb.Plugs.AuthorizePublicAPITest do
     user = user_fixture()
     api_key = api_key_fixture(user, scopes: ["repositories:read"])
     :ok = Accomplish.Accounts.revoke_api_key(api_key.raw_key)
+    authorization =  Base.encode64("#{api_key.raw_key}:")
 
     conn =
       conn
-      |> put_req_header("authorization", "Bearer #{api_key.raw_key}")
+      |> put_req_header("authorization", "Basic #{authorization}")
       |> get(~p"/api/v1/repositories")
       |> assign(:api_scope, "repositories:read")
-      |> AuthorizePublicAPI.call(nil)
 
     assert conn.halted
     assert json_response(conn, 401)["error"] =~ "Invalid API key."

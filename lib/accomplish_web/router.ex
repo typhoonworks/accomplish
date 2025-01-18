@@ -20,6 +20,7 @@ defmodule AccomplishWeb.Router do
   pipeline :public_api do
     plug :accepts, ["json"]
     plug(OpenApiSpex.Plug.PutApiSpec, module: AccomplishWeb.API.Spec)
+    plug(AccomplishWeb.Plugs.AuthorizePublicAPI)
   end
 
   scope "/", AccomplishWeb do
@@ -91,12 +92,9 @@ defmodule AccomplishWeb.Router do
   end
 
   scope "/api/v1/repositories", AccomplishWeb.API do
-    pipe_through :public_api
+    pipe_through [:public_api]
 
-    scope pipe_through: [AccomplishWeb.Plugs.AuthorizePublicAPI] do
-      get "/", RepositoriesController, :index, assigns: %{api_scope: "repositories:read"}
-      post "/", RepositoriesController, :create_repository, assigns: %{api_scope: "repositories:write"}
-    end
+    get "/", RepositoriesController, :index, assigns: %{api_scope: "repositories:read"}
+    post "/", RepositoriesController, :create_repository, assigns: %{api_scope: "repositories:write"}
   end
-
 end
