@@ -396,11 +396,11 @@ defmodule Accomplish.Accounts do
 
   """
   def list_api_keys(user) do
-    Repo.all(from k in ApiKey, where: k.user_id == ^user.id)
+    Repo.all(from k in ApiKey, where: k.user_id == ^user.id and is_nil(k.revoked_at))
   end
 
   @doc """
-  Finds an API key by its raw value.
+  Finds an active API key by its raw value.
 
   ## Examples
 
@@ -414,28 +414,32 @@ defmodule Accomplish.Accounts do
   def find_api_key(raw_key) do
     hashed_key = ApiKey.hash_key(raw_key)
 
-    case Repo.get_by(ApiKey, key_hash: hashed_key) do
+    case Repo.one(from k in ApiKey, where: k.key_hash == ^hashed_key and is_nil(k.revoked_at)) do
       nil -> {:error, :not_found}
       api_key -> {:ok, api_key}
     end
   end
 
   @doc """
-  Deletes the API key with the given ID for the user.
+  Revokes the API key with the given raw key value.
 
   ## Examples
 
-      iex> delete_api_key(user, api_key_id)
+      iex> revoke_api_key("raw_key_value")
       :ok
 
-      iex> delete_api_key(user, invalid_id)
+      iex> revoke_api_key("invalid_key")
       {:error, :not_found}
 
   """
-  def delete_api_key(user, api_key_id) do
-    query = from k in ApiKey, where: k.id == ^api_key_id and k.user_id == ^user.id
+  def revoke_api_key(raw_key) do
+    hashed_key = ApiKey.hash_key(raw_key)
 
-    case Repo.delete_all(query) do
+    query =
+      from k in ApiKey,
+        where: k.key_hash == ^hashed_key and is_nil(k.revoked_at)
+
+    case Repo.update_all(query, set: [revoked_at: DateTime.utc_now()]) do
       {1, _} -> :ok
       _ -> {:error, :not_found}
     end

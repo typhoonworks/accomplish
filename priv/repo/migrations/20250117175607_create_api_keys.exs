@@ -11,6 +11,7 @@ defmodule Accomplish.Repo.Migrations.CreateApiKeys do
       add :key_hash, :string, null: false
       add :key_prefix, :string, null: false
       add :scopes, {:array, :string}, null: false
+      add :revoked_at, :utc_datetime
       add :user_id, references(:users, type: :uuid, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)

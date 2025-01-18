@@ -5,14 +5,15 @@ defmodule Accomplish.Accounts.ApiKey do
 
   alias Accomplish.Accounts.User
 
-  @permitted ~w(name key_hash key_prefix scopes)a
-  @required ~w(name key_hash key_prefix scopes)a
+  @permitted ~w(name key_hash key_prefix scopes revoked_at user_id)a
+  @required ~w(name key_hash key_prefix scopes user_id)a
 
   schema "api_keys" do
     field :name, :string
     field :key_hash, :string
     field :key_prefix, :string
     field :scopes, {:array, :string}, default: ["default:read"]
+    field :revoked_at, :utc_datetime
 
     belongs_to :user, User
 

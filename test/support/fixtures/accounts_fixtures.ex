@@ -39,10 +39,9 @@ defmodule Accomplish.AccountsFixtures do
   end
 
   def api_key_fixture(user, attrs \\ %{}) do
-    {:ok, api_key} =
-      attrs
-      |> valid_api_key_attributes()
-      |> Accomplish.Accounts.create_api_key(user)
+    attrs = attrs |> valid_api_key_attributes()
+
+    {:ok, api_key} = Accomplish.Accounts.create_api_key(user, attrs)
 
     api_key
   end

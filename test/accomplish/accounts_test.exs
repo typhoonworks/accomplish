@@ -533,8 +533,10 @@ defmodule Accomplish.AccountsTest do
 
     test "returns all API keys for the user", %{user: user} do
       api_key = api_key_fixture(user)
+      api_key = Map.drop(api_key, [:raw_key])
+
       assert [returned_key] = Accounts.list_api_keys(user)
-      assert returned_key == api_key
+      assert Map.drop(returned_key, [:raw_key]) == api_key
     end
 
     test "returns an empty list if no API keys exist", %{user: user} do
@@ -559,20 +561,24 @@ defmodule Accomplish.AccountsTest do
     end
   end
 
-  describe "delete_api_key/2" do
+  describe "revoke_api_key/1" do
     setup do
       user = user_fixture()
       %{user: user}
     end
 
-    test "deletes the API key", %{user: user} do
-      api_key = api_key_fixture(user)
-      assert :ok = Accounts.delete_api_key(user, api_key.id)
+    test "revokes the API key", %{user: user} do
+      {:ok, api_key} = Accounts.create_api_key(user, %{name: "My API Key"})
+      assert :ok = Accounts.revoke_api_key(api_key.raw_key)
+
       assert [] = Accounts.list_api_keys(user)
+
+      {:error, :not_found} = Accounts.find_api_key(api_key.raw_key)
+      assert Repo.get_by(ApiKey, id: api_key.id).revoked_at != nil
     end
 
-    test "returns an error if the API key does not exist", %{user: user} do
-      assert {:error, :not_found} = Accounts.delete_api_key(user, UUIDv7.generate())
+    test "returns an error if the API key does not exist" do
+      assert {:error, :not_found} = Accounts.revoke_api_key("invalid_key")
     end
   end
 
