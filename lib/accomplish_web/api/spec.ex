@@ -4,6 +4,7 @@ defmodule AccomplishWeb.API.Spec do
   """
   alias OpenApiSpex.{Components, Info, OpenApi, Paths, Server}
   alias AccomplishWeb.Router
+
   @behaviour OpenApi
 
   @impl OpenApi
@@ -20,7 +21,6 @@ defmodule AccomplishWeb.API.Spec do
         title: "Accomplish API",
         version: "1.0-rc"
       },
-      # Populate the paths from a phoenix router
       paths: Paths.from_router(Router),
       components: %Components{
         securitySchemes: %{
@@ -43,7 +43,7 @@ defmodule AccomplishWeb.API.Spec do
       },
       security: [%{"basic_auth" => []}]
     }
-    # Discover request/response schemas from path specs
+    # Ensure all schemas in components are resolved properly
     |> OpenApiSpex.resolve_schema_modules()
   end
 end

@@ -107,6 +107,26 @@ defmodule AccomplishWeb do
     end
   end
 
+  def open_api_schema do
+    quote do
+      require OpenApiSpex
+      alias OpenApiSpex.Schema
+      alias AccomplishWeb.API.Schemas
+    end
+  end
+
+  def api_controller do
+    quote do
+      use AccomplishWeb, :controller
+      use OpenApiSpex.ControllerSpecs
+
+      alias AccomplishWeb.API.Schemas
+      alias AccomplishWeb.API.Helpers
+
+     plug(OpenApiSpex.Plug.CastAndValidate, json_render_error_v2: true, replace_params: false)
+    end
+  end
+
   @doc """
   When used, dispatch to the appropriate controller/live_view/etc.
   """

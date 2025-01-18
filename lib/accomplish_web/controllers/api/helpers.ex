@@ -13,6 +13,8 @@ defmodule AccomplishWeb.API.Helpers do
 
   import Plug.Conn
 
+  alias AccomplishWeb.ErrorMapper
+
   def unauthorized(conn, msg) do
     conn
     |> put_status(401)
@@ -51,7 +53,7 @@ defmodule AccomplishWeb.API.Helpers do
     |> Phoenix.Controller.json(%{errors: errors})
   end
 
-  def serialize_validation_errors(%Ecto.Changeset{} = changeset) do
+  def serialize_validation_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->
         String.replace(acc, "%{#{key}}", to_string(value))
@@ -60,30 +62,13 @@ defmodule AccomplishWeb.API.Helpers do
     |> Enum.flat_map(fn {field, messages} ->
       Enum.map(messages, fn message ->
         %{
-          field: field,
-          message: message,
-          type: "invalid_request_error",
-          code: map_error_to_code(field, message, %{})
+          title: "Invalid value",
+          source: %{"pointer" => "/#{field}"},
+          detail: ErrorMapper.translate_ecto_message_to_openapi(message, field)
         }
       end)
     end)
   end
-
-  def serialize_validation_errors(errors) when is_list(errors) do
-    Enum.map(errors, fn {field, {msg, opts}} ->
-      %{
-        field: field,
-        message: msg,
-        type: "invalid_request_error",
-        code: map_error_to_code(field, msg, opts)
-      }
-    end)
-  end
-
-  defp map_error_to_code(_field, "can't be blank", _opts), do: "parameter_missing"
-  defp map_error_to_code(_field, "is invalid", _opts), do: "parameter_invalid"
-  defp map_error_to_code(_field, "is too short", _opts), do: "parameter_invalid_string_empty"
-  defp map_error_to_code(_field, _msg, _opts), do: "parameter_invalid"
 
   defp invalid_request_error(conn, msg) do
     conn
