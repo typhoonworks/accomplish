@@ -87,3 +87,5 @@ config :swoosh, :api_client, false
 
 # Path to install SaladUI components
 config :salad_ui, components_path: Path.join(File.cwd!(), "lib/accomplish_web/components")
+
+config :open_api_spex, :cache_adapter, OpenApiSpex.Plug.NoneCache
