@@ -557,7 +557,7 @@ defmodule Accomplish.AccountsTest do
     end
 
     test "returns an error for an invalid raw key" do
-      assert {:error, :not_found} = Accounts.find_api_key("invalid_key")
+      assert {:error, :invalid_api_key} = Accounts.find_api_key("invalid_key")
     end
   end
 
@@ -567,15 +567,16 @@ defmodule Accomplish.AccountsTest do
       %{user: user}
     end
 
-    test "revokes the API key", %{user: user} do
-      {:ok, api_key} = Accounts.create_api_key(user, %{name: "My API Key"})
-      assert :ok = Accounts.revoke_api_key(api_key.raw_key)
+   test "revokes the API key", %{user: user} do
+     {:ok, api_key} = Accounts.create_api_key(user, %{name: "My API Key"})
+     assert :ok = Accounts.revoke_api_key(api_key.raw_key)
 
-      assert [] = Accounts.list_api_keys(user)
+     assert [] = Accounts.list_api_keys(user)
 
-      {:error, :not_found} = Accounts.find_api_key(api_key.raw_key)
-      assert Repo.get_by(ApiKey, id: api_key.id).revoked_at != nil
-    end
+     {:error, :invalid_api_key} = Accounts.find_api_key(api_key.raw_key)
+     assert Repo.get_by(ApiKey, id: api_key.id).revoked_at != nil
+   end
+
 
     test "returns an error if the API key does not exist" do
       assert {:error, :not_found} = Accounts.revoke_api_key("invalid_key")

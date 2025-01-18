@@ -2,6 +2,7 @@ defmodule Accomplish.Accounts.User do
   @moduledoc false
 
   use Accomplish.Schema
+  alias Accomplish.Accounts.ApiKey
 
   schema "users" do
     field :username, :string
@@ -10,6 +11,8 @@ defmodule Accomplish.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+
+    has_many :api_keys, ApiKey
 
     timestamps(type: :utc_datetime)
   end
