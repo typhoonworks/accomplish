@@ -60,6 +60,7 @@ defmodule Accomplish.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:uuidv7, "~> 1.0"},
+      {:excellent_migrations, "~> 0.1", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:salad_ui, "~> 0.14"}
     ]
