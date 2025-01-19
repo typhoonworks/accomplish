@@ -55,7 +55,7 @@ defmodule Accomplish.OAuthFixtures do
     %{
       access_token: "some access_token",
       expires_at: ~U[2025-01-18 13:18:00Z],
-      provider: "some provider",
+      provider: "github",
       refresh_token: "some refresh_token",
       scopes: ["option1", "option2"],
       uid: "some uid"
