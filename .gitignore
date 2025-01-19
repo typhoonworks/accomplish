@@ -45,3 +45,4 @@ plausible-report.xml
 *.code-workspace
 .vscode
 
+/config/.env.exs
