@@ -32,6 +32,7 @@ defmodule Accomplish.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:assent, "~> 0.3.0"},
       {:bandit, "~> 1.5"},
       {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -58,6 +59,7 @@ defmodule Accomplish.MixProject do
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.0.0"},
       {:postgrex, ">= 0.0.0"},
+      {:req, "~> 0.5.0"},
       {:salad_ui, "~> 0.14"},
       {:swoosh, "~> 1.5"},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},

@@ -26,6 +26,7 @@ defmodule Accomplish.DataCase do
       import Accomplish.DataCase
       import Accomplish.AccountsFixtures
       import Accomplish.RepositoriesFixtures
+      import Accomplish.OAuthFixtures
     end
   end
 

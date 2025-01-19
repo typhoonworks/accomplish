@@ -3,6 +3,7 @@ defmodule Accomplish.Accounts.User do
 
   use Accomplish.Schema
   alias Accomplish.Accounts.ApiKey
+  alias Accomplish.OAuth
 
   schema "users" do
     field :username, :string
@@ -13,6 +14,7 @@ defmodule Accomplish.Accounts.User do
     field :confirmed_at, :utc_datetime
 
     has_many :api_keys, ApiKey
+    has_many :oauth_identities, OAuth.Identity, foreign_key: :user_id
 
     timestamps(type: :utc_datetime)
   end
@@ -47,6 +49,68 @@ defmodule Accomplish.Accounts.User do
     |> validate_email(opts)
     |> validate_password(opts)
     |> validate_username(opts)
+  end
+
+  @doc """
+    A user changeset for OAuth-based registration.
+
+    This changeset is designed specifically for users created via OAuth providers
+    (e.g., GitHub, Google). Since OAuth users typically do not provide a password during
+    registration, a placeholder password is set to satisfy database constraints.
+
+    ## Options
+
+      * `:validate_email` - Validates the uniqueness of the email. If uniqueness validation
+        is not required (e.g., when validating in a LiveView form before submitting), this
+        option can be set to `false`. Defaults to `true`.
+
+      * `:validate_username` - Ensures the username meets format and length requirements.
+        Defaults to `true`.
+
+    ## Attributes
+
+    The function casts the following attributes:
+      * `:email` - The email address of the user (required).
+      * `:username` - The username for the user (required).
+
+    ## Example
+
+        iex> changeset = oauth_changeset(%User{}, %{email: "user@example.com", username: "username"})
+        %Ecto.Changeset{
+          valid?: true,
+          changes: %{
+            email: "user@example.com",
+            username: "username",
+            hashed_password: "$2b$12$..."
+          }
+        }
+
+    The `hashed_password` field is set using a predefined placeholder value.
+
+    ## Notes
+
+    - `set_placeholder_password/1` ensures that OAuth users have a hashed password
+      even though they won't authenticate with it. This placeholder prevents database
+      constraints from being violated.
+    - The changeset uses `validate_email/2` and `validate_username/2` to enforce uniqueness
+      and format rules, if configured.
+  """
+  def oauth_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :username])
+    |> downcase_username()
+    |> set_placeholder_password()
+    |> validate_email(opts)
+    |> validate_username(opts)
+  end
+
+  defp set_placeholder_password(changeset) do
+    placeholder_password = "oauth_user_placeholder"
+    hashed_placeholder = Bcrypt.hash_pwd_salt(placeholder_password)
+
+    changeset
+    |> put_change(:hashed_password, hashed_placeholder)
+    |> delete_change(:password)
   end
 
   defp validate_username(changeset, opts) do
