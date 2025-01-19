@@ -3,6 +3,7 @@ defmodule Accomplish.Accounts.User do
 
   use Accomplish.Schema
   alias Accomplish.Accounts.ApiKey
+  alias Accomplish.OAuth
 
   schema "users" do
     field :username, :string
@@ -13,6 +14,7 @@ defmodule Accomplish.Accounts.User do
     field :confirmed_at, :utc_datetime
 
     has_many :api_keys, ApiKey
+    has_many :oauth_identities, OAuth.Identity, foreign_key: :user_id
 
     timestamps(type: :utc_datetime)
   end
