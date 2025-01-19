@@ -52,15 +52,14 @@ defmodule AccomplishWeb.Router do
   scope "/", AccomplishWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
-    live_session :redirect_if_user_is_authenticated,
-      on_mount: [{AccomplishWeb.Plugs.UserAuth, :redirect_if_user_is_authenticated}] do
-      live "/users/register", UserRegistrationLive, :new
-      live "/users/log_in", UserLoginLive, :new
-      live "/users/reset_password", UserForgotPasswordLive, :new
-      live "/users/reset_password/:token", UserResetPasswordLive, :edit
-    end
-
+    get "/users/register", UserRegistrationController, :new
+    post "/users/register", UserRegistrationController, :create
+    get "/users/log_in", UserSessionController, :new
     post "/users/log_in", UserSessionController, :create
+    get "/users/reset_password", UserResetPasswordController, :new
+    post "/users/reset_password", UserResetPasswordController, :create
+    get "/users/reset_password/:token", UserResetPasswordController, :edit
+    put "/users/reset_password/:token", UserResetPasswordController, :update
   end
 
   scope "/", AccomplishWeb do
@@ -79,12 +78,10 @@ defmodule AccomplishWeb.Router do
     post "/session/set-timezone", SessionTimezoneController, :set
 
     delete "/users/log_out", UserSessionController, :delete
-
-    live_session :current_user,
-      on_mount: [{AccomplishWeb.Plugs.UserAuth, :mount_current_user}] do
-      live "/users/confirm/:token", UserConfirmationLive, :edit
-      live "/users/confirm", UserConfirmationInstructionsLive, :new
-    end
+    get "/users/confirm", UserConfirmationController, :new
+    post "/users/confirm", UserConfirmationController, :create
+    get "/users/confirm/:token", UserConfirmationController, :edit
+    post "/users/confirm/:token", UserConfirmationController, :update
   end
 
   scope "/api" do

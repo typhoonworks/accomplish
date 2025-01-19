@@ -1,0 +1,43 @@
+<div class="mx-auto max-w-sm">
+  <.header class="text-center">
+    Log in to account
+    <:subtitle>
+      Don't have an account?
+      <.link navigate={~p"/users/register"} class="font-semibold text-brand hover:underline">
+        Sign up
+      </.link>
+      for an account now.
+    </:subtitle>
+  </.header>
+
+  <.form
+    :let={f}
+    for={@conn.params["user"]}
+    as={:user}
+    action={~p"/users/log_in"}
+    method="post"
+    id="login_form"
+    class="mt-10 space-y-6"
+  >
+    <.form_item>
+      <.form_label error={not Enum.empty?(f[:email].errors)}>Email</.form_label>
+      <.input field={f[:email]} type="email" required />
+    </.form_item>
+
+    <.form_item>
+      <.form_label error={not Enum.empty?(f[:password].errors)}>Password</.form_label>
+      <.input field={f[:password]} type="password" required />
+    </.form_item>
+
+    <.form_item class="flex items-center justify-between">
+      <.input field={f[:remember_me]} type="checkbox" label="Keep me logged in" />
+      <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
+        Forgot your password?
+      </.link>
+    </.form_item>
+
+    <.button phx-disable-with="Logging in..." class="w-full">
+      Log in <span aria-hidden="true">→</span>
+    </.button>
+  </.form>
+</div>
