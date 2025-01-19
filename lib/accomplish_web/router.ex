@@ -114,6 +114,12 @@ defmodule AccomplishWeb.Router do
       plug(AccomplishWeb.Plugs.AuthorizePublicAPI)
     end
 
+    scope "/cli", AccomplishWeb.API do
+      pipe_through [:api]
+
+      post "/auth/initiate", CLIController, :initiate_login
+    end
+
     scope "/spec" do
       pipe_through(:public_api)
       get "/openapi", OpenApiSpex.Plug.RenderSpec, []

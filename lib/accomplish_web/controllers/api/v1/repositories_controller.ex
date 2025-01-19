@@ -3,7 +3,7 @@ defmodule AccomplishWeb.API.V1.RepositoriesController do
   Controller for managing repositories.
   """
 
-  use AccomplishWeb, :api_controller
+  use AccomplishWeb, :public_api_controller
 
   alias Accomplish.Repositories
 

@@ -4,7 +4,7 @@ defmodule Accomplish.AccountsTest do
   alias Accomplish.Accounts
 
   import Accomplish.AccountsFixtures
-  alias Accomplish.Accounts.{User, UserToken, ApiKey}
+  alias Accomplish.Accounts.{User, UserToken, ApiKey, CliToken}
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -612,6 +612,49 @@ defmodule Accomplish.AccountsTest do
     test "supports wildcard scopes", %{user: user} do
       api_key = api_key_fixture(user, %{scopes: ["repo:*"]})
       assert Accounts.valid_scope?(api_key, "repo:write")
+    end
+  end
+
+  describe "generate_cli_token/1" do
+    test "generates and stores a CLI token with a valid context" do
+      context = %{some_key: "some_value"}
+
+      assert {:ok, raw_token} = Accounts.generate_cli_token(context)
+
+      {:ok, decoded_token} = Base.url_decode64(raw_token, padding: false)
+      hashed_token = :crypto.hash(:sha256, decoded_token) |> Base.encode16(case: :lower)
+
+      assert %CliToken{} = Repo.get_by(CliToken, token: hashed_token)
+
+      cli_token = Repo.get_by(CliToken, token: hashed_token)
+      assert cli_token.context == %{"some_key" => "some_value"}
+    end
+  end
+
+
+  describe "validate_cli_token/1" do
+    setup do
+      {:ok, raw_token} = Accounts.generate_cli_token()
+      %{raw_token: raw_token}
+    end
+
+    test "validates a valid CLI token and returns the associated CLI token", %{raw_token: raw_token} do
+      assert {:ok, %CliToken{} = cli_token} = Accounts.validate_cli_token(raw_token)
+      assert cli_token.token
+
+      assert DateTime.compare(cli_token.expires_at, DateTime.utc_now()) == :gt
+    end
+
+
+    test "returns an error for an invalid token", %{raw_token: _raw_token} do
+      assert {:error, :invalid_token} = Accounts.validate_cli_token("invalid_token")
+    end
+
+    test "returns an error for an expired token", %{raw_token: raw_token} do
+      {1, nil} =
+        Repo.update_all(CliToken, set: [expires_at: DateTime.add(DateTime.utc_now(), -60, :second)])
+
+      assert {:error, :invalid_or_expired_token} = Accounts.validate_cli_token(raw_token)
     end
   end
 end

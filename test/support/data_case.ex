@@ -18,6 +18,8 @@ defmodule Accomplish.DataCase do
 
   using do
     quote do
+      use Accomplish.TestUtils
+
       alias Accomplish.Repo
 
       import Ecto

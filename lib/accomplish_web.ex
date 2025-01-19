@@ -118,6 +118,14 @@ defmodule AccomplishWeb do
   def api_controller do
     quote do
       use AccomplishWeb, :controller
+
+      alias AccomplishWeb.API.Helpers
+    end
+  end
+
+  def public_api_controller do
+    quote do
+      use AccomplishWeb, :controller
       use OpenApiSpex.ControllerSpecs
 
       alias AccomplishWeb.API.Schemas

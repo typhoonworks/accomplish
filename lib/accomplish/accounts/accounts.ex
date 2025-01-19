@@ -5,7 +5,7 @@ defmodule Accomplish.Accounts do
 
   use Accomplish.Context
 
-  alias Accomplish.Accounts.{User, UserToken, UserNotifier, ApiKey}
+  alias Accomplish.Accounts.{User, UserToken, UserNotifier, ApiKey, CliToken}
 
   ## Database getters
 
@@ -496,4 +496,38 @@ defmodule Accomplish.Accounts do
   defp matches_wildcard_scope?(scope, required_scope) do
     String.starts_with?(required_scope, String.trim_trailing(scope, "*"))
   end
+
+  @doc """
+  Generates and stores a CLI token for the given user.
+
+  Returns the generated token (not hashed) for the caller to use.
+  """
+  def generate_cli_token(context \\ %{}) do
+    token_struct = CliToken.build_token(context)
+
+    case Repo.insert(token_struct) do
+      {:ok, token} -> {:ok, token.raw_token}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  @doc """
+  Validates a CLI token and returns the associated user if valid.
+  """
+  def validate_cli_token(raw_token) do
+    with {:ok, decoded_token} <- Base.url_decode64(raw_token, padding: false),
+         hashed_token = :crypto.hash(:sha256, decoded_token) |> Base.encode16(case: :lower),
+         %CliToken{} = cli_token <-
+           Repo.one(
+             from(t in CliToken,
+               where: t.token == ^hashed_token and t.expires_at > ^DateTime.utc_now()
+             )
+           ) do
+      {:ok, cli_token}
+    else
+      nil -> {:error, :invalid_or_expired_token}
+      :error -> {:error, :invalid_token}
+    end
+  end
+
 end

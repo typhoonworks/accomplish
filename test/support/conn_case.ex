@@ -28,6 +28,9 @@ defmodule AccomplishWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import AccomplishWeb.ConnCase
+
+      import Accomplish.AccountsFixtures
+      import Accomplish.RepositoriesFixtures
     end
   end
 
