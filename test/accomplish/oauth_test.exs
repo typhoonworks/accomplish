@@ -53,7 +53,7 @@ defmodule Accomplish.OAuthTest do
 
       valid_attrs = %{
         uid: "some uid",
-        provider: "some provider",
+        provider: "github",
         access_token: "some access_token",
         refresh_token: "some refresh_token",
         expires_at: ~U[2025-01-18 13:18:00Z],
@@ -63,7 +63,7 @@ defmodule Accomplish.OAuthTest do
 
       assert {:ok, %Identity{} = oauth_identity} = OAuth.create_oauth_identity(valid_attrs)
       assert oauth_identity.uid == "some uid"
-      assert oauth_identity.provider == "some provider"
+      assert oauth_identity.provider == "github"
       assert oauth_identity.access_token == "some access_token"
       assert oauth_identity.refresh_token == "some refresh_token"
       assert oauth_identity.expires_at == ~U[2025-01-18 13:18:00Z]
@@ -80,7 +80,6 @@ defmodule Accomplish.OAuthTest do
 
       update_attrs = %{
         uid: "some updated uid",
-        provider: "some updated provider",
         access_token: "some updated access_token",
         refresh_token: "some updated refresh_token",
         expires_at: ~U[2025-01-19 13:18:00Z],
@@ -91,7 +90,6 @@ defmodule Accomplish.OAuthTest do
                OAuth.update_oauth_identity(oauth_identity, update_attrs)
 
       assert oauth_identity.uid == "some updated uid"
-      assert oauth_identity.provider == "some updated provider"
       assert oauth_identity.access_token == "some updated access_token"
       assert oauth_identity.refresh_token == "some updated refresh_token"
       assert oauth_identity.expires_at == ~U[2025-01-19 13:18:00Z]

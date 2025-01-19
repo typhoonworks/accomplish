@@ -70,8 +70,6 @@ defmodule AccomplishWeb.OAuthController do
              OAuthService.find_or_create_user_from_oauth(provider, auth) do
         conn
         |> UserAuth.log_in_user(user)
-        |> put_flash(:info, "Welcome to Accomplish!")
-        |> redirect(to: "/")
       else
         {:error, _reason} ->
           conn

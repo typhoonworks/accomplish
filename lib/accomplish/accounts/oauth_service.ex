@@ -48,8 +48,22 @@ defmodule Accomplish.Accounts.OAuthService do
         create_user_with_oauth_identity(provider, auth)
 
       user ->
-        identity = OAuth.get_oauth_identity(provider, uid)
-        OAuth.link_identity_to_user(identity, user.id)
+        case OAuth.get_oauth_identity(provider, uid) do
+          nil ->
+            OAuth.create_oauth_identity(%{
+              provider: provider,
+              uid: uid,
+              access_token: auth.token["access_token"],
+              refresh_token: auth.token["refresh_token"],
+              expires_at: auth.token["expires_at"],
+              scopes: parse_scopes(auth.token["scope"]),
+              user_id: user.id
+            })
+
+          identity ->
+            OAuth.link_identity_to_user(identity, user.id)
+        end
+
         {:ok, user}
     end
   end
@@ -62,7 +76,7 @@ defmodule Accomplish.Accounts.OAuthService do
         Accounts.create_user_from_oauth(user_params)
       end)
       |> Multi.run(:oauth_identity, fn _repo, %{create_user: user} ->
-        %{
+        attrs = %{
           provider: provider,
           uid: oauth_user["sub"],
           access_token: token["access_token"],
@@ -71,7 +85,11 @@ defmodule Accomplish.Accounts.OAuthService do
           scopes: parse_scopes(token["scope"]),
           user_id: user.id
         }
-        |> OAuth.create_oauth_identity()
+
+        case OAuth.create_oauth_identity(attrs) do
+          {:ok, identity} -> {:ok, identity}
+          {:error, changeset} -> {:error, changeset}
+        end
       end)
       |> Repo.transaction()
 
@@ -111,19 +129,20 @@ defmodule Accomplish.Accounts.OAuthService do
   defp sanitize_username(username) do
     username
     |> String.downcase()
+    |> String.replace("_", "-")
     |> String.replace(~r/[^a-z0-9\-]/, "")
     |> String.replace(~r/^-+|-+$/, "")
   end
 
   defp generate_random_username do
-    base = "user_"
+    base = "user"
 
     suffix =
       :crypto.strong_rand_bytes(6)
       |> Base.encode16(case: :lower)
       |> String.slice(0..7)
 
-    base <> suffix
+    "#{base}-#{suffix}"
   end
 
   defp parse_scopes(nil), do: []

@@ -5,6 +5,7 @@ defmodule Accomplish.OAuth.Identity do
 
   alias Accomplish.Accounts.User
 
+  @providers ~w(github)
   @permitted ~w(uid provider scopes user_id access_token refresh_token expires_at user_id)a
   @required ~w(uid provider scopes)a
 
@@ -26,6 +27,7 @@ defmodule Accomplish.OAuth.Identity do
     oauth_identity
     |> cast(attrs, @permitted)
     |> validate_required(@required)
+    |> validate_inclusion(:provider, @providers)
     |> assoc_constraint(:user)
     |> unique_constraint([:provider, :uid])
   end
