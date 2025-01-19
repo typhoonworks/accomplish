@@ -3,8 +3,7 @@ defmodule Accomplish.Accounts do
   The Accounts context.
   """
 
-  import Ecto.Query, warn: false
-  alias Accomplish.Repo
+  use Accomplish.Context
 
   alias Accomplish.Accounts.{User, UserToken, UserNotifier, ApiKey}
 

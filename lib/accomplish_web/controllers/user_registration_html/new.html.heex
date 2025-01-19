@@ -1,0 +1,44 @@
+<div class="mx-auto max-w-sm">
+  <.header class="text-center">
+    Register for an account
+    <:subtitle>
+      Already registered?
+      <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
+        Log in
+      </.link>
+      to your account now.
+    </:subtitle>
+  </.header>
+
+  <.form
+    :let={f}
+    for={@changeset}
+    action={~p"/users/register"}
+    method="post"
+    id="registration_form"
+    class="mt-10 space-y-6"
+  >
+    <.form_item>
+      <.form_label error={not Enum.empty?(f[:email].errors)}>Email</.form_label>
+      <.input field={f[:email]} type="email" phx-debounce="500" />
+    </.form_item>
+
+    <.form_item>
+      <.form_label error={not Enum.empty?(f[:password].errors)}>Password</.form_label>
+      <.input field={f[:password]} type="password" phx-debounce="500" />
+      <%!-- <.form_message field={f[:password]} /> --%>
+      <.form_description>
+        Password must be between 12 and 72 characters long.
+      </.form_description>
+    </.form_item>
+
+    <.form_item>
+      <.form_label error={not Enum.empty?(f[:username].errors)}>Username</.form_label>
+      <.input field={f[:username]} type="text" phx-debounce="500" />
+      <.form_description>
+        Username may only contain alphanumeric characters or single hyphens, and cannot begin or end with a hyphen.
+      </.form_description>
+    </.form_item>
+    <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
+  </.form>
+</div>
