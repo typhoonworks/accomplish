@@ -67,7 +67,7 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, JSON
 
-if config_env() in [:dev, :test] do
+if config_env() in [:dev] do
   import_config ".env.exs"
 end
 
