@@ -67,6 +67,19 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, JSON
 
+if config_env() in [:dev, :test] do
+  import_config ".env.exs"
+end
+
+# Configures OAuth with Assent
+config :accomplish, :assent_providers,
+  github: %{
+    client_id: System.get_env("GITHUB_CLIENT_ID"),
+    client_secret: System.get_env("GITHUB_CLIENT_SECRET"),
+    strategy: Assent.Strategy.Github,
+    redirect_uri: "http://localhost:4000/auth/github/callback"
+  }
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

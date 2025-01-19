@@ -80,6 +80,23 @@ defmodule Accomplish.Accounts do
   end
 
   @doc """
+    Creates a user using data provided by an OAuth provider.
+
+    ## Examples
+
+        iex> create_user_from_oauth(%{email: "user@example.com", username: "username"})
+        {:ok, %User{}}
+
+        iex> create_user_from_oauth(%{email: nil, username: "username"})
+        {:error, %Ecto.Changeset{}}
+  """
+  def create_user_from_oauth(attrs, opts \\ []) do
+    %User{}
+    |> User.oauth_changeset(attrs, opts)
+    |> Repo.insert()
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
   ## Examples
