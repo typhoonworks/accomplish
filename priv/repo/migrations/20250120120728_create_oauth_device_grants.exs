@@ -9,6 +9,7 @@ defmodule Accomplish.Repo.Migrations.CreateOauthDeviceGrants do
       add :id, :uuid, primary_key: true
       add :device_code, :string, null: false
       add :user_code, :string, null: false
+      add :scopes, {:array, :string}, null: false, default: []
       add :expires_in, :integer, null: false
       add :revoked_at, :utc_datetime
       add :last_polling_at, :utc_datetime_usec

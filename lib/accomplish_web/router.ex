@@ -65,6 +65,8 @@ defmodule AccomplishWeb.Router do
       get "/:provider", OAuthController, :request
       get "/:provider/callback", OAuthController, :callback
       post "/:provider/callback", OAuthController, :callback
+
+      post "/device/code", OAuthDeviceGrantController, :create_device_code
     end
   end
 

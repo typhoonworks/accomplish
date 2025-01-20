@@ -18,6 +18,24 @@ defmodule Accomplish.OAuth do
   def list_applications, do: Repo.all(Application)
 
   @doc """
+  Fetches an OAuth application by its `client_id` (stored as the `uid`).
+
+  ## Examples
+
+      iex> get_application_by_client_id("client-id-123")
+      {:ok, %Application{}}
+
+      iex> get_application_by_client_id("invalid-id")
+      {:error, :application_not_found}
+  """
+  def get_application_by_client_id(client_id) do
+    case Repo.get_by(Application, uid: client_id) do
+      nil -> {:error, :application_not_found}
+      application -> {:ok, application}
+    end
+  end
+
+  @doc """
   Gets a single OAuth application.
 
   ## Examples
@@ -218,10 +236,17 @@ defmodule Accomplish.OAuth do
   @doc """
   Creates a new device grant.
   """
-  def create_device_grant(application, attrs) do
-    attrs =
-      attrs
-      |> Map.put(:application_id, application.id)
+  def create_device_grant(application, scopes) do
+    {device_code, user_code} = DeviceGrant.generate_tokens()
+    expires_in_seconds = 600
+
+    attrs = %{
+      device_code: device_code,
+      user_code: user_code,
+      expires_in: expires_in_seconds,
+      application_id: application.id,
+      scopes: scopes
+    }
 
     %DeviceGrant{}
     |> DeviceGrant.changeset(attrs)

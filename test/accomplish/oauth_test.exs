@@ -13,6 +13,16 @@ defmodule Accomplish.OAuthTest do
       assert OAuth.list_applications() == [application]
     end
 
+    test "get_application_by_client_id returns the application for a valid client_id", %{
+      application: application
+    } do
+      assert {:ok, ^application} = OAuth.get_application_by_client_id(application.uid)
+    end
+
+    test "get_application_by_client_id returns an error for an invalid client_id" do
+      assert {:error, :application_not_found} = OAuth.get_application_by_client_id("invalid-id")
+    end
+
     test "get_application!/1 returns the specified application", %{application: application} do
       assert OAuth.get_application!(application.id) == application
     end
@@ -27,14 +37,14 @@ defmodule Accomplish.OAuthTest do
       valid_attrs = %{
         name: "My App",
         redirect_uri: "https://example.com/callback",
-        scopes: ["read:user", "write:user"],
+        scopes: ["user:read", "user:write"],
         confidential: true
       }
 
       assert {:ok, %Application{} = application} = OAuth.create_application(valid_attrs)
       assert application.name == "My App"
       assert application.redirect_uri == "https://example.com/callback"
-      assert application.scopes == ["read:user", "write:user"]
+      assert application.scopes == ["user:read", "user:write"]
       assert application.confidential == true
     end
 
@@ -46,13 +56,13 @@ defmodule Accomplish.OAuthTest do
     test "update_application/2 updates an application with valid data", %{
       application: application
     } do
-      update_attrs = %{name: "Updated App", scopes: ["read:repository"]}
+      update_attrs = %{name: "Updated App", scopes: ["repository:read"]}
 
       assert {:ok, %Application{} = updated_app} =
                OAuth.update_application(application, update_attrs)
 
       assert updated_app.name == "Updated App"
-      assert updated_app.scopes == ["read:repository"]
+      assert updated_app.scopes == ["repository:read"]
     end
 
     test "update_application/2 with invalid data returns error changeset", %{
@@ -115,7 +125,7 @@ defmodule Accomplish.OAuthTest do
         token: Accomplish.OAuth.AccessGrant.generate_token(),
         expires_in: 3600,
         redirect_uri: "https://example.com/callback",
-        scopes: ["read:user", "write:user"],
+        scopes: ["user:read", "user:write"],
         application_id: oauth_application_fixture().id
       }
 
@@ -169,7 +179,7 @@ defmodule Accomplish.OAuthTest do
 
     test "create_access_token/3 creates a token without a user", %{application: application} do
       attrs = %{
-        scopes: ["read:user"],
+        scopes: ["user:read"],
         expires_in: 3600
       }
 
@@ -184,7 +194,7 @@ defmodule Accomplish.OAuthTest do
       user: user
     } do
       attrs = %{
-        scopes: ["read:user"],
+        scopes: ["user:read"],
         expires_in: 3600
       }
 
@@ -218,30 +228,25 @@ defmodule Accomplish.OAuthTest do
     test "create_device_grant/2 creates a device grant with valid data", %{
       application: application
     } do
-      attrs =
-        DeviceGrant.generate_tokens()
-        |> Map.put_new(:expires_in, 3600)
+      scopes = ["user:read", "user:write"]
 
       assert {:ok, %DeviceGrant{} = device_grant} =
-               OAuth.create_device_grant(application, attrs)
+               OAuth.create_device_grant(application, scopes)
 
-      assert device_grant.device_code == attrs.device_code
-      assert device_grant.user_code == attrs.user_code
-      assert device_grant.expires_in == 3600
+      assert String.length(device_grant.device_code) == 32
+      assert String.length(device_grant.user_code) == 8
+      assert device_grant.expires_in == 600
+      assert device_grant.scopes == scopes
       assert device_grant.application_id == application.id
     end
 
     test "create_device_grant/2 with invalid data returns error changeset", %{
       application: application
     } do
-      invalid_attrs = %{
-        device_code: "invalid-code",
-        user_code: "invalid-code",
-        expires_in: -1
-      }
+      scopes = ["invalid-scope"]
 
       assert {:error, %Ecto.Changeset{}} =
-               OAuth.create_device_grant(application, invalid_attrs)
+               OAuth.create_device_grant(application, scopes)
     end
 
     test "get_device_grant_by_code/1 returns the device grant by code", %{
