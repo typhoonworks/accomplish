@@ -43,4 +43,4 @@ jobs:
           toolchain: stable
 
       - name: Run rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
+        run: cargo fmt --check
