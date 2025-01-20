@@ -185,7 +185,7 @@ defmodule Accomplish.OAuth do
       iex> revoke_access_grant(access_grant)
       {:error, %Ecto.Changeset{}}
   """
-  def revoke_access_grant(%AccessGrant{} = access_grant) do
+  def revoke_access_grant(access_grant) do
     access_grant
     |> AccessGrant.revoke_changeset(%{revoked_at: DateTime.utc_now()})
     |> Repo.update()
@@ -256,7 +256,7 @@ defmodule Accomplish.OAuth do
   @doc """
   Finds a device grant by `device_code`.
   """
-  def get_device_grant_by_code(device_code) do
+  def get_device_grant_by_device_code(device_code) do
     Repo.get_by(DeviceGrant, device_code: device_code)
   end
 
@@ -277,13 +277,51 @@ defmodule Accomplish.OAuth do
   @doc """
   Links a device grant to a user.
   """
-  def link_device_grant_to_user(%DeviceGrant{} = device_grant, user_id) do
+  def link_device_grant_to_user(device_grant, user_id) do
     if device_grant.user_id do
       {:error, :already_linked}
     else
       device_grant
       |> DeviceGrant.link_changeset(%{user_id: user_id})
       |> Repo.update()
+    end
+  end
+
+  @doc """
+  Fetches and verifies a device grant by device_code and ensures it has been authorized by a user.
+
+  Returns:
+    - `{:ok, device_grant}` if authorized and valid.
+    - `{:error, :not_found}` if the device grant doesn't exist.
+    - `{:error, :unauthorized}` if the user hasn't authorized the grant.
+    - `{:error, :expired}` if the grant has expired.
+    - `{:error, :revoked}` if the grant has been revoked.
+  """
+  def get_authorized_device_grant(device_code) do
+    case get_device_grant_by_device_code(device_code) do
+      nil ->
+        {:error, :not_found}
+
+      %DeviceGrant{
+        user_id: nil,
+        revoked_at: nil,
+        inserted_at: inserted_at,
+        expires_in: expires_in
+      } ->
+        now = DateTime.utc_now()
+        expiration_time = DateTime.add(inserted_at, expires_in)
+
+        if DateTime.compare(now, expiration_time) == :gt do
+          {:error, :expired}
+        else
+          {:error, :unauthorized}
+        end
+
+      %DeviceGrant{revoked_at: revoked_at} when not is_nil(revoked_at) ->
+        {:error, :revoked}
+
+      %DeviceGrant{} = device_grant ->
+        {:ok, device_grant}
     end
   end
 
@@ -303,6 +341,38 @@ defmodule Accomplish.OAuth do
     device_grant
     |> DeviceGrant.revoke_changeset(%{revoked_at: DateTime.utc_now(), expires_in: 0})
     |> Repo.update()
+  end
+
+  @doc """
+  Validates the device grant.
+  Returns:
+  - `:ok` if the grant is authorized.
+  - `{:error, :unauthorized}` if the user has not authorized the grant.
+  - `{:error, :expired}` if the grant has expired.
+  """
+  def validate_device_grant(%DeviceGrant{
+        user_id: nil,
+        expires_in: expires_in,
+        inserted_at: inserted_at
+      }) do
+    if DateTime.diff(DateTime.utc_now(), inserted_at) > expires_in do
+      {:error, :expired}
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  def validate_device_grant(%DeviceGrant{
+        user_id: user_id,
+        expires_in: expires_in,
+        inserted_at: inserted_at
+      })
+      when not is_nil(user_id) do
+    if DateTime.diff(DateTime.utc_now(), inserted_at) > expires_in do
+      {:error, :expired}
+    else
+      :ok
+    end
   end
 
   @doc """

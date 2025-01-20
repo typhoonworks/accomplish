@@ -249,16 +249,18 @@ defmodule Accomplish.OAuthTest do
                OAuth.create_device_grant(application, scopes)
     end
 
-    test "get_device_grant_by_code/1 returns the device grant by code", %{
+    test "get_device_grant_by_device_code/1 returns the device grant by code", %{
       application: application
     } do
       device_grant = oauth_device_grant_fixture(application)
-      assert OAuth.get_device_grant_by_code(device_grant.device_code) == device_grant
+      assert OAuth.get_device_grant_by_device_code(device_grant.device_code) == device_grant
     end
 
-    test "get_device_grant_by_code/1 returns nil for an invalid code", %{application: application} do
+    test "get_device_grant_by_device_code/1 returns nil for an invalid code", %{
+      application: application
+    } do
       oauth_device_grant_fixture(application)
-      assert OAuth.get_device_grant_by_code("invalid-code") == nil
+      assert OAuth.get_device_grant_by_device_code("invalid-code") == nil
     end
 
     test "get_device_grant_by_user_code/1 returns the device grant for a valid user_code", %{
@@ -363,6 +365,100 @@ defmodule Accomplish.OAuthTest do
       # Compare truncated timestamps
       assert DateTime.truncate(already_revoked.revoked_at, :second) ==
                DateTime.truncate(revoked_device_grant.revoked_at, :second)
+    end
+
+    test "validate_device_grant/1 returns :error, :expired for an expired device grant" do
+      expired_device_grant =
+        %DeviceGrant{
+          user_id: nil,
+          expires_in: 600,
+          inserted_at: DateTime.add(DateTime.utc_now(), -601)
+        }
+
+      assert {:error, :expired} = OAuth.validate_device_grant(expired_device_grant)
+    end
+
+    test "validate_device_grant/1 returns :error, :unauthorized for an unlinked device grant" do
+      unlinked_device_grant =
+        %DeviceGrant{
+          user_id: nil,
+          expires_in: 600,
+          inserted_at: DateTime.utc_now()
+        }
+
+      assert {:error, :unauthorized} = OAuth.validate_device_grant(unlinked_device_grant)
+    end
+
+    test "validate_device_grant/1 returns :ok for a valid and linked device grant" do
+      linked_device_grant =
+        %DeviceGrant{
+          user_id: UUIDv7.generate(),
+          expires_in: 600,
+          inserted_at: DateTime.utc_now()
+        }
+
+      assert :ok = OAuth.validate_device_grant(linked_device_grant)
+    end
+
+    test "validate_device_grant/1 returns :error, :expired for an expired and linked device grant" do
+      expired_linked_device_grant =
+        %DeviceGrant{
+          user_id: UUIDv7.generate(),
+          expires_in: 600,
+          inserted_at: DateTime.add(DateTime.utc_now(), -601)
+        }
+
+      assert {:error, :expired} = OAuth.validate_device_grant(expired_linked_device_grant)
+    end
+
+    test "get_authorized_device_grant/1 returns :not_found if device_code does not exist" do
+      assert {:error, :not_found} = OAuth.get_authorized_device_grant("invalid_device_code")
+    end
+
+    test "get_authorized_device_grant/1 returns :expired if the grant has expired", %{
+      application: application
+    } do
+      expired_device_grant =
+        oauth_device_grant_fixture(application)
+        |> Ecto.Changeset.change(inserted_at: DateTime.add(DateTime.utc_now(), -601))
+        |> Repo.update!()
+
+      assert {:error, :expired} =
+               OAuth.get_authorized_device_grant(expired_device_grant.device_code)
+    end
+
+    test "get_authorized_device_grant/1 returns :unauthorized if the grant is not linked to a user and has not expired",
+         %{
+           application: application
+         } do
+      unlinked_device_grant = oauth_device_grant_fixture(application)
+
+      assert {:error, :unauthorized} =
+               OAuth.get_authorized_device_grant(unlinked_device_grant.device_code)
+    end
+
+    test "get_authorized_device_grant/1 returns :revoked if the grant has been revoked", %{
+      application: application
+    } do
+      {:ok, revoked_device_grant} =
+        oauth_device_grant_fixture(application)
+        |> OAuth.revoke_access_grant()
+
+      assert {:error, :revoked} =
+               OAuth.get_authorized_device_grant(revoked_device_grant.device_code)
+    end
+
+    test "get_authorized_device_grant/1 returns :ok if the grant is valid and linked to a user",
+         %{application: application} do
+      user = user_fixture()
+      device_grant = oauth_device_grant_fixture(application)
+
+      {:ok, _} = OAuth.link_device_grant_to_user(device_grant, user.id)
+
+      linked_device_grant = Repo.get!(DeviceGrant, device_grant.id)
+
+      assert {:ok, ^linked_device_grant} =
+               OAuth.get_authorized_device_grant(linked_device_grant.device_code)
     end
   end
 
