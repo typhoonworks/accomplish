@@ -1,4 +1,5 @@
 use crate::api::endpoints::initiate_device_code;
+use crate::api::endpoints::exchange_device_code_for_token;
 use crate::api::client::ApiClient;
 use crate::api::errors::ApiError;
 use crate::services::callback_server;
@@ -26,8 +27,20 @@ pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<
             match rx.await {
                 Ok(code) => {
                     println!("Successfully received code: {}", code);
-                    // You can now exchange the code for an access token
-                    Ok(())
+                    match exchange_device_code_for_token(api_client, &code).await {
+                        Ok(token_response) => {
+                            println!("Access Token: {}", token_response.access_token);
+                            println!("Token Type: {}", token_response.token_type);
+                            println!("Expires In: {}", token_response.expires_in);
+                            println!("Refresh Token: {}", token_response.refresh_token);
+                            println!("Scope: {}", token_response.scope);
+                            Ok(())
+                        }
+                        Err(err) => {
+                            eprintln!("Error exchanging device code for token: {}", err);
+                            Err("Failed to exchange device code for token.".into())
+                        }
+                    }
                 }
                 Err(_) => {
                     eprintln!("Failed to receive authorization code.");

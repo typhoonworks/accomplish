@@ -29,3 +29,29 @@ pub async fn initiate_device_code(
 
   Ok(device_code_response)
 }
+
+#[derive(Deserialize, Debug)]
+pub struct TokenResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: u64,
+    pub refresh_token: String,
+    pub scope: String,
+}
+
+pub async fn exchange_device_code_for_token(
+  api_client: &ApiClient,
+  device_code: &str,
+) -> Result<TokenResponse, ApiError> {
+  let body = json!({
+      "device_code": device_code
+  });
+
+  let response = api_client.post("auth/device/token", body).await?;
+  let token_response: TokenResponse = response
+      .json()
+      .await
+      .map_err(|e| ApiError::DecodeError(e.to_string()))?;
+
+  Ok(token_response)
+}
