@@ -168,4 +168,87 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
                "This device has already been linked"
     end
   end
+
+  describe "POST /token" do
+    setup do
+      application = oauth_application_fixture()
+      user = user_fixture()
+      %{application: application, user: user}
+    end
+
+    test "successfully issues an access token", %{
+      conn: conn,
+      application: application,
+      user: user
+    } do
+      {:ok, device_grant} =
+        oauth_device_grant_fixture(application, ["user:read", "user:write"])
+        |> OAuth.link_device_grant_to_user(user.id)
+
+      conn =
+        post(conn, ~p"/auth/device/token", %{
+          "device_code" => device_grant.device_code
+        })
+
+      assert %{
+               "access_token" => access_token,
+               "token_type" => "Bearer",
+               "expires_in" => expires_in,
+               "refresh_token" => refresh_token,
+               "scope" => "user:read,user:write"
+             } = json_response(conn, 200)
+
+      access_token_record = OAuth.get_access_token_by_token(access_token)
+
+      assert access_token_record
+      assert access_token_record.application_id == application.id
+      assert access_token_record.user_id == user.id
+      assert access_token_record.scopes == ["user:read", "user:write"]
+      assert access_token_record.refresh_token == refresh_token
+      assert access_token_record.expires_in == expires_in
+    end
+
+    test "returns unauthorized for an unauthorized device grant", %{
+      conn: conn,
+      application: application
+    } do
+      device_grant = oauth_device_grant_fixture(application, ["user:read", "user:write"])
+
+      conn =
+        post(conn, ~p"/auth/device/token", %{
+          "device_code" => device_grant.device_code
+        })
+
+      assert response(conn, 401)
+      assert json_response(conn, 401) == %{"error" => "authorization_pending"}
+    end
+
+    test "returns bad request for an expired device grant", %{
+      conn: conn,
+      application: application
+    } do
+      device_grant =
+        oauth_device_grant_fixture(application, ["user:read", "user:write"])
+        |> Ecto.Changeset.change(inserted_at: DateTime.add(DateTime.utc_now(), -601))
+        |> Repo.update!()
+
+      conn =
+        post(conn, ~p"/auth/device/token", %{
+          "device_code" => device_grant.device_code
+        })
+
+      assert response(conn, 400)
+      assert json_response(conn, 400) == %{"error" => "expired_token"}
+    end
+
+    test "returns bad request for an invalid device_code", %{conn: conn} do
+      conn =
+        post(conn, ~p"/auth/device/token", %{
+          "device_code" => "invalid-code"
+        })
+
+      assert response(conn, 400)
+      assert json_response(conn, 400) == %{"error" => "not_found"}
+    end
+  end
 end
