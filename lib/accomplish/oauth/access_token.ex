@@ -1,6 +1,6 @@
-defmodule Accomplish.OAuth.AccessGrant do
+defmodule Accomplish.OAuth.AccessToken do
   @moduledoc """
-  Schema for OAuth Access Grants, used for authorization flows.
+  Schema for OAuth Access Tokens.
   """
 
   use Accomplish.Schema
@@ -10,15 +10,16 @@ defmodule Accomplish.OAuth.AccessGrant do
   alias Accomplish.OAuth.Token
   alias Accomplish.Scopes
 
-  @permitted ~w(token expires_in redirect_uri scopes revoked_at user_id application_id)a
-  @required ~w(token expires_in redirect_uri scopes user_id application_id)a
+  @permitted ~w(token refresh_token expires_in scopes revoked_at previous_refresh_token user_id application_id)a
+  @required ~w(token expires_in application_id)a
 
-  schema "oauth_access_grants" do
+  schema "oauth_access_tokens" do
     field :token, :string
+    field :refresh_token, :string
     field :expires_in, :integer
-    field :redirect_uri, :string
     field :scopes, {:array, :string}, default: []
     field :revoked_at, :utc_datetime
+    field :previous_refresh_token, :string, default: ""
 
     belongs_to :user, User
     belongs_to :application, Application
@@ -27,22 +28,22 @@ defmodule Accomplish.OAuth.AccessGrant do
   end
 
   @doc false
-  def changeset(access_grant, attrs) do
-    access_grant
+  def changeset(access_token, attrs) do
+    access_token
     |> cast(attrs, @permitted)
     |> validate_required(@required)
     |> validate_length(:token, min: 32)
     |> validate_expiration()
-    |> Validators.validate_url(:redirect_uri)
     |> Scopes.validate_scopes(:scopes)
     |> unique_constraint(:token)
+    |> unique_constraint(:refresh_token)
     |> assoc_constraint(:user)
     |> assoc_constraint(:application)
   end
 
   @doc false
-  def revoke_changeset(application, attrs) do
-    application
+  def revoke_changeset(access_token, attrs) do
+    access_token
     |> cast(attrs, [:revoked_at])
     |> validate_required([:revoked_at])
     |> case do
@@ -53,7 +54,12 @@ defmodule Accomplish.OAuth.AccessGrant do
 
   @doc false
   def generate_token do
-    Token.generate(32)
+    Token.generate()
+  end
+
+  @doc false
+  def generate_refresh_token do
+    Token.generate_refresh_token()
   end
 
   defp validate_expiration(changeset) do

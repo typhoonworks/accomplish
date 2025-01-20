@@ -5,7 +5,7 @@ defmodule Accomplish.OAuth do
 
   import Ecto.Query, warn: false
   alias Accomplish.Repo
-  alias Accomplish.OAuth.{Application, AccessGrant, Identity}
+  alias Accomplish.OAuth.{Application, AccessGrant, AccessToken, Identity}
 
   @doc """
   Returns a list of OAuth applications.
@@ -170,6 +170,48 @@ defmodule Accomplish.OAuth do
   def revoke_access_grant(%AccessGrant{} = access_grant) do
     access_grant
     |> AccessGrant.revoke_changeset(%{revoked_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns all access tokens for a user.
+  """
+  def list_access_tokens(user) do
+    Repo.all(from t in AccessToken, where: t.user_id == ^user.id)
+  end
+
+  @doc """
+  Finds an access token by its token value.
+  """
+  def get_access_token_by_token(token) do
+    Repo.get_by(AccessToken, token: token)
+  end
+
+  @doc """
+  Creates an OAuth access token.
+  """
+  def create_access_token(user, application, attrs) do
+    attrs =
+      attrs
+      |> Map.put_new(:token, AccessToken.generate_token())
+      |> Map.put_new(:refresh_token, AccessToken.generate_refresh_token())
+      |> Map.put(:application_id, application.id)
+      |> maybe_put_user(user)
+
+    %AccessToken{}
+    |> AccessToken.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  defp maybe_put_user(attrs, nil), do: attrs
+  defp maybe_put_user(attrs, user), do: Map.put(attrs, :user_id, user.id)
+
+  @doc """
+  Revokes an access token by setting its `revoked_at` field.
+  """
+  def revoke_access_token(%AccessToken{} = access_token) do
+    access_token
+    |> AccessToken.revoke_changeset(%{revoked_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
