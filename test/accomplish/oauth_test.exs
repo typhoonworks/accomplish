@@ -215,7 +215,9 @@ defmodule Accomplish.OAuthTest do
       %{application: application}
     end
 
-    test "create_device_grant/2 creates a device grant with valid data", %{application: application} do
+    test "create_device_grant/2 creates a device grant with valid data", %{
+      application: application
+    } do
       attrs =
         DeviceGrant.generate_tokens()
         |> Map.put_new(:expires_in, 3600)
@@ -229,7 +231,9 @@ defmodule Accomplish.OAuthTest do
       assert device_grant.application_id == application.id
     end
 
-    test "create_device_grant/2 with invalid data returns error changeset", %{application: application} do
+    test "create_device_grant/2 with invalid data returns error changeset", %{
+      application: application
+    } do
       invalid_attrs = %{
         device_code: "invalid-code",
         user_code: "invalid-code",
@@ -240,7 +244,9 @@ defmodule Accomplish.OAuthTest do
                OAuth.create_device_grant(application, invalid_attrs)
     end
 
-    test "get_device_grant_by_code/1 returns the device grant by code", %{application: application} do
+    test "get_device_grant_by_code/1 returns the device grant by code", %{
+      application: application
+    } do
       device_grant = oauth_device_grant_fixture(application)
       assert OAuth.get_device_grant_by_code(device_grant.device_code) == device_grant
     end
@@ -261,7 +267,9 @@ defmodule Accomplish.OAuthTest do
       assert updated_device_grant.last_polling_at != nil
     end
 
-    test "update_device_grant/2 with invalid data returns error changeset", %{application: application} do
+    test "update_device_grant/2 with invalid data returns error changeset", %{
+      application: application
+    } do
       device_grant = oauth_device_grant_fixture(application)
 
       invalid_attrs = %{last_polling_at: "invalid-timestamp"}
@@ -280,22 +288,23 @@ defmodule Accomplish.OAuthTest do
       assert revoked_device_grant.expires_in == 0
     end
 
-   test "revoke_device_grant/1 does not revoke an already revoked grant", %{application: application} do
-     device_grant = oauth_device_grant_fixture(application)
+    test "revoke_device_grant/1 does not revoke an already revoked grant", %{
+      application: application
+    } do
+      device_grant = oauth_device_grant_fixture(application)
 
-     # Revoke the grant
-     assert {:ok, %DeviceGrant{} = already_revoked} =
-              OAuth.revoke_device_grant(device_grant)
+      # Revoke the grant
+      assert {:ok, %DeviceGrant{} = already_revoked} =
+               OAuth.revoke_device_grant(device_grant)
 
-     # Attempt to revoke again
-     assert {:ok, %DeviceGrant{} = revoked_device_grant} =
-              OAuth.revoke_device_grant(already_revoked)
+      # Attempt to revoke again
+      assert {:ok, %DeviceGrant{} = revoked_device_grant} =
+               OAuth.revoke_device_grant(already_revoked)
 
-     # Compare truncated timestamps
-     assert DateTime.truncate(already_revoked.revoked_at, :second) ==
-            DateTime.truncate(revoked_device_grant.revoked_at, :second)
-   end
-
+      # Compare truncated timestamps
+      assert DateTime.truncate(already_revoked.revoked_at, :second) ==
+               DateTime.truncate(revoked_device_grant.revoked_at, :second)
+    end
   end
 
   describe "oauth_identities" do

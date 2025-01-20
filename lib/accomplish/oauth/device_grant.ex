@@ -56,7 +56,6 @@ defmodule Accomplish.OAuth.DeviceGrant do
     end)
   end
 
-
   defp validate_token_lengths(changeset) do
     changeset
     |> validate_length(:device_code, min: 32)
