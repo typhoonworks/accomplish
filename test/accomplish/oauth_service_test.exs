@@ -1,5 +1,5 @@
 defmodule Accomplish.Accounts.OAuthServiceTest do
-  use Accomplish.DataCase, async: true
+  use Accomplish.DataCase
 
   alias Accomplish.Accounts.OAuthService
   alias Accomplish.OAuth
