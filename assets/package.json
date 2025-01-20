@@ -9,6 +9,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "phoenix_live_view": "^1.0.2",
     "topbar": "^3.0.0"
   }
 }

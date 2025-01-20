@@ -65,8 +65,6 @@ defmodule AccomplishWeb.Router do
       get "/:provider", OAuthController, :request
       get "/:provider/callback", OAuthController, :callback
       post "/:provider/callback", OAuthController, :callback
-
-      post "/device/code", OAuthDeviceGrantController, :create_device_code
     end
   end
 
@@ -95,6 +93,12 @@ defmodule AccomplishWeb.Router do
     post "/users/confirm", UserConfirmationController, :create
     get "/users/confirm/:token", UserConfirmationController, :edit
     post "/users/confirm/:token", UserConfirmationController, :update
+  end
+
+  scope "/", AccomplishWeb do
+    pipe_through [:api]
+
+    post "/auth/device/code", OAuthDeviceGrantController, :create_device_code
   end
 
   scope "/api" do

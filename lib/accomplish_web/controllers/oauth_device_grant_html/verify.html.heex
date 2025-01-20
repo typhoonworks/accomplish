@@ -1,0 +1,55 @@
+<div class="mx-auto max-w-sm">
+  <.header class="text-center">
+    Device Verification
+    <:subtitle>
+      Enter the user code below to link your device.
+    </:subtitle>
+  </.header>
+
+  <div id="code-input-container" phx-hook="CodeInput">
+    <.form
+      :let={f}
+      for={@changeset}
+      action={~p"/auth/device/verify"}
+      method="post"
+      phx-submit="verify_user_code"
+      id="device_verification_form"
+      class="mt-10 space-y-6"
+    >
+      <.form_item>
+        <div
+          id="user_code_input"
+          class="flex gap-2 justify-center"
+          role="group"
+          aria-labelledby="user-code-input-label"
+        >
+          <label id="user-code-input-label" class="sr-only">Enter your user code</label>
+          <%= for index <- 0..5 do %>
+            <input
+              id={"user_code_#{index}"}
+              type="text"
+              maxlength="1"
+              class="uppercase w-12 h-14 text-center border rounded-lg text-xl font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+              data-index={index}
+              aria-label={"User code digit #{index + 1}"}
+              value={String.at(Phoenix.HTML.Form.input_value(f, :user_code) || "", index) || ""}
+            />
+          <% end %>
+          <input
+            type="hidden"
+            name="user_code"
+            id="hidden_user_code"
+            value={Phoenix.HTML.Form.input_value(f, :user_code) || ""}
+          />
+        </div>
+        <p id="error-message" class="hidden mt-2 text-sm text-red-500" aria-live="polite">
+          Invalid code. Please try again.
+        </p>
+      </.form_item>
+
+      <.button phx-disable-with="Verifying..." class="w-full">
+        Verify
+      </.button>
+    </.form>
+  </div>
+</div>

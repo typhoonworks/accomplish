@@ -234,7 +234,7 @@ defmodule Accomplish.OAuthTest do
                OAuth.create_device_grant(application, scopes)
 
       assert String.length(device_grant.device_code) == 32
-      assert String.length(device_grant.user_code) == 8
+      assert String.length(device_grant.user_code) == 6
       assert device_grant.expires_in == 600
       assert device_grant.scopes == scopes
       assert device_grant.application_id == application.id

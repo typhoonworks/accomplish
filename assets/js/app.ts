@@ -22,8 +22,13 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "topbar"
 import sendTimezoneToServer from "./utils/timezone";
+import CodeInput from "./hooks/code_input"
 
 sendTimezoneToServer();
+
+const hooks = {
+  CodeInput
+};
 
 let csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -31,7 +36,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: {
     _csrf_token: csrfToken,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  }
+  },
+  hooks
 });
 
 interface PhxJsExecDetail {

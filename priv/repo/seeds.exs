@@ -17,12 +17,24 @@ IO.puts("Cleaning up the database...")
 
 tables = [
   "api_keys",
-  "users"
+  "users",
+  "oauth_applications"
 ]
 
 for table <- tables do
   Repo.query!("TRUNCATE TABLE #{table} CASCADE")
 end
+
+IO.puts("Creating OAuth application...")
+
+attrs = %{
+  name: "Accomplish CLI",
+  redirect_uri: "http://localhost:4000",
+  confidential: true,
+  scopes: ["user:read", "user:write"]
+}
+
+{:ok, app} = Accomplish.OAuth.create_application(attrs)
 
 IO.puts("Creating initial user...")
 
@@ -46,6 +58,25 @@ if Mix.env() == :dev do
 
   {:ok, api_key} =
     Accounts.create_api_key(user, %{name: "Development API Key", scopes: dev_api_scopes})
+
+  IO.puts("""
+  =====================================
+  OAuth Application for Development:
+  Client ID: #{app.uid}
+  Sefret: #{app.secret}
+  =====================================
+
+    You can use the following curl command to trigger device auth flows
+
+    ```
+    curl -X POST http://localhost:4000/auth/device/code \
+    -H "Content-Type: application/json" \
+    -d '{
+      "client_id": "#{app.uid}",
+      "scope": "user:read,user:write"
+    }'
+    ```
+  """)
 
   IO.puts("""
   =====================================

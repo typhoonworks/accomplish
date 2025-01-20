@@ -2,11 +2,17 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
   @moduledoc """
   Handles the OAuth Device Authorization Grant for applications using this app as an OAuth provider.
 
-  ## Actions
+  This module supports the following actions:
 
-    * `create_device_code/2` - Issues a device code and user code for clients.
-    * Additional actions can include polling, revocation, or verification.
+  * `create_device_code/2` - Issues a `device_code` and `user_code` to enable a client to initiate the Device Authorization Flow.
+    - Response includes a `verification_uri` and `verification_uri_complete` for user redirection.
+    - Implements proper validation for `client_id` and `scope`.
 
+  * `verify_page/2` - Renders the page for the user to enter the `user_code` for device verification.
+    - Prepopulates the form if a `user_code` query parameter is provided.
+
+  * `verify_user_code/2` - Processes the submitted `user_code` and associates the `device_grant` with the authenticated user.
+    - Provides user feedback for invalid, expired, or already-linked device codes.
   """
 
   use AccomplishWeb, :controller
@@ -53,8 +59,13 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
   @doc """
   Renders the verification page for the user to enter the `user_code`.
   """
+  def verify_page(conn, %{"user_code" => user_code}) do
+    changeset = %{"user_code" => user_code}
+    render(conn, "verify.html", changeset: changeset)
+  end
+
   def verify_page(conn, _params) do
-    render(conn, "verify.html")
+    render(conn, "verify.html", changeset: %{})
   end
 
   @doc """
@@ -67,17 +78,17 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
          {:ok, _updated_device_grant} <- OAuth.link_device_grant_to_user(device_grant, user.id) do
       conn
       |> put_flash(:info, "Device successfully linked!")
-      |> redirect(to: "/dashboard")
+      |> redirect(to: "/")
     else
       {:error, :device_grant_not_found} ->
         conn
         |> put_flash(:error, "Invalid or expired user code.")
-        |> redirect(to: "/auth/device/verify")
+        |> redirect(to: ~p"/auth/device/verify")
 
       {:error, :already_linked} ->
         conn
         |> put_flash(:error, "This device has already been linked.")
-        |> redirect(to: "/auth/device/verify")
+        |> redirect(to: ~p"/auth/device/verify")
     end
   end
 end

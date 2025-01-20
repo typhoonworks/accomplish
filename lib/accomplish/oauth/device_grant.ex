@@ -70,7 +70,7 @@ defmodule Accomplish.OAuth.DeviceGrant do
   defp validate_token_lengths(changeset) do
     changeset
     |> validate_length(:device_code, min: 32)
-    |> validate_length(:user_code, min: 8)
+    |> validate_length(:user_code, min: 6)
   end
 
   defp validate_expiration(changeset) do
@@ -90,7 +90,7 @@ defmodule Accomplish.OAuth.DeviceGrant do
   @doc false
   def generate_tokens do
     device_code = Token.generate(32)
-    user_code = Token.generate_user_code()
+    user_code = Token.generate_user_code(6)
     {device_code, user_code}
   end
 end
