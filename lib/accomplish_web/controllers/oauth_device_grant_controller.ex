@@ -57,6 +57,12 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
     end
   end
 
+  def create_device_code(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> json(%{error: "invalid_request", message: "Missing client_id or scope"})
+  end
+
   @doc """
   Handles token issuance for the Device Grant flow.
 

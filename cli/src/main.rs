@@ -1,8 +1,10 @@
+mod api;
 mod commands;
 mod config;
 
 use clap::{Parser, Subcommand};
 use config::Config;
+use api::client::ApiClient;
 
 use commands::{login, logout, status};
 
@@ -28,12 +30,13 @@ enum Commands {
 
 #[tokio::main]
 async fn main() {
-    let cli = CLI::parse();
+    let cli = CLI::parse(); // Parse CLI commands using clap
     let config = Config::new(); // Initialize configuration
+    let api_client = ApiClient::new(config.api_base.clone()); // Create an API client
 
     match &cli.command {
         Commands::Login => {
-            if let Err(e) = login::execute(&config).await {
+            if let Err(e) = login::execute(&api_client, &config.client_id).await {
                 eprintln!("Error: {}", e);
             }
         }

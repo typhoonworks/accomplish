@@ -1,28 +1,35 @@
-use reqwest::Client;
+use crate::api::endpoints::initiate_device_code;
+use crate::api::client::ApiClient;
+use crate::api::errors::ApiError;
 use std::error::Error;
-use crate::config::Config;
 
-pub async fn execute(config: &Config) -> Result<(), Box<dyn Error>> {
-    let api_url = config.get_api_url("api/cli/auth/initiate");
-    let client = Client::new();
-
-    match client.post(&api_url).send().await {
+pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<dyn Error>> {
+    match initiate_device_code(api_client, client_id).await {
         Ok(response) => {
-            if response.status().is_success() {
-                let json: serde_json::Value = response.json().await.unwrap();
-                if let Some(verification_url) = json["verification_url"].as_str() {
-                    println!("Please authenticate by visiting: {}", verification_url);
-                } else {
-                    println!("Unexpected response: {}", json);
-                }
-            } else {
-                println!("Failed to initiate login: HTTP {}", response.status());
-            }
+            println!("Device Code: {}", response.device_code);
+            println!("User Code: {}", response.user_code);
+            println!("Please authenticate by visiting: {}", response.verification_uri);
+            Ok(())
         }
-        Err(err) => {
-            println!("Error occurred: {}", err);
+        Err(ApiError::BadRequest(msg)) => {
+            eprintln!("Bad Request: {}", msg);
+            Err(Box::new(ApiError::BadRequest(msg)))
+        }
+        Err(ApiError::Unauthorized(msg)) => {
+            eprintln!("Unauthorized: {}", msg);
+            Err(Box::new(ApiError::Unauthorized(msg)))
+        }
+        Err(ApiError::ServerError(msg)) => {
+            eprintln!("Server Error: {}", msg);
+            Err(Box::new(ApiError::ServerError(msg)))
+        }
+        Err(ApiError::DecodeError(msg)) => {
+            eprintln!("Error decoding response: {}", msg);
+            Err(Box::new(ApiError::DecodeError(msg)))
+        }
+        Err(e) => {
+            eprintln!("Unexpected Error: {}", e);
+            Err(Box::new(e))
         }
     }
-
-    Ok(())
 }
