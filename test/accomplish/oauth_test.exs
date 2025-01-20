@@ -2,7 +2,7 @@ defmodule Accomplish.OAuthTest do
   use Accomplish.DataCase
 
   alias Accomplish.OAuth
-  alias Accomplish.OAuth.{Application, AccessGrant, Identity}
+  alias Accomplish.OAuth.{Application, AccessGrant, AccessToken, DeviceGrant, Identity}
 
   describe "oauth_applications" do
     setup do
@@ -141,6 +141,161 @@ defmodule Accomplish.OAuthTest do
 
       refute is_nil(updated_access_grant.revoked_at)
     end
+  end
+
+  describe "oauth_access_tokens" do
+    setup do
+      application = oauth_application_fixture()
+      user = user_fixture()
+
+      %{application: application, user: user}
+    end
+
+    test "list_access_tokens/1 returns all tokens for a user", %{
+      application: application,
+      user: user
+    } do
+      token = oauth_access_token_fixture(user, application)
+      assert OAuth.list_access_tokens(user) == [token]
+    end
+
+    test "get_access_token_by_token/1 returns the token by its value", %{
+      application: application,
+      user: user
+    } do
+      token = oauth_access_token_fixture(user, application)
+      assert OAuth.get_access_token_by_token(token.token) == token
+    end
+
+    test "create_access_token/3 creates a token without a user", %{application: application} do
+      attrs = %{
+        scopes: ["read:user"],
+        expires_in: 3600
+      }
+
+      assert {:ok, %AccessToken{} = token} = OAuth.create_access_token(nil, application, attrs)
+
+      assert token.user_id == nil
+      assert token.application_id == application.id
+    end
+
+    test "create_access_token/3 creates a token with a user", %{
+      application: application,
+      user: user
+    } do
+      attrs = %{
+        scopes: ["read:user"],
+        expires_in: 3600
+      }
+
+      assert {:ok, %AccessToken{} = token} = OAuth.create_access_token(user, application, attrs)
+
+      assert token.user_id == user.id
+      assert token.application_id == application.id
+    end
+
+    test "create_access_token/3 with invalid data returns error changeset", %{
+      application: application,
+      user: user
+    } do
+      assert {:error, %Ecto.Changeset{}} =
+               OAuth.create_access_token(user, application, %{token: "short"})
+    end
+
+    test "revoke_access_token/1 revokes the token", %{application: application, user: user} do
+      token = oauth_access_token_fixture(user, application)
+      assert {:ok, %AccessToken{revoked_at: revoked_at}} = OAuth.revoke_access_token(token)
+      assert not is_nil(revoked_at)
+    end
+  end
+
+  describe "oauth_device_grants" do
+    setup do
+      application = oauth_application_fixture()
+      %{application: application}
+    end
+
+    test "create_device_grant/2 creates a device grant with valid data", %{application: application} do
+      attrs =
+        DeviceGrant.generate_tokens()
+        |> Map.put_new(:expires_in, 3600)
+
+      assert {:ok, %DeviceGrant{} = device_grant} =
+               OAuth.create_device_grant(application, attrs)
+
+      assert device_grant.device_code == attrs.device_code
+      assert device_grant.user_code == attrs.user_code
+      assert device_grant.expires_in == 3600
+      assert device_grant.application_id == application.id
+    end
+
+    test "create_device_grant/2 with invalid data returns error changeset", %{application: application} do
+      invalid_attrs = %{
+        device_code: "invalid-code",
+        user_code: "invalid-code",
+        expires_in: -1
+      }
+
+      assert {:error, %Ecto.Changeset{}} =
+               OAuth.create_device_grant(application, invalid_attrs)
+    end
+
+    test "get_device_grant_by_code/1 returns the device grant by code", %{application: application} do
+      device_grant = oauth_device_grant_fixture(application)
+      assert OAuth.get_device_grant_by_code(device_grant.device_code) == device_grant
+    end
+
+    test "get_device_grant_by_code/1 returns nil for an invalid code", %{application: application} do
+      oauth_device_grant_fixture(application)
+      assert OAuth.get_device_grant_by_code("invalid-code") == nil
+    end
+
+    test "update_device_grant/2 updates the device grant", %{application: application} do
+      device_grant = oauth_device_grant_fixture(application)
+
+      update_attrs = %{last_polling_at: DateTime.utc_now()}
+
+      assert {:ok, %DeviceGrant{} = updated_device_grant} =
+               OAuth.update_device_grant(device_grant, update_attrs)
+
+      assert updated_device_grant.last_polling_at != nil
+    end
+
+    test "update_device_grant/2 with invalid data returns error changeset", %{application: application} do
+      device_grant = oauth_device_grant_fixture(application)
+
+      invalid_attrs = %{last_polling_at: "invalid-timestamp"}
+
+      assert {:error, %Ecto.Changeset{}} =
+               OAuth.update_device_grant(device_grant, invalid_attrs)
+    end
+
+    test "revoke_device_grant/1 revokes the device grant", %{application: application} do
+      device_grant = oauth_device_grant_fixture(application)
+
+      assert {:ok, %DeviceGrant{} = revoked_device_grant} =
+               OAuth.revoke_device_grant(device_grant)
+
+      assert revoked_device_grant.revoked_at != nil
+      assert revoked_device_grant.expires_in == 0
+    end
+
+   test "revoke_device_grant/1 does not revoke an already revoked grant", %{application: application} do
+     device_grant = oauth_device_grant_fixture(application)
+
+     # Revoke the grant
+     assert {:ok, %DeviceGrant{} = already_revoked} =
+              OAuth.revoke_device_grant(device_grant)
+
+     # Attempt to revoke again
+     assert {:ok, %DeviceGrant{} = revoked_device_grant} =
+              OAuth.revoke_device_grant(already_revoked)
+
+     # Compare truncated timestamps
+     assert DateTime.truncate(already_revoked.revoked_at, :second) ==
+            DateTime.truncate(revoked_device_grant.revoked_at, :second)
+   end
+
   end
 
   describe "oauth_identities" do

@@ -39,6 +39,41 @@ defmodule Accomplish.OAuthFixtures do
   end
 
   @doc """
+  Generates an OAuth access token.
+  """
+  def oauth_access_token_fixture(user, application, attrs \\ %{}) do
+    attrs =
+      Enum.into(attrs, %{
+        token: Accomplish.OAuth.AccessToken.generate_token(),
+        refresh_token: Accomplish.OAuth.AccessToken.generate_refresh_token(),
+        expires_in: 3600,
+        scopes: ["read:user", "write:user"]
+      })
+
+    {:ok, access_token} = Accomplish.OAuth.create_access_token(user, application, attrs)
+    access_token
+  end
+
+  @doc """
+  Generates an OAuth device grant.
+  """
+  def oauth_device_grant_fixture(application, attrs \\ %{}) do
+    %{device_code: device_code, user_code: user_code} =
+      Accomplish.OAuth.DeviceGrant.generate_tokens()
+
+    attrs =
+      Enum.into(attrs, %{
+        device_code: device_code,
+        user_code: user_code,
+        expires_in: 3600,
+        last_polling_at: nil
+      })
+
+    {:ok, device_grant} = Accomplish.OAuth.create_device_grant(application, attrs)
+    device_grant
+  end
+
+  @doc """
   Generate an OAuth identity.
   """
   def oauth_identity_fixture(attrs \\ %{}) do
