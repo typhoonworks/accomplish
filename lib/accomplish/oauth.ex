@@ -41,7 +41,7 @@ defmodule Accomplish.OAuth do
   ## Examples
 
       iex> get_application!("01948340-f09f-7c01-95cf-abbc9bc67ce3")
-      %User{}
+      %Application{}
 
       iex> get_application!("01948341-403d-7b0d-be8e-701e751fb9a4")
       ** (Ecto.NoResultsError)
@@ -268,10 +268,11 @@ defmodule Accomplish.OAuth do
   @doc """
   Finds a device grant by `user_code`.
   """
-  def get_device_grant_by_user_code(user_code) do
+  def get_device_grant_by_user_code(user_code, preloads \\ []) do
     query =
       from dg in DeviceGrant,
-        where: dg.user_code == ^user_code and is_nil(dg.revoked_at)
+        where: dg.user_code == ^user_code and is_nil(dg.revoked_at),
+        preload: ^preloads
 
     case Repo.one(query) do
       nil -> {:error, :device_grant_not_found}

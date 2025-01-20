@@ -57,6 +57,12 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
     end
   end
 
+  def create_device_code(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> json(%{error: "invalid_request", message: "Missing client_id or scope"})
+  end
+
   @doc """
   Handles token issuance for the Device Grant flow.
 
@@ -113,11 +119,14 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
   def verify_user_code(conn, %{"user_code" => user_code}) do
     user = conn.assigns[:current_user]
 
-    with {:ok, device_grant} <- OAuth.get_device_grant_by_user_code(user_code),
+    with {:ok, device_grant} <- OAuth.get_device_grant_by_user_code(user_code, :application),
          {:ok, _updated_device_grant} <- OAuth.link_device_grant_to_user(device_grant, user.id) do
+      redirect_uri =
+        "#{device_grant.application.redirect_uri}?device_code=#{device_grant.device_code}" || "/"
+
       conn
       |> put_flash(:info, "Device successfully linked!")
-      |> redirect(to: "/")
+      |> redirect(external: redirect_uri)
     else
       {:error, :device_grant_not_found} ->
         conn

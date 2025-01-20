@@ -45,4 +45,8 @@ plausible-report.xml
 *.code-workspace
 .vscode
 
+# Secrets
 /config/.env.exs
+
+# Rust CLI build artifacts
+/cli/target/
