@@ -256,9 +256,14 @@ defmodule Accomplish.OAuth do
   @doc """
   Finds a device grant by `device_code`.
   """
-  def get_device_grant_by_device_code(device_code) do
-    Repo.get_by(DeviceGrant, device_code: device_code)
+  def get_device_grant_by_device_code(device_code, preloads \\ []) do
+    DeviceGrant
+    |> Repo.get_by(device_code: device_code)
+    |> maybe_preload(preloads)
   end
+
+  defp maybe_preload(nil, _preloads), do: nil
+  defp maybe_preload(device_grant, preloads), do: Repo.preload(device_grant, preloads)
 
   @doc """
   Finds a device grant by `user_code`.
@@ -298,7 +303,7 @@ defmodule Accomplish.OAuth do
     - `{:error, :revoked}` if the grant has been revoked.
   """
   def get_authorized_device_grant(device_code) do
-    case get_device_grant_by_device_code(device_code) do
+    case get_device_grant_by_device_code(device_code, [:application, :user]) do
       nil ->
         {:error, :not_found}
 

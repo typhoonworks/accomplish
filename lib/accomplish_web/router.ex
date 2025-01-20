@@ -98,7 +98,10 @@ defmodule AccomplishWeb.Router do
   scope "/", AccomplishWeb do
     pipe_through [:api]
 
-    post "/auth/device/code", OAuthDeviceGrantController, :create_device_code
+    scope "/auth/device" do
+      post "/code", OAuthDeviceGrantController, :create_device_code
+      post "/token", OAuthDeviceGrantController, :token
+    end
   end
 
   scope "/api" do

@@ -455,7 +455,9 @@ defmodule Accomplish.OAuthTest do
 
       {:ok, _} = OAuth.link_device_grant_to_user(device_grant, user.id)
 
-      linked_device_grant = Repo.get!(DeviceGrant, device_grant.id)
+      linked_device_grant =
+        Repo.get!(DeviceGrant, device_grant.id)
+        |> Repo.preload([:user, :application])
 
       assert {:ok, ^linked_device_grant} =
                OAuth.get_authorized_device_grant(linked_device_grant.device_code)

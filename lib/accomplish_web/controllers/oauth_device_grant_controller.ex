@@ -19,7 +19,8 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
 
   alias Accomplish.OAuth
 
-  @polling_interval_in_seconds 5
+  @polling_interval_seconds 5
+  @ttl_one_hour 3600
 
   @doc """
   Issues a `device_code` and `user_code` for a client to initiate the Device Authorization Flow.
@@ -36,7 +37,7 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
         verification_uri: base_verification_uri,
         verification_uri_complete: "#{base_verification_uri}?user_code=#{device_grant.user_code}",
         expires_in: device_grant.expires_in,
-        interval: @polling_interval_in_seconds
+        interval: @polling_interval_seconds
       })
     else
       {:error, :application_not_found} ->
@@ -53,6 +54,44 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
         conn
         |> put_status(:bad_request)
         |> json(%{error: "invalid_request", details: formatted_errors})
+    end
+  end
+
+  @doc """
+  Handles token issuance for the Device Grant flow.
+
+  Expects:
+    - `device_code`: The code issued to the client device.
+  """
+  def token(conn, %{"device_code" => device_code}) do
+    with {:ok, device_grant} <- OAuth.get_authorized_device_grant(device_code),
+         {:ok, access_token} <-
+           OAuth.create_access_token(device_grant.user, device_grant.application, %{
+             scopes: device_grant.scopes,
+             expires_in: @ttl_one_hour
+           }) do
+      json(conn, %{
+        access_token: access_token.token,
+        token_type: "Bearer",
+        expires_in: access_token.expires_in,
+        refresh_token: access_token.refresh_token,
+        scope: Enum.join(access_token.scopes, ",")
+      })
+    else
+      {:error, :unauthorized} ->
+        conn
+        |> put_status(:unauthorized)
+        |> json(%{error: "authorization_pending"})
+
+      {:error, :expired} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "expired_token"})
+
+      {:error, reason} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: to_string(reason)})
     end
   end
 
