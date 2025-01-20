@@ -13,7 +13,7 @@ defmodule Accomplish.Accounts.OAuthServiceTest do
     token: %{
       "access_token" => "abcd1234",
       "refresh_token" => "refresh1234",
-      "scope" => "read:user,user:email"
+      "scope" => "user:read,user:email"
     }
   }
 

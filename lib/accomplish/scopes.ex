@@ -6,10 +6,10 @@ defmodule Accomplish.Scopes do
   import Ecto.Changeset
 
   @scopes ~w(
-    read:user
-    write:user
-    read:repository
-    write:repository
+    user:read
+    user:write
+    repository:read
+    repository:write
   )
 
   @doc """

@@ -8,10 +8,11 @@ defmodule Accomplish.OAuth.DeviceGrant do
   alias Accomplish.Accounts.User
   alias Accomplish.OAuth.Application
   alias Accomplish.OAuth.Token
+  alias Accomplish.Scopes
 
-  @permitted ~w(device_code user_code expires_in last_polling_at user_id application_id)a
+  @permitted ~w(device_code user_code expires_in scopes last_polling_at user_id application_id)a
   @permitted_update_attrs ~w(last_polling_at expires_in)a
-  @required ~w(device_code user_code expires_in application_id)a
+  @required ~w(device_code user_code expires_in scopes application_id)a
 
   schema "oauth_device_grants" do
     field :device_code, :string
@@ -19,6 +20,7 @@ defmodule Accomplish.OAuth.DeviceGrant do
     field :expires_in, :integer
     field :last_polling_at, :utc_datetime_usec
     field :revoked_at, :utc_datetime_usec
+    field :scopes, {:array, :string}, default: []
 
     belongs_to :user, User
     belongs_to :application, Application
@@ -33,6 +35,7 @@ defmodule Accomplish.OAuth.DeviceGrant do
     |> validate_required(@required)
     |> validate_token_lengths()
     |> validate_expiration()
+    |> Scopes.validate_scopes(:scopes)
     |> unique_constraint(:device_code)
     |> unique_constraint(:user_code)
     |> assoc_constraint(:application)
@@ -56,10 +59,18 @@ defmodule Accomplish.OAuth.DeviceGrant do
     end)
   end
 
+  @doc false
+  def link_changeset(device_grant, attrs) do
+    device_grant
+    |> cast(attrs, [:user_id])
+    |> validate_required([:user_id])
+    |> assoc_constraint(:user)
+  end
+
   defp validate_token_lengths(changeset) do
     changeset
     |> validate_length(:device_code, min: 32)
-    |> validate_length(:user_code, min: 8)
+    |> validate_length(:user_code, min: 6)
   end
 
   defp validate_expiration(changeset) do
@@ -77,10 +88,9 @@ defmodule Accomplish.OAuth.DeviceGrant do
   end
 
   @doc false
-  def generate_tokens(attrs \\ %{}) do
-    Map.merge(attrs, %{
-      device_code: Token.generate(32),
-      user_code: Token.generate(8)
-    })
+  def generate_tokens do
+    device_code = Token.generate(32)
+    user_code = Token.generate_user_code(6)
+    {device_code, user_code}
   end
 end

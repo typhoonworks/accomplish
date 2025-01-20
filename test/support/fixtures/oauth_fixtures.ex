@@ -4,6 +4,8 @@ defmodule Accomplish.OAuthFixtures do
   entities via the `Accomplish.OAuth` context.
   """
 
+  @valid_scopes ["user:read", "user:write"]
+
   @doc """
   Generate an OAuth application.
   """
@@ -13,7 +15,7 @@ defmodule Accomplish.OAuthFixtures do
       |> Enum.into(%{
         name: "Default App",
         redirect_uri: "https://example.com/callback",
-        scopes: ["read:user"],
+        scopes: @valid_scopes,
         confidential: true
       })
       |> Accomplish.OAuth.create_application()
@@ -30,7 +32,7 @@ defmodule Accomplish.OAuthFixtures do
         token: Accomplish.OAuth.AccessGrant.generate_token(),
         expires_in: 3600,
         redirect_uri: "https://example.com/callback",
-        scopes: ["read:user", "write:user"]
+        scopes: @valid_scopes
       })
 
     {:ok, access_grant} = Accomplish.OAuth.create_access_grant(user, application, attrs)
@@ -47,7 +49,7 @@ defmodule Accomplish.OAuthFixtures do
         token: Accomplish.OAuth.AccessToken.generate_token(),
         refresh_token: Accomplish.OAuth.AccessToken.generate_refresh_token(),
         expires_in: 3600,
-        scopes: ["read:user", "write:user"]
+        scopes: @valid_scopes
       })
 
     {:ok, access_token} = Accomplish.OAuth.create_access_token(user, application, attrs)
@@ -57,19 +59,8 @@ defmodule Accomplish.OAuthFixtures do
   @doc """
   Generates an OAuth device grant.
   """
-  def oauth_device_grant_fixture(application, attrs \\ %{}) do
-    %{device_code: device_code, user_code: user_code} =
-      Accomplish.OAuth.DeviceGrant.generate_tokens()
-
-    attrs =
-      Enum.into(attrs, %{
-        device_code: device_code,
-        user_code: user_code,
-        expires_in: 3600,
-        last_polling_at: nil
-      })
-
-    {:ok, device_grant} = Accomplish.OAuth.create_device_grant(application, attrs)
+  def oauth_device_grant_fixture(application, scopes \\ @valid_scopes) do
+    {:ok, device_grant} = Accomplish.OAuth.create_device_grant(application, scopes)
     device_grant
   end
 
