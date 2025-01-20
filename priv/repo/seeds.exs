@@ -29,7 +29,7 @@ IO.puts("Creating OAuth application...")
 
 attrs = %{
   name: "Accomplish CLI",
-  redirect_uri: "http://localhost:4000",
+  redirect_uri: "http://127.0.0.1:8000/callback",
   confidential: true,
   scopes: ["user:read", "user:write"]
 }

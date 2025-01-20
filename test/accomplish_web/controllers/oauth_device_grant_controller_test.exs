@@ -128,13 +128,19 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
       assert redirected_to(conn) == ~p"/users/log_in"
     end
 
-    test "successfully links a device", %{conn: conn, device_grant: device_grant, user: user} do
+    test "successfully links a device", %{
+      conn: conn,
+      application: application,
+      device_grant: device_grant,
+      user: user
+    } do
       conn =
         conn
         |> log_in_user(user)
         |> post(~p"/auth/device/verify", %{"user_code" => device_grant.user_code})
 
-      assert redirected_to(conn) == "/"
+      assert redirected_to(conn) ==
+               "#{application.redirect_uri}?device_code=#{device_grant.device_code}"
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
                "Device successfully linked"

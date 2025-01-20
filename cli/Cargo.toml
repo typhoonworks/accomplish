@@ -1,9 +1,12 @@
 [package]
-name = "accomplish-cli"
+name = "accomplish"
 version = "0.1.0"
 edition = "2021"
+description = "Accomplish: A CLI tool for managing tasks and authentication in the Accomplish app."
+authors = ["Rui Freitas <rodloboz@heycom>"]
 
 [dependencies]
+axum = "0.6"
 clap = { version = "4.0", features = ["derive"] }
 dirs-next = "2.0"
 keyring = "1.0"
@@ -11,3 +14,5 @@ reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.0", features = ["full"] }
+tower-http = "0.4"
+webbrowser = "0.5"

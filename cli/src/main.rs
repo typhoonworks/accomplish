@@ -1,6 +1,7 @@
 mod api;
 mod commands;
 mod config;
+mod services;
 
 use clap::{Parser, Subcommand};
 use config::Config;
