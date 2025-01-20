@@ -1,15 +1,17 @@
 defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
   use AccomplishWeb.ConnCase, async: true
 
-  alias Accomplish.OAuthFixtures
+  import Accomplish.AccountsFixtures
+  import Accomplish.OAuthFixtures
   alias Accomplish.Repo
   alias Accomplish.OAuth.DeviceGrant
+  alias Accomplish.OAuth
 
   @valid_scope "user:read,user:write"
 
   describe "POST /auth/device/code" do
     setup do
-      application = OAuthFixtures.oauth_application_fixture()
+      application = oauth_application_fixture()
       %{application: application}
     end
 
@@ -84,6 +86,86 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
 
       # Ensure the device codes are unique
       assert device_code1 != device_code2
+    end
+  end
+
+  describe "GET /auth/device/verify" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "redirects if user is not logged in", %{conn: conn} do
+      conn = get(conn, ~p"/auth/device/verify")
+      assert redirected_to(conn) == ~p"/users/log_in"
+    end
+
+    test "renders the verification page without a user_code", %{conn: conn, user: user} do
+      conn = conn |> log_in_user(user) |> get(~p"/auth/device/verify")
+      assert html_response(conn, 200) =~ "Enter the user code below to link your device."
+    end
+
+    test "renders the verification page with a prepopulated user_code", %{conn: conn, user: user} do
+      user_code = "ABC123"
+
+      conn =
+        conn |> log_in_user(user) |> get(~p"/auth/device/verify", %{"user_code" => user_code})
+
+      assert html_response(conn, 200) =~ "Enter the user code below to link your device."
+      assert html_response(conn, 200) =~ "value=\"#{String.at(user_code, 0)}\""
+    end
+  end
+
+  describe "POST /auth/device/verify" do
+    setup do
+      application = oauth_application_fixture()
+      device_grant = oauth_device_grant_fixture(application, ["user:read", "user:write"])
+      user = user_fixture()
+      %{application: application, device_grant: device_grant, user: user}
+    end
+
+    test "redirects if user is not logged in", %{conn: conn} do
+      conn = get(conn, ~p"/auth/device/verify")
+      assert redirected_to(conn) == ~p"/users/log_in"
+    end
+
+    test "successfully links a device", %{conn: conn, device_grant: device_grant, user: user} do
+      conn =
+        conn
+        |> log_in_user(user)
+        |> post(~p"/auth/device/verify", %{"user_code" => device_grant.user_code})
+
+      assert redirected_to(conn) == "/"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+               "Device successfully linked"
+    end
+
+    test "shows an error for invalid or expired user_code", %{conn: conn, user: user} do
+      conn =
+        conn |> log_in_user(user) |> post(~p"/auth/device/verify", %{"user_code" => "INVALID"})
+
+      assert redirected_to(conn) == ~p"/auth/device/verify"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
+               "Invalid or expired user code"
+    end
+
+    test "shows an error for an already-linked device", %{
+      conn: conn,
+      device_grant: device_grant,
+      user: user
+    } do
+      {:ok, _} = OAuth.link_device_grant_to_user(device_grant, user.id)
+
+      conn =
+        conn
+        |> log_in_user(user)
+        |> post(~p"/auth/device/verify", %{"user_code" => device_grant.user_code})
+
+      assert redirected_to(conn) == ~p"/auth/device/verify"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
+               "This device has already been linked"
     end
   end
 end
