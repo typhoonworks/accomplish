@@ -90,7 +90,7 @@ defmodule Accomplish.OAuth.DeviceGrant do
   @doc false
   def generate_tokens do
     device_code = Token.generate(32)
-    secret = Token.generate(8)
-    {device_code, secret}
+    user_code = Token.generate_user_code()
+    {device_code, user_code}
   end
 end
