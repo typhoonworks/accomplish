@@ -5,8 +5,7 @@ defmodule Accomplish.OAuth do
 
   import Ecto.Query, warn: false
   alias Accomplish.Repo
-  alias Accomplish.OAuth.Application
-  alias Accomplish.OAuth.Identity
+  alias Accomplish.OAuth.{Application, AccessGrant, Identity}
 
   @doc """
   Returns a list of OAuth applications.
@@ -106,7 +105,76 @@ defmodule Accomplish.OAuth do
   end
 
   @doc """
-  Returns the list of oauth_identities for a given user.
+  Lists all access grants for a user.
+
+  ## Examples
+
+      iex> list_access_grants(user.id)
+      [%AccessGrant{}, ...]
+
+  """
+  def list_access_grants(user_id) do
+    Repo.all(from ag in AccessGrant, where: ag.user_id == ^user_id)
+  end
+
+  @doc """
+  Gets a single access grant by token.
+
+  ## Examples
+
+      iex> get_access_grant_by_token("some_token")
+      %AccessGrant{}
+
+      iex> get_access_grant_by_token("invalid_token")
+      nil
+  """
+  def get_access_grant_by_token(token) do
+    Repo.get_by(AccessGrant, token: token)
+  end
+
+  @doc """
+  Creates an access grant.
+
+  ## Examples
+
+      iex> create_access_grant(user, application, %{token: "some_token", ...})
+      {:ok, %AccessGrant{}}
+
+      iex> create_access_grant(user, application, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+  """
+  def create_access_grant(user, application, attrs) do
+    attrs =
+      attrs
+      |> Map.merge(%{
+        application_id: application.id,
+        user_id: user.id
+      })
+
+    %AccessGrant{}
+    |> AccessGrant.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Revokes an access grant.
+
+  ## Examples
+
+      iex> revoke_access_grant(access_grant)
+      {:ok, %AccessGrant{}}
+
+      iex> revoke_access_grant(access_grant)
+      {:error, %Ecto.Changeset{}}
+  """
+  def revoke_access_grant(%AccessGrant{} = access_grant) do
+    access_grant
+    |> AccessGrant.revoke_changeset(%{revoked_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns the list of oauth_identities for a user.
 
   ## Examples
 

@@ -1,5 +1,5 @@
 defmodule Accomplish.RepositoriesTest do
-  use Accomplish.DataCase, async: true
+  use Accomplish.DataCase
 
   alias Accomplish.Repositories
 

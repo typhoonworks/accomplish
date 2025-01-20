@@ -22,6 +22,23 @@ defmodule Accomplish.OAuthFixtures do
   end
 
   @doc """
+  Generates an OAuth access grant.
+  """
+  def oauth_access_grant_fixture(user, application, attrs \\ %{}) do
+    attrs =
+      Enum.into(attrs, %{
+        token: Accomplish.OAuth.AccessGrant.generate_token(),
+        expires_in: 3600,
+        redirect_uri: "https://example.com/callback",
+        scopes: ["read:user", "write:user"]
+      })
+
+    {:ok, access_grant} = Accomplish.OAuth.create_access_grant(user, application, attrs)
+
+    access_grant
+  end
+
+  @doc """
   Generate an OAuth identity.
   """
   def oauth_identity_fixture(attrs \\ %{}) do

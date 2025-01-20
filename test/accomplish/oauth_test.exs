@@ -2,8 +2,7 @@ defmodule Accomplish.OAuthTest do
   use Accomplish.DataCase
 
   alias Accomplish.OAuth
-  alias Accomplish.OAuth.Application
-  alias Accomplish.OAuth.Identity
+  alias Accomplish.OAuth.{Application, AccessGrant, Identity}
 
   describe "oauth_applications" do
     setup do
@@ -82,16 +81,69 @@ defmodule Accomplish.OAuthTest do
     end
   end
 
-  describe "oauth_identities" do
-    @invalid_attrs %{
-      uid: nil,
-      provider: nil,
-      access_token: nil,
-      refresh_token: nil,
-      expires_at: nil,
-      scopes: nil
-    }
+  describe "oauth_access_grants" do
+    setup do
+      application = oauth_application_fixture()
+      user = user_fixture()
 
+      %{application: application, user: user}
+    end
+
+    test "list_access_grants/1 returns all grants for a user", %{
+      application: application,
+      user: user
+    } do
+      access_grant = oauth_access_grant_fixture(user, application)
+
+      assert OAuth.list_access_grants(user.id) == [access_grant]
+    end
+
+    test "get_access_grant_by_token/1 returns the grant by token", %{
+      application: application,
+      user: user
+    } do
+      access_grant = oauth_access_grant_fixture(user, application)
+
+      assert OAuth.get_access_grant_by_token(access_grant.token) == access_grant
+    end
+
+    test "create_access_grant/1 with valid data creates a grant", %{
+      application: application,
+      user: user
+    } do
+      valid_attrs = %{
+        token: Accomplish.OAuth.AccessGrant.generate_token(),
+        expires_in: 3600,
+        redirect_uri: "https://example.com/callback",
+        scopes: ["read:user", "write:user"],
+        application_id: oauth_application_fixture().id
+      }
+
+      assert {:ok, %AccessGrant{}} = OAuth.create_access_grant(user, application, valid_attrs)
+    end
+
+    test "create_access_grant/1 with invalid data returns error changeset", %{
+      application: application,
+      user: user
+    } do
+      invalid_attrs = %{token: nil, expires_in: -1, redirect_uri: nil, scopes: nil}
+
+      assert {:error, %Ecto.Changeset{}} =
+               OAuth.create_access_grant(user, application, invalid_attrs)
+    end
+
+    test "revoke_access_grant/1 revokes the grant", %{application: application, user: user} do
+      access_grant = oauth_access_grant_fixture(user, application)
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      assert {:ok, %AccessGrant{revoked_at: ^now} = updated_access_grant} =
+               OAuth.revoke_access_grant(access_grant)
+
+      refute is_nil(updated_access_grant.revoked_at)
+    end
+  end
+
+  describe "oauth_identities" do
     test "list_identities/1 returns all oauth identities for a user" do
       user = user_fixture()
       oauth_identity = oauth_identity_fixture(%{user: user})
@@ -150,7 +202,16 @@ defmodule Accomplish.OAuthTest do
     end
 
     test "create_oauth_identity/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = OAuth.create_oauth_identity(@invalid_attrs)
+      invalid_attrs = %{
+        uid: nil,
+        provider: nil,
+        access_token: nil,
+        refresh_token: nil,
+        expires_at: nil,
+        scopes: nil
+      }
+
+      assert {:error, %Ecto.Changeset{}} = OAuth.create_oauth_identity(invalid_attrs)
     end
 
     test "update_oauth_identity/2 with valid data updates the oauth identity" do
@@ -177,8 +238,17 @@ defmodule Accomplish.OAuthTest do
     test "update_oauth_identity/2 with invalid data returns error changeset" do
       oauth_identity = oauth_identity_fixture()
 
+      invalid_attrs = %{
+        uid: nil,
+        provider: nil,
+        access_token: nil,
+        refresh_token: nil,
+        expires_at: nil,
+        scopes: nil
+      }
+
       assert {:error, %Ecto.Changeset{}} =
-               OAuth.update_oauth_identity(oauth_identity, @invalid_attrs)
+               OAuth.update_oauth_identity(oauth_identity, invalid_attrs)
 
       assert oauth_identity ==
                OAuth.get_oauth_identity(oauth_identity.provider, oauth_identity.uid)
