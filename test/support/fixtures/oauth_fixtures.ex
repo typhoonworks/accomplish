@@ -5,15 +5,24 @@ defmodule Accomplish.OAuthFixtures do
   """
 
   @doc """
+  Generate an OAuth application.
+  """
+  def oauth_application_fixture(attrs \\ %{}) do
+    {:ok, application} =
+      attrs
+      |> Enum.into(%{
+        name: "Default App",
+        redirect_uri: "https://example.com/callback",
+        scopes: ["read:user"],
+        confidential: true
+      })
+      |> Accomplish.OAuth.create_application()
+
+    application
+  end
+
+  @doc """
   Generate an OAuth identity.
-
-  ## Examples
-
-      iex> oauth_identity_fixture()
-      %Identity{}
-
-      iex> oauth_identity_fixture(%{provider: "github"})
-      %Identity{}
   """
   def oauth_identity_fixture(attrs \\ %{}) do
     {:ok, oauth_identity} =

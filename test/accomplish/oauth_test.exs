@@ -2,23 +2,101 @@ defmodule Accomplish.OAuthTest do
   use Accomplish.DataCase
 
   alias Accomplish.OAuth
+  alias Accomplish.OAuth.Application
   alias Accomplish.OAuth.Identity
 
-  @invalid_attrs %{
-    uid: nil,
-    provider: nil,
-    access_token: nil,
-    refresh_token: nil,
-    expires_at: nil,
-    scopes: nil
-  }
+  describe "oauth_applications" do
+    setup do
+      {:ok, application: oauth_application_fixture()}
+    end
+
+    test "list_applications/0 returns all applications", %{application: application} do
+      assert OAuth.list_applications() == [application]
+    end
+
+    test "get_application!/1 returns the specified application", %{application: application} do
+      assert OAuth.get_application!(application.id) == application
+    end
+
+    test "get_application!/1 raises error if the application does not exist" do
+      assert_raise Ecto.NoResultsError, fn ->
+        OAuth.get_application!(UUIDv7.generate())
+      end
+    end
+
+    test "create_application/1 with valid data creates an application" do
+      valid_attrs = %{
+        name: "My App",
+        redirect_uri: "https://example.com/callback",
+        scopes: ["read:user", "write:user"],
+        confidential: true
+      }
+
+      assert {:ok, %Application{} = application} = OAuth.create_application(valid_attrs)
+      assert application.name == "My App"
+      assert application.redirect_uri == "https://example.com/callback"
+      assert application.scopes == ["read:user", "write:user"]
+      assert application.confidential == true
+    end
+
+    test "create_application/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} =
+               OAuth.create_application(%{name: nil, redirect_uri: "invalid"})
+    end
+
+    test "update_application/2 updates an application with valid data", %{
+      application: application
+    } do
+      update_attrs = %{name: "Updated App", scopes: ["read:repository"]}
+
+      assert {:ok, %Application{} = updated_app} =
+               OAuth.update_application(application, update_attrs)
+
+      assert updated_app.name == "Updated App"
+      assert updated_app.scopes == ["read:repository"]
+    end
+
+    test "update_application/2 with invalid data returns error changeset", %{
+      application: application
+    } do
+      assert {:error, %Ecto.Changeset{}} =
+               OAuth.update_application(application, %{redirect_uri: "invalid"})
+
+      assert application == OAuth.get_application!(application.id)
+    end
+
+    test "delete_application/1 deletes an application", %{application: application} do
+      assert {:ok, %Application{}} = OAuth.delete_application(application)
+      assert_raise Ecto.NoResultsError, fn -> OAuth.get_application!(application.id) end
+    end
+
+    test "regenerate_application_secret/1 regenerates the application secret", %{
+      application: application
+    } do
+      original_secret = application.secret
+
+      assert {:ok, %Application{} = updated_application} =
+               OAuth.regenerate_application_secret(application)
+
+      assert updated_application.secret != original_secret
+    end
+  end
 
   describe "oauth_identities" do
-    test "list_oauth_identities/1 returns all oauth identities for a user" do
+    @invalid_attrs %{
+      uid: nil,
+      provider: nil,
+      access_token: nil,
+      refresh_token: nil,
+      expires_at: nil,
+      scopes: nil
+    }
+
+    test "list_identities/1 returns all oauth identities for a user" do
       user = user_fixture()
       oauth_identity = oauth_identity_fixture(%{user: user})
 
-      assert OAuth.list_oauth_identities(user) == [oauth_identity]
+      assert OAuth.list_identities(user) == [oauth_identity]
     end
 
     test "get_oauth_identity/2 returns the oauth identity by provider and UID" do

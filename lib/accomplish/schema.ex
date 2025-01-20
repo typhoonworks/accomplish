@@ -12,6 +12,7 @@ defmodule Accomplish.Schema do
       import Ecto.Changeset
 
       alias Ecto.Multi
+      alias Accomplish.Validators
     end
   end
 end

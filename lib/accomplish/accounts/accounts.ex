@@ -50,10 +50,10 @@ defmodule Accomplish.Accounts do
 
   ## Examples
 
-      iex> get_user!(123)
+      iex> get_user!("01948340-f09f-7c01-95cf-abbc9bc67ce3")
       %User{}
 
-      iex> get_user!(456)
+      iex> get_user!("01948341-403d-7b0d-be8e-701e751fb9a4")
       ** (Ecto.NoResultsError)
 
   """

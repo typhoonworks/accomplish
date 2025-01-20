@@ -15,7 +15,7 @@ defmodule Accomplish.OAuth.Identity do
     field :access_token, :string
     field :refresh_token, :string
     field :expires_at, :utc_datetime
-    field :scopes, {:array, :string}
+    field :scopes, {:array, :string}, default: []
 
     belongs_to :user, User
 
