@@ -1,11 +1,11 @@
-use crate::api::endpoints::initiate_device_code;
-use crate::api::endpoints::exchange_device_code_for_token;
 use crate::api::client::ApiClient;
+use crate::api::endpoints::exchange_device_code_for_token;
+use crate::api::endpoints::initiate_device_code;
 use crate::api::errors::ApiError;
 use crate::services::callback_server;
-use webbrowser;
 use std::error::Error;
 use tokio::sync::oneshot;
+use webbrowser;
 
 pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<dyn Error>> {
     let (tx, rx) = oneshot::channel();
@@ -17,10 +17,7 @@ pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<
 
     match initiate_device_code(api_client, client_id).await {
         Ok(response) => {
-            display_device_verification_message(
-                &response.verification_uri,
-                &response.user_code,
-            );
+            display_device_verification_message(&response.verification_uri, &response.user_code);
 
             open_browser(&response.verification_uri_complete).ok();
 
@@ -94,9 +91,8 @@ pub fn open_browser(url: &str) -> Result<(), String> {
     if webbrowser::open(url).is_ok() {
         Ok(())
     } else {
-        Err(format!("Failed to open the browser. Please open the URL manually: {url}"))
+        Err(format!(
+            "Failed to open the browser. Please open the URL manually: {url}"
+        ))
     }
 }
-
-
-

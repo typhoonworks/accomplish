@@ -3,16 +3,16 @@ mod commands;
 mod config;
 mod services;
 
+use api::client::ApiClient;
 use clap::{Parser, Subcommand};
 use config::Config;
-use api::client::ApiClient;
 
 use commands::{login, logout, status};
 
 #[derive(Parser)]
 #[command(name = "accomplish")]
 #[command(about = "Accomplish CLI for managing tasks", long_about = None)]
-struct CLI {
+struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
@@ -31,7 +31,7 @@ enum Commands {
 
 #[tokio::main]
 async fn main() {
-    let cli = CLI::parse(); // Parse CLI commands using clap
+    let cli = Cli::parse(); // Parse CLI commands using clap
     let config = Config::new(); // Initialize configuration
     let api_client = ApiClient::new(config.api_base.clone()); // Create an API client
 

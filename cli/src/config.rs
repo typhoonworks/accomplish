@@ -1,7 +1,6 @@
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use dirs_next;
 
 pub struct Config {
     pub api_base: String,
@@ -32,7 +31,10 @@ impl Config {
         let client_id = Self::load_from_file(&credentials_path, "client_id")
             .unwrap_or_else(|| "your_default_client_id".to_string());
 
-        Config { api_base, client_id }
+        Config {
+            api_base,
+            client_id,
+        }
     }
 
     fn load_from_file(path: &PathBuf, key: &str) -> Option<String> {

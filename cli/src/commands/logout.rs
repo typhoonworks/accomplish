@@ -1,4 +1,4 @@
 pub fn execute() {
-  println!("Logging out...");
-  // Add logout logic here
+    println!("Logging out...");
+    // Add logout logic here
 }
