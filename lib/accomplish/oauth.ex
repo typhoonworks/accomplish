@@ -261,6 +261,33 @@ defmodule Accomplish.OAuth do
   end
 
   @doc """
+  Finds a device grant by `user_code`.
+  """
+  def get_device_grant_by_user_code(user_code) do
+    query =
+      from dg in DeviceGrant,
+        where: dg.user_code == ^user_code and is_nil(dg.revoked_at)
+
+    case Repo.one(query) do
+      nil -> {:error, :device_grant_not_found}
+      device_grant -> {:ok, device_grant}
+    end
+  end
+
+  @doc """
+  Links a device grant to a user.
+  """
+  def link_device_grant_to_user(%DeviceGrant{} = device_grant, user_id) do
+    if device_grant.user_id do
+      {:error, :already_linked}
+    else
+      device_grant
+      |> DeviceGrant.link_changeset(%{user_id: user_id})
+      |> Repo.update()
+    end
+  end
+
+  @doc """
   Updates a device grant.
   """
   def update_device_grant(%DeviceGrant{} = device_grant, attrs) do

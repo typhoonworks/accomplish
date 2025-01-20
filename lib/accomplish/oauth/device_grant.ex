@@ -59,6 +59,14 @@ defmodule Accomplish.OAuth.DeviceGrant do
     end)
   end
 
+  @doc false
+  def link_changeset(device_grant, attrs) do
+    device_grant
+    |> cast(attrs, [:user_id])
+    |> validate_required([:user_id])
+    |> assoc_constraint(:user)
+  end
+
   defp validate_token_lengths(changeset) do
     changeset
     |> validate_length(:device_code, min: 32)

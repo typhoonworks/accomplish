@@ -73,6 +73,11 @@ defmodule AccomplishWeb.Router do
   scope "/", AccomplishWeb do
     pipe_through [:browser, :require_authenticated_user]
 
+    scope "/auth" do
+      get "/device/verify", OAuthDeviceGrantController, :verify_page
+      post "/device/verify", OAuthDeviceGrantController, :verify_user_code
+    end
+
     live_session :require_authenticated_user,
       on_mount: [{AccomplishWeb.Plugs.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit

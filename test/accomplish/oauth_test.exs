@@ -261,6 +261,60 @@ defmodule Accomplish.OAuthTest do
       assert OAuth.get_device_grant_by_code("invalid-code") == nil
     end
 
+    test "get_device_grant_by_user_code/1 returns the device grant for a valid user_code", %{
+      application: application
+    } do
+      device_grant = oauth_device_grant_fixture(application)
+      assert {:ok, fetched_grant} = OAuth.get_device_grant_by_user_code(device_grant.user_code)
+      assert fetched_grant.id == device_grant.id
+    end
+
+    test "get_device_grant_by_user_code/1 returns an error if the user_code does not exist", %{
+      application: application
+    } do
+      oauth_device_grant_fixture(application)
+
+      assert {:error, :device_grant_not_found} =
+               OAuth.get_device_grant_by_user_code("invalid_code")
+    end
+
+    test "get_device_grant_by_user_code/1 returns an error if the device grant is revoked", %{
+      application: application
+    } do
+      device_grant = oauth_device_grant_fixture(application)
+
+      {:ok, _} =
+        device_grant
+        |> DeviceGrant.revoke_changeset(%{revoked_at: DateTime.utc_now(), expires_in: 0})
+        |> Repo.update()
+
+      assert {:error, :device_grant_not_found} =
+               OAuth.get_device_grant_by_user_code(device_grant.user_code)
+    end
+
+    test "link_device_grant_to_user/2 successfully links a device grant to a user", %{
+      application: application
+    } do
+      user = user_fixture()
+      device_grant = oauth_device_grant_fixture(application)
+
+      assert {:ok, updated_grant} = OAuth.link_device_grant_to_user(device_grant, user.id)
+      assert updated_grant.user_id == user.id
+    end
+
+    test "link_device_grant_to_user/2 returns an error if the device grant is already linked to a user",
+         %{application: application} do
+      user = user_fixture()
+      device_grant = oauth_device_grant_fixture(application)
+
+      {:ok, _} = OAuth.link_device_grant_to_user(device_grant, user.id)
+
+      reloaded_device_grant = Repo.get!(DeviceGrant, device_grant.id)
+
+      assert {:error, :already_linked} =
+               OAuth.link_device_grant_to_user(reloaded_device_grant, user.id)
+    end
+
     test "update_device_grant/2 updates the device grant", %{application: application} do
       device_grant = oauth_device_grant_fixture(application)
 

@@ -24,7 +24,9 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
                "device_code" => device_code,
                "user_code" => user_code,
                "expires_in" => expires_in,
-               "interval" => 5
+               "interval" => 5,
+               "verification_uri" => verification_uri,
+               "verification_uri_complete" => verification_uri_complete
              } = json_response(conn, 200)
 
       device_grant = Repo.get_by(DeviceGrant, device_code: device_code)
@@ -32,6 +34,10 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
       assert device_grant.user_code == user_code
       assert device_grant.expires_in == expires_in
       assert device_grant.application_id == application.id
+
+      base_uri = AccomplishWeb.Endpoint.url() <> ~p"/auth/device/verify"
+      assert verification_uri == base_uri
+      assert verification_uri_complete == "#{base_uri}?user_code=#{user_code}"
     end
 
     test "returns unauthorized error for invalid client_id", %{conn: conn} do
