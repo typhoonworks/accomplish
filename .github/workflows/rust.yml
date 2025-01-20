@@ -11,6 +11,9 @@ jobs:
   test:
     name: cargo test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./cli
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,13 +24,14 @@ jobs:
           toolchain: stable
 
       - name: Run cargo test
-        run: |
-          cd cli
-          cargo test --all-features
+        run: cargo test --all-features
 
   formatting:
     name: cargo fmt
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./cli
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
