@@ -10,7 +10,7 @@ defmodule Accomplish.OAuth.AccessToken do
   alias Accomplish.OAuth.Token
   alias Accomplish.Scopes
 
-  @permitted ~w(token refresh_token expires_in scopes revoked_at previous_refresh_token user_id application_id)a
+  @permitted ~w(token refresh_token expires_in scopes previous_refresh_token user_id application_id)a
   @required ~w(token expires_in application_id)a
 
   schema "oauth_access_tokens" do
@@ -44,8 +44,11 @@ defmodule Accomplish.OAuth.AccessToken do
   @doc false
   def revoke_changeset(access_token, attrs) do
     access_token
-    |> cast(attrs, [:revoked_at])
-    |> validate_required([:revoked_at])
+    |> cast(attrs, [:revoked_at, :expires_in])
+    |> validate_required([:revoked_at, :expires_in])
+    |> validate_change(:expires_in, fn _, value ->
+      if value == 0, do: [], else: [{:expires_in, "must be set to 0 for revocation"}]
+    end)
     |> case do
       %{changes: %{revoked_at: _}} = changeset -> changeset
       %{} = changeset -> add_error(changeset, :revoked_at, "did not change")

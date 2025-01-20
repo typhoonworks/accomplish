@@ -10,7 +10,7 @@ defmodule Accomplish.OAuth.AccessGrant do
   alias Accomplish.OAuth.Token
   alias Accomplish.Scopes
 
-  @permitted ~w(token expires_in redirect_uri scopes revoked_at user_id application_id)a
+  @permitted ~w(token expires_in redirect_uri scopes user_id application_id)a
   @required ~w(token expires_in redirect_uri scopes user_id application_id)a
 
   schema "oauth_access_grants" do
@@ -41,10 +41,13 @@ defmodule Accomplish.OAuth.AccessGrant do
   end
 
   @doc false
-  def revoke_changeset(application, attrs) do
-    application
-    |> cast(attrs, [:revoked_at])
-    |> validate_required([:revoked_at])
+  def revoke_changeset(access_grant, attrs) do
+    access_grant
+    |> cast(attrs, [:revoked_at, :expires_in])
+    |> validate_required([:revoked_at, :expires_in])
+    |> validate_change(:expires_in, fn _, value ->
+      if value == 0, do: [], else: [{:expires_in, "must be set to 0 for revocation"}]
+    end)
     |> case do
       %{changes: %{revoked_at: _}} = changeset -> changeset
       %{} = changeset -> add_error(changeset, :revoked_at, "did not change")

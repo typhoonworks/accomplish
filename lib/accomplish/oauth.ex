@@ -5,7 +5,7 @@ defmodule Accomplish.OAuth do
 
   import Ecto.Query, warn: false
   alias Accomplish.Repo
-  alias Accomplish.OAuth.{Application, AccessGrant, AccessToken, Identity}
+  alias Accomplish.OAuth.{Application, AccessGrant, AccessToken, DeviceGrant, Identity}
 
   @doc """
   Returns a list of OAuth applications.
@@ -212,6 +212,44 @@ defmodule Accomplish.OAuth do
   def revoke_access_token(%AccessToken{} = access_token) do
     access_token
     |> AccessToken.revoke_changeset(%{revoked_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @doc """
+  Creates a new device grant.
+  """
+  def create_device_grant(application, attrs) do
+    attrs =
+      attrs
+      |> Map.put(:application_id, application.id)
+
+    %DeviceGrant{}
+    |> DeviceGrant.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Finds a device grant by `device_code`.
+  """
+  def get_device_grant_by_code(device_code) do
+    Repo.get_by(DeviceGrant, device_code: device_code)
+  end
+
+  @doc """
+  Updates a device grant.
+  """
+  def update_device_grant(%DeviceGrant{} = device_grant, attrs) do
+    device_grant
+    |> DeviceGrant.update_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Revokes a device grant by setting its `revoked_at` field
+  """
+  def revoke_device_grant(%DeviceGrant{} = device_grant) do
+    device_grant
+    |> DeviceGrant.revoke_changeset(%{revoked_at: DateTime.utc_now(), expires_in: 0})
     |> Repo.update()
   end
 
