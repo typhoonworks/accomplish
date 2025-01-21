@@ -5,9 +5,11 @@ defmodule Accomplish.OAuth.Application do
 
   alias Accomplish.Scopes
 
-  @permitted ~w(name uid secret redirect_uri scopes confidential)a
+  @permitted ~w(name uid secret redirect_uri scopes confidential token_ttl)a
   @permitted_update_attrs ~w(name scopes redirect_uri)a
   @required ~w(name uid secret redirect_uri)a
+
+  @ttl_one_hour 3600
 
   schema "oauth_applications" do
     field :name, :string
@@ -16,6 +18,7 @@ defmodule Accomplish.OAuth.Application do
     field :redirect_uri, :string
     field :scopes, {:array, :string}, default: []
     field :confidential, :boolean, default: true
+    field :token_ttl, :integer, default: @ttl_one_hour
 
     timestamps(type: :utc_datetime)
   end

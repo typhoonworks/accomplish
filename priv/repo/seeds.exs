@@ -31,7 +31,9 @@ attrs = %{
   name: "Accomplish CLI",
   redirect_uri: "http://127.0.0.1:8000/callback",
   confidential: true,
-  scopes: ["user:read", "user:write"]
+  scopes: ["user:read", "user:write"],
+  # 90 days
+  token_ttl: 90 * 24 * 60 * 60
 }
 
 {:ok, app} = Accomplish.OAuth.create_application(attrs)
@@ -63,7 +65,7 @@ if Mix.env() == :dev do
   =====================================
   OAuth Application for Development:
   Client ID: #{app.uid}
-  Sefret: #{app.secret}
+  Secret: #{app.secret}
   =====================================
 
     You can use the following curl command to trigger device auth flows

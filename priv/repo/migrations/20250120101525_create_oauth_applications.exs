@@ -13,14 +13,17 @@ defmodule Accomplish.Repo.Migrations.CreateOauthApplications do
       add :redirect_uri, :text, null: false
       add :scopes, {:array, :string}, default: []
       add :confidential, :boolean, null: false, default: true
+      add :token_ttl, :integer, null: false, default: 3600
 
       timestamps(type: :utc_datetime)
     end
 
     create unique_index(:oauth_applications, [:uid], concurrently: true)
+    create unique_index(:oauth_applications, [:name], concurrently: true)
   end
 
   def down do
+    drop_if_exists unique_index(:oauth_applications, [:name], concurrently: true)
     drop_if_exists unique_index(:oauth_applications, [:uid], concurrently: true)
     drop table(:oauth_applications)
   end
