@@ -13,11 +13,8 @@ pub async fn initiate_device_code(
         "scope": "user:read,user:write"
     });
 
-    let response = api_client.post("auth/device/code", body).await?;
-    let device_code_response: DeviceCodeResponse = response
-        .json()
-        .await
-        .map_err(|e| ApiError::DecodeError(e.to_string()))?;
+    let device_code_response: DeviceCodeResponse =
+        api_client.post("auth/device/code", body).await?;
 
     Ok(device_code_response)
 }
@@ -30,11 +27,7 @@ pub async fn exchange_device_code_for_token(
         "device_code": device_code
     });
 
-    let response = api_client.post("auth/device/token", body).await?;
-    let token_response: TokenResponse = response
-        .json()
-        .await
-        .map_err(|e| ApiError::DecodeError(e.to_string()))?;
+    let token_response: TokenResponse = api_client.post("auth/device/token", body).await?;
 
     Ok(token_response)
 }
@@ -56,11 +49,10 @@ mod tests {
             .with_status(200)
             .with_body(
                 r#"{
-                "device_code": "device_code_123",
-                "user_code": "user_code_456",
-                "verification_uri": "http://example.com",
-                "verification_uri_complete": "http://example.com?user_code=user_code_456"
-            }"#,
+               "user_code": "user_code_456",
+               "verification_uri": "http://example.com",
+               "verification_uri_complete": "http://example.com?user_code=user_code_456"
+           }"#,
             )
             .create();
 
@@ -70,13 +62,12 @@ mod tests {
 
         match result {
             Ok(device_code_response) => {
-                // assert_eq!(device_code_response.device_code, "device_code_123");
                 assert_eq!(device_code_response.user_code, "user_code_456");
                 assert_eq!(device_code_response.verification_uri, "http://example.com");
                 assert_eq!(
                     device_code_response.verification_uri_complete,
                     "http://example.com?user_code=user_code_456"
-                )
+                );
             }
             Err(e) => panic!("Expected Ok, but got Err: {:?}", e),
         }

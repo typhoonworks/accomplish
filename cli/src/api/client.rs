@@ -1,5 +1,6 @@
 use crate::api::errors::ApiError;
-use reqwest::{Client, Response};
+use reqwest::Client;
+use serde::de::DeserializeOwned;
 
 pub struct ApiClient {
     base_url: String,
@@ -10,18 +11,20 @@ impl ApiClient {
         ApiClient { base_url }
     }
 
-    pub async fn post(
-        &self,
-        endpoint: &str,
-        body: serde_json::Value,
-    ) -> Result<Response, ApiError> {
+    pub async fn post<T>(&self, endpoint: &str, body: serde_json::Value) -> Result<T, ApiError>
+    where
+        T: DeserializeOwned,
+    {
         let full_url = format!("{}/{}", self.base_url, endpoint);
         let client = Client::new();
 
         let response = client.post(&full_url).json(&body).send().await;
 
         match response {
-            Ok(resp) if resp.status().is_success() => Ok(resp),
+            Ok(resp) if resp.status().is_success() => resp
+                .json::<T>()
+                .await
+                .map_err(|e| ApiError::DecodeError(e.to_string())),
             Ok(resp) => match resp.status().as_u16() {
                 400 => {
                     let error_msg = resp
