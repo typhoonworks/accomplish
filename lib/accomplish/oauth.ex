@@ -234,6 +234,30 @@ defmodule Accomplish.OAuth do
   end
 
   @doc """
+  Checks is the access token is valid.
+  """
+  def validate_access_token(token) do
+    case get_access_token_by_token(token) do
+      nil ->
+        {:error, :invalid_token}
+
+      access_token ->
+        if access_token.revoked_at do
+          {:error, :token_revoked}
+        else
+          expiration_time = DateTime.add(access_token.inserted_at, access_token.expires_in)
+          current_time = DateTime.utc_now()
+
+          if DateTime.compare(current_time, expiration_time) == :gt do
+            {:error, :token_expired}
+          else
+            {:ok, access_token}
+          end
+        end
+    end
+  end
+
+  @doc """
   Creates a new device grant.
   """
   def create_device_grant(application, scopes) do
@@ -518,5 +542,31 @@ defmodule Accomplish.OAuth do
   """
   def change_oauth_identity(%Identity{} = oauth_identity, attrs \\ %{}) do
     Identity.changeset(oauth_identity, attrs)
+  end
+
+  @doc """
+  Checks if the API key has the required scope.
+
+  ## Examples
+
+      iex> valid_scope?(api_key, "repo:read")
+      true
+
+      iex> valid_scope?(api_key, "repo:write")
+      false
+
+  """
+  def valid_scope?(scopes, required_scope) do
+    Enum.any?(scopes, fn scope ->
+      matches_scope?(scope, required_scope) || matches_wildcard_scope?(scope, required_scope)
+    end)
+  end
+
+  defp matches_scope?(scope, required_scope) do
+    scope == required_scope
+  end
+
+  defp matches_wildcard_scope?(scope, required_scope) do
+    String.starts_with?(required_scope, String.trim_trailing(scope, "*"))
   end
 end

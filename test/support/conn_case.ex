@@ -31,6 +31,7 @@ defmodule AccomplishWeb.ConnCase do
 
       import Accomplish.AccountsFixtures
       import Accomplish.RepositoriesFixtures
+      import Accomplish.OAuthFixtures
     end
   end
 

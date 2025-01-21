@@ -219,6 +219,42 @@ defmodule Accomplish.OAuthTest do
     end
   end
 
+  describe "validate_access_token/1" do
+    setup do
+      application = oauth_application_fixture()
+      user = user_fixture()
+      access_token = oauth_access_token_fixture(user, application)
+
+      {:ok, access_token: access_token}
+    end
+
+    test "returns {:ok, access_token} for a valid token", %{access_token: access_token} do
+      assert {:ok, ^access_token} = OAuth.validate_access_token(access_token.token)
+    end
+
+    test "returns {:error, :invalid_token} for an invalid token" do
+      assert {:error, :invalid_token} = OAuth.validate_access_token("invalid-token")
+    end
+
+    test "returns {:error, :token_revoked} for a revoked token", %{access_token: access_token} do
+      revoked_token = OAuth.revoke_access_token(access_token) |> elem(1)
+
+      assert {:error, :token_revoked} = OAuth.validate_access_token(revoked_token.token)
+    end
+
+    test "returns {:error, :token_expired} for an expired token", %{access_token: access_token} do
+      expired_token =
+        access_token
+        |> Ecto.Changeset.change(
+          inserted_at: DateTime.add(DateTime.utc_now(), -7200),
+          expires_in: 3600
+        )
+        |> Repo.update!()
+
+      assert {:error, :token_expired} = OAuth.validate_access_token(expired_token.token)
+    end
+  end
+
   describe "oauth_device_grants" do
     setup do
       application = oauth_application_fixture()
