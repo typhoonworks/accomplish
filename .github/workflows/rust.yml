@@ -16,6 +16,7 @@ jobs:
 
     steps:
       - name: Install CI dependencies
+        working-directory: ./
         run: |
           sudo apt update -y
           sudo apt install -y libdbus-1-dev libssl-dev gnome-keyring
