@@ -8,53 +8,8 @@ on:
     paths: ['cli/**/*']
 
 jobs:
-  test_non_nix:
-    name: cargo test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ macos-latest, windows-latest ]
-
-    defaults:
-      run:
-        working-directory: ./cli
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-
-      - name: Run cargo test
-        env:
-          RUST_LOG: debug
-        run: cargo test --features=apple-native,windows-native --verbose
-
-  test_nix:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        features:
-          - "linux-native"
-          - "sync-secret-service"
-          - "linux-native,sync-secret-service"
-          - "sync-secret-service,crypto-rust"
-          - "sync-secret-service,crypto-openssl"
-          - "async-secret-service,tokio,crypto-rust"
-          - "async-secret-service,async-io,crypto-rust"
-          - "async-secret-service,tokio,crypto-openssl"
-          - "async-secret-service,async-io,crypto-openssl"
-          - "linux-native-sync-persistent,crypto-rust"
-          - "linux-native-sync-persistent,crypto-openssl"
-          - "linux-native-async-persistent,tokio,crypto-rust"
-          - "linux-native-async-persistent,async-io,crypto-rust"
-          - "linux-native-async-persistent,tokio,crypto-openssl"
-          - "linux-native-async-persistent,async-io,crypto-openssl"
-
     defaults:
       run:
         working-directory: ./cli
@@ -82,7 +37,7 @@ jobs:
       - name: Run cargo test
         env:
           RUST_LOG: debug
-        run: cargo test --features=${{ matrix.features }} -- --test-threads=1
+        run: cargo test --all -- --test-threads=1
 
   formatting:
     name: cargo fmt
