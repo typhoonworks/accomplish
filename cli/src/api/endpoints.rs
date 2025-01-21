@@ -1,6 +1,7 @@
 use crate::api::client::ApiClient;
 use crate::api::errors::ApiError;
 use crate::api::models::DeviceCodeResponse;
+use crate::api::models::TokenInfoResponse;
 use crate::api::models::TokenResponse;
 use serde_json::json;
 
@@ -14,7 +15,7 @@ pub async fn initiate_device_code(
     });
 
     let device_code_response: DeviceCodeResponse =
-        api_client.post("auth/device/code", body).await?;
+        api_client.post("auth/device/code", body, false).await?;
 
     Ok(device_code_response)
 }
@@ -27,9 +28,23 @@ pub async fn exchange_device_code_for_token(
         "device_code": device_code
     });
 
-    let token_response: TokenResponse = api_client.post("auth/device/token", body).await?;
+    let token_response: TokenResponse = api_client.post("auth/device/token", body, false).await?;
 
     Ok(token_response)
+}
+
+pub async fn check_token_info(
+    api_client: &ApiClient,
+    token: &str,
+) -> Result<TokenInfoResponse, ApiError> {
+    let body = json!({ "token": token });
+
+    let response: TokenInfoResponse = api_client.post("auth/token_info", body, true).await?;
+    if response.active {
+        Ok(response)
+    } else {
+        Err(ApiError::Unauthorized("Token is inactive".into()))
+    }
 }
 
 #[cfg(test)]
@@ -49,14 +64,16 @@ mod tests {
             .with_status(200)
             .with_body(
                 r#"{
-               "user_code": "user_code_456",
-               "verification_uri": "http://example.com",
-               "verification_uri_complete": "http://example.com?user_code=user_code_456"
-           }"#,
+                "device_code": "device_code_123",
+                "user_code": "user_code_456",
+                "verification_uri": "http://example.com",
+                "verification_uri_complete": "http://example.com?user_code=user_code_456",
+                "interval": 5
+            }"#,
             )
             .create();
 
-        let api_client = ApiClient::new(mockito::server_url());
+        let api_client = ApiClient::new(&mockito::server_url()); // Borrow the String
 
         let result = initiate_device_code(&api_client, "test-client-id").await;
 
@@ -91,7 +108,7 @@ mod tests {
             )
             .create();
 
-        let api_client = ApiClient::new(mockito::server_url());
+        let api_client = ApiClient::new(&mockito::server_url()); // Borrow the String
 
         let result = exchange_device_code_for_token(&api_client, "device_code_123").await;
 

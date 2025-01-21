@@ -1,13 +1,15 @@
-use crate::api::client::ApiClient;
-use crate::api::endpoints::exchange_device_code_for_token;
-use crate::api::endpoints::initiate_device_code;
+use crate::api::endpoints::{exchange_device_code_for_token, initiate_device_code};
 use crate::api::errors::ApiError;
-use crate::services::callback_server;
+use crate::auth::callback_server;
+use crate::auth::AuthService;
 use std::error::Error;
 use tokio::sync::oneshot;
 use webbrowser;
 
-pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<dyn Error>> {
+pub async fn execute(
+    auth_service: &mut AuthService,
+    client_id: &str,
+) -> Result<(), Box<dyn Error>> {
     let (tx, rx) = oneshot::channel();
     tokio::spawn(async move {
         if let Err(err) = callback_server::start_callback_server(tx).await {
@@ -15,7 +17,7 @@ pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<
         }
     });
 
-    match initiate_device_code(api_client, client_id).await {
+    match initiate_device_code(auth_service.api_client(), client_id).await {
         Ok(response) => {
             display_device_verification_message(&response.verification_uri, &response.user_code);
 
@@ -23,14 +25,11 @@ pub async fn execute(api_client: &ApiClient, client_id: &str) -> Result<(), Box<
 
             match rx.await {
                 Ok(code) => {
-                    println!("Successfully received code: {}", code);
-                    match exchange_device_code_for_token(api_client, &code).await {
+                    match exchange_device_code_for_token(auth_service.api_client(), &code).await {
                         Ok(token_response) => {
-                            println!("Access Token: {}", token_response.access_token);
-                            println!("Token Type: {}", token_response.token_type);
-                            println!("Expires In: {}", token_response.expires_in);
-                            println!("Refresh Token: {}", token_response.refresh_token);
-                            println!("Scope: {}", token_response.scope);
+                            println!("Authentication successful!");
+
+                            auth_service.save_access_token(&token_response.access_token)?;
                             Ok(())
                         }
                         Err(err) => {
