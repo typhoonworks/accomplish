@@ -207,9 +207,6 @@ defmodule Accomplish.OAuth do
     Repo.get_by(AccessToken, token: token)
   end
 
-  @doc """
-  Finds an access token by its refresh token value.
-  """
   defp get_refresh_token(token) do
     case Repo.get_by(AccessToken, refresh_token: token) do
       nil -> {:error, :invalid_token}
@@ -282,7 +279,7 @@ defmodule Accomplish.OAuth do
     end
   end
 
-  defp preload_access_token_associations(%AccessToken{} = access_token) do
+  def preload_access_token_associations(%AccessToken{} = access_token) do
     case Repo.preload(access_token, [:user, :application]) do
       %AccessToken{} = preloaded_access_token ->
         {:ok, preloaded_access_token}
@@ -330,7 +327,7 @@ defmodule Accomplish.OAuth do
     end
   end
 
-  defp validate_access_token_validity(%AccessToken{} = access_token) do
+  def validate_access_token_validity(%AccessToken{} = access_token) do
     expiration_time = DateTime.add(access_token.inserted_at, access_token.expires_in)
     current_time = DateTime.utc_now()
 

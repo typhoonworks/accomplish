@@ -48,6 +48,8 @@ defmodule AccomplishWeb.Plugs.AuthorizeOAuthToken do
     end
   end
 
+  defp check_scope(_, nil), do: :ok
+
   defp check_scope(scopes, required_scope) do
     if OAuth.valid_scope?(scopes, required_scope) do
       :ok
