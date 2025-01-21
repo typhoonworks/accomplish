@@ -7,6 +7,8 @@ defmodule Accomplish.OAuth do
   alias Accomplish.Repo
   alias Accomplish.OAuth.{Application, AccessGrant, AccessToken, DeviceGrant, Identity}
 
+  @ttl_access_token 3600
+
   @doc """
   Returns a list of OAuth applications.
 
@@ -206,6 +208,16 @@ defmodule Accomplish.OAuth do
   end
 
   @doc """
+  Finds an access token by its refresh token value.
+  """
+  defp get_refresh_token(token) do
+    case Repo.get_by(AccessToken, refresh_token: token) do
+      nil -> {:error, :invalid_token}
+      record -> {:ok, record}
+    end
+  end
+
+  @doc """
   Creates an OAuth access token.
   """
   def create_access_token(user, application, attrs) do
@@ -225,6 +237,75 @@ defmodule Accomplish.OAuth do
   defp maybe_put_user(attrs, user), do: Map.put(attrs, :user_id, user.id)
 
   @doc """
+  Revokes the existing access token and issues a new one using a refresh token.
+
+  Returns:
+    - `{:ok, new_access_token}` if successful.
+    - `{:error, reason}` if the refresh token is invalid, expired, or revoked.
+  """
+  def refresh_access_token(refresh_token) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:refresh_token_record, fn _repo, _changes ->
+      get_refresh_token(refresh_token)
+    end)
+    |> Ecto.Multi.run(:access_token, fn _repo, %{refresh_token_record: refresh_token_record} ->
+      preload_access_token_associations(refresh_token_record)
+    end)
+    |> Ecto.Multi.run(:validate_access_token, fn _repo, %{access_token: access_token} ->
+      validate_access_token_validity(access_token)
+    end)
+    |> Ecto.Multi.run(:validate_refresh_token, fn _repo, %{access_token: access_token} ->
+      validate_refresh_token(refresh_token, access_token.previous_refresh_token)
+    end)
+    |> Ecto.Multi.update(:revoke_access_token, fn %{access_token: access_token} ->
+      AccessToken.revoke_changeset(access_token, %{revoked_at: DateTime.utc_now()})
+    end)
+    |> Ecto.Multi.insert(:new_access_token, fn %{access_token: access_token} ->
+      %AccessToken{}
+      |> AccessToken.changeset(%{
+        token: AccessToken.generate_token(),
+        refresh_token: AccessToken.generate_refresh_token(),
+        application_id: access_token.application_id,
+        user_id: access_token.user_id,
+        scopes: access_token.scopes,
+        expires_in: @ttl_access_token,
+        previous_refresh_token: refresh_token
+      })
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{new_access_token: new_access_token}} ->
+        {:ok, new_access_token}
+
+      {:error, _step, reason, _changes} ->
+        {:error, reason}
+    end
+  end
+
+  defp preload_access_token_associations(%AccessToken{} = access_token) do
+    case Repo.preload(access_token, [:user, :application]) do
+      %AccessToken{} = preloaded_access_token ->
+        {:ok, preloaded_access_token}
+
+      _ ->
+        {:error, :failed_to_preload}
+    end
+  end
+
+  defp validate_refresh_token(refresh_token, previous_refresh_token) do
+    cond do
+      previous_refresh_token == "" ->
+        {:ok, :valid}
+
+      refresh_token == previous_refresh_token ->
+        {:ok, :valid}
+
+      true ->
+        {:error, :invalid_refresh_token}
+    end
+  end
+
+  @doc """
   Revokes an access token by setting its `revoked_at` field.
   """
   def revoke_access_token(%AccessToken{} = access_token) do
@@ -242,18 +323,26 @@ defmodule Accomplish.OAuth do
         {:error, :invalid_token}
 
       access_token ->
-        if access_token.revoked_at do
-          {:error, :token_revoked}
-        else
-          expiration_time = DateTime.add(access_token.inserted_at, access_token.expires_in)
-          current_time = DateTime.utc_now()
-
-          if DateTime.compare(current_time, expiration_time) == :gt do
-            {:error, :token_expired}
-          else
-            {:ok, access_token}
-          end
+        case validate_access_token_validity(access_token) do
+          {:ok, :valid} -> {:ok, access_token}
+          error -> error
         end
+    end
+  end
+
+  defp validate_access_token_validity(%AccessToken{} = access_token) do
+    expiration_time = DateTime.add(access_token.inserted_at, access_token.expires_in)
+    current_time = DateTime.utc_now()
+
+    cond do
+      not is_nil(access_token.revoked_at) ->
+        {:error, :token_revoked}
+
+      DateTime.compare(current_time, expiration_time) == :gt ->
+        {:error, :token_expired}
+
+      true ->
+        {:ok, :valid}
     end
   end
 
