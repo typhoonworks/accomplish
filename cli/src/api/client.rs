@@ -1,27 +1,63 @@
 use crate::api::errors::ApiError;
-use reqwest::{Client, Response};
+use reqwest::Client;
+use serde::de::DeserializeOwned;
 
 pub struct ApiClient {
     base_url: String,
+    access_token: Option<String>,
 }
 
 impl ApiClient {
-    pub fn new(base_url: String) -> Self {
-        ApiClient { base_url }
+    pub fn new(base_url: &str) -> Self {
+        Self {
+            base_url: base_url.to_string(),
+            access_token: None,
+        }
     }
 
-    pub async fn post(
+    // pub fn new_with_token(base_url: String, access_token: Option<String>) -> Self {
+    //     Self { base_url, access_token }
+    // }
+
+    pub fn set_access_token(&mut self, token: String) {
+        self.access_token = Some(token);
+    }
+
+    // pub fn clear_access_token(&mut self) {
+    //     self.access_token = None;
+    // }
+
+    pub async fn post<T>(
         &self,
         endpoint: &str,
         body: serde_json::Value,
-    ) -> Result<Response, ApiError> {
+        use_auth: bool,
+    ) -> Result<T, ApiError>
+    where
+        T: DeserializeOwned,
+    {
         let full_url = format!("{}/{}", self.base_url, endpoint);
         let client = Client::new();
 
-        let response = client.post(&full_url).json(&body).send().await;
+        let mut request = client.post(&full_url).json(&body);
+
+        if use_auth {
+            if let Some(token) = &self.access_token {
+                request = request.bearer_auth(token);
+            } else {
+                return Err(ApiError::Unauthorized(
+                    "Authorization required but no token is set.".into(),
+                ));
+            }
+        }
+
+        let response = request.send().await;
 
         match response {
-            Ok(resp) if resp.status().is_success() => Ok(resp),
+            Ok(resp) if resp.status().is_success() => resp
+                .json::<T>()
+                .await
+                .map_err(|e| ApiError::DecodeError(e.to_string())),
             Ok(resp) => match resp.status().as_u16() {
                 400 => {
                     let error_msg = resp

@@ -219,6 +219,96 @@ defmodule Accomplish.OAuthTest do
     end
   end
 
+  describe "validate_access_token/1" do
+    setup do
+      application = oauth_application_fixture()
+      user = user_fixture()
+      access_token = oauth_access_token_fixture(user, application)
+
+      {:ok, access_token: access_token}
+    end
+
+    test "returns {:ok, access_token} for a valid token", %{access_token: access_token} do
+      assert {:ok, ^access_token} = OAuth.validate_access_token(access_token.token)
+    end
+
+    test "returns {:error, :invalid_token} for an invalid token" do
+      assert {:error, :invalid_token} = OAuth.validate_access_token("invalid-token")
+    end
+
+    test "returns {:error, :token_revoked} for a revoked token", %{access_token: access_token} do
+      {:ok, revoked_token} = OAuth.revoke_access_token(access_token)
+
+      assert {:error, :token_revoked} = OAuth.validate_access_token(revoked_token.token)
+    end
+
+    test "returns {:error, :token_expired} for an expired token", %{access_token: access_token} do
+      expired_token =
+        access_token
+        |> Ecto.Changeset.change(
+          inserted_at: DateTime.add(DateTime.utc_now(), -7200),
+          expires_in: 3600
+        )
+        |> Repo.update!()
+
+      assert {:error, :token_expired} = OAuth.validate_access_token(expired_token.token)
+    end
+  end
+
+  describe "refresh_access_token/1" do
+    setup do
+      application = oauth_application_fixture()
+      user = user_fixture()
+
+      {:ok, application: application, user: user}
+    end
+
+    test "successfully refreshes an access token", %{application: application, user: user} do
+      access_token = oauth_access_token_fixture(user, application)
+
+      assert {:ok, new_access_token} = OAuth.refresh_access_token(access_token.refresh_token)
+
+      assert new_access_token.token != access_token.token
+      assert new_access_token.refresh_token != access_token.refresh_token
+      assert new_access_token.previous_refresh_token == access_token.refresh_token
+      assert new_access_token.scopes == access_token.scopes
+
+      assert {:error, :token_revoked} = OAuth.validate_access_token(access_token.token)
+    end
+
+    test "fails to refresh with an invalid refresh token" do
+      assert {:error, :invalid_token} = OAuth.refresh_access_token("invalid_refresh_token")
+    end
+
+    test "fails to refresh when tokens do not match", %{application: application, user: user} do
+      access_token =
+        oauth_access_token_fixture(user, application, %{previous_refresh_token: "mismatch_token"})
+
+      assert {:error, :invalid_refresh_token} =
+               OAuth.refresh_access_token(access_token.refresh_token)
+    end
+
+    test "fails to refresh with an expired token", %{application: application, user: user} do
+      expired_token =
+        oauth_access_token_fixture(user, application)
+        |> Ecto.Changeset.change(
+          inserted_at: DateTime.add(DateTime.utc_now(), -7200),
+          expires_in: 3600
+        )
+        |> Repo.update!()
+
+      assert {:error, :token_expired} = OAuth.refresh_access_token(expired_token.refresh_token)
+    end
+
+    test "fails to refresh with a revoked token", %{application: application, user: user} do
+      {:ok, revoked_token} =
+        oauth_access_token_fixture(user, application)
+        |> OAuth.revoke_access_token()
+
+      assert {:error, :token_revoked} = OAuth.refresh_access_token(revoked_token.refresh_token)
+    end
+  end
+
   describe "oauth_device_grants" do
     setup do
       application = oauth_application_fixture()

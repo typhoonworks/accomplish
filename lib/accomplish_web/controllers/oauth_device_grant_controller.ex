@@ -20,7 +20,6 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
   alias Accomplish.OAuth
 
   @polling_interval_seconds 5
-  @ttl_one_hour 3600
 
   @doc """
   Issues a `device_code` and `user_code` for a client to initiate the Device Authorization Flow.
@@ -74,7 +73,7 @@ defmodule AccomplishWeb.OAuthDeviceGrantController do
          {:ok, access_token} <-
            OAuth.create_access_token(device_grant.user, device_grant.application, %{
              scopes: device_grant.scopes,
-             expires_in: @ttl_one_hour
+             expires_in: device_grant.application.token_ttl
            }) do
       json(conn, %{
         access_token: access_token.token,

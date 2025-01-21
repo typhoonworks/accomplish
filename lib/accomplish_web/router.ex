@@ -98,9 +98,24 @@ defmodule AccomplishWeb.Router do
   scope "/", AccomplishWeb do
     pipe_through [:api]
 
-    scope "/auth/device" do
-      post "/code", OAuthDeviceGrantController, :create_device_code
-      post "/token", OAuthDeviceGrantController, :token
+    pipeline :api_oauth do
+      plug(AccomplishWeb.Plugs.AuthorizeOAuthToken)
+    end
+
+    scope "/auth" do
+      pipe_through(:api_oauth)
+
+      post "/token_info", OAuthAccessTokenController, :token_info,
+        assigns: %{api_scope: "user:read"}
+    end
+
+    scope "/auth" do
+      post "/refresh_token", OAuthAccessTokenController, :refresh_token
+
+      scope "/device" do
+        post "/code", OAuthDeviceGrantController, :create_device_code
+        post "/token", OAuthDeviceGrantController, :token
+      end
     end
   end
 

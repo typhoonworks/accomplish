@@ -6,6 +6,8 @@ defmodule Accomplish.OAuthFixtures do
 
   @valid_scopes ["user:read", "user:write"]
 
+  def unique_name, do: "application-#{System.unique_integer()}"
+
   @doc """
   Generate an OAuth application.
   """
@@ -13,7 +15,7 @@ defmodule Accomplish.OAuthFixtures do
     {:ok, application} =
       attrs
       |> Enum.into(%{
-        name: "Default App",
+        name: unique_name(),
         redirect_uri: "https://example.com/callback",
         scopes: @valid_scopes,
         confidential: true

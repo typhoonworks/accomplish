@@ -1,8 +1,6 @@
 defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
   use AccomplishWeb.ConnCase, async: true
 
-  import Accomplish.AccountsFixtures
-  import Accomplish.OAuthFixtures
   alias Accomplish.Repo
   alias Accomplish.OAuth.DeviceGrant
   alias Accomplish.OAuth
