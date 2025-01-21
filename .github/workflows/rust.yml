@@ -8,12 +8,17 @@ on:
     paths: ['cli/**/*']
 
 jobs:
-  test:
+  test_non_nix:
     name: cargo test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ macos-latest, windows-latest ]
+
     defaults:
       run:
         working-directory: ./cli
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,26 +27,71 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-
-      - name: Install dependencies for DBus
-        run: |
-          sudo apt update -y
-          sudo apt install -y libdbus-1-dev pkg-config
-
-      - name: Start dbus-daemon (for headless testing)
-        run: |
-          sudo dbus-daemon --session --nofork --print-address &
-          export DBUS_SESSION_BUS_ADDRESS=$(sudo dbus-daemon --session --nofork --print-address)
+          components: rustfmt, clippy
 
       - name: Run cargo test
-        run: cargo test --all-features
+        env:
+          RUST_LOG: debug
+        run: cargo test --features=apple-native,windows-native --verbose
+
+  test_nix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features:
+          - "linux-native"
+          - "sync-secret-service"
+          - "linux-native,sync-secret-service"
+          - "sync-secret-service,crypto-rust"
+          - "sync-secret-service,crypto-openssl"
+          - "async-secret-service,tokio,crypto-rust"
+          - "async-secret-service,async-io,crypto-rust"
+          - "async-secret-service,tokio,crypto-openssl"
+          - "async-secret-service,async-io,crypto-openssl"
+          - "linux-native-sync-persistent,crypto-rust"
+          - "linux-native-sync-persistent,crypto-openssl"
+          - "linux-native-async-persistent,tokio,crypto-rust"
+          - "linux-native-async-persistent,async-io,crypto-rust"
+          - "linux-native-async-persistent,tokio,crypto-openssl"
+          - "linux-native-async-persistent,async-io,crypto-openssl"
+
+    defaults:
+      run:
+        working-directory: ./cli
+
+    steps:
+      - name: Install CI dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev libssl-dev gnome-keyring
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Start gnome-keyring
+        # run gnome-keyring with 'foobar' as password for the login keyring
+        # this will create a new login keyring and unlock it
+        # the login password doesn't matter, but the keyring must be unlocked for the tests to
+        run: gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
+
+      - name: Run cargo test
+        env:
+          RUST_LOG: debug
+        run: cargo test --features=${{ matrix.features }} -- --test-threads=1
 
   formatting:
     name: cargo fmt
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ./cli
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,8 +99,11 @@ jobs:
       - name: Set up Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          components: rustfmt
           toolchain: stable
+          components: rustfmt #, clippy
 
       - name: Run rustfmt Check
-        run: cargo fmt --check
+        run: cargo fmt --all --check
+
+      # - name: Run clippy check
+      #   run: cargo clippy -- -D warnings
