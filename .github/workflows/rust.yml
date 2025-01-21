@@ -23,6 +23,16 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install dependencies for DBus
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev pkg-config
+
+      - name: Start dbus-daemon (for headless testing)
+        run: |
+          sudo dbus-daemon --session --nofork --print-address &
+          export DBUS_SESSION_BUS_ADDRESS=$(sudo dbus-daemon --session --nofork --print-address)
+
       - name: Run cargo test
         run: cargo test --all-features
 
