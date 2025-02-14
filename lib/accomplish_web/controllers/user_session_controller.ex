@@ -5,7 +5,9 @@ defmodule AccomplishWeb.UserSessionController do
   alias AccomplishWeb.Plugs.UserAuth
 
   def new(conn, _params) do
-    render(conn, :new, error_message: nil)
+    conn
+    |> put_layout(html: {AccomplishWeb.Layouts, :auth})
+    |> render(:new, error_message: nil)
   end
 
   def create(conn, %{"_action" => "registered"} = params) do

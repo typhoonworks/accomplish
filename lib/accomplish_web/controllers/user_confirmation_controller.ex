@@ -4,7 +4,9 @@ defmodule AccomplishWeb.UserConfirmationController do
   alias Accomplish.Accounts
 
   def new(conn, _params) do
-    render(conn, :new)
+    conn
+    |> put_layout(html: {AccomplishWeb.Layouts, :auth})
+    |> render(:new)
   end
 
   def create(conn, %{"user" => %{"email" => email}}) do

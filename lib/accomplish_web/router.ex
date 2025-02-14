@@ -77,6 +77,7 @@ defmodule AccomplishWeb.Router do
     end
 
     live_session :require_authenticated_user,
+      root_layout: {AccomplishWeb.Layouts, :root_app},
       on_mount: [{AccomplishWeb.Plugs.UserAuth, :ensure_authenticated}] do
       live "/settings", UserSettingsLive, :edit
       live "/settings/email_confirmation/:token", UserSettingsLive, :confirm_email
