@@ -1,27 +1,25 @@
-defmodule Accomplish.Career.Company do
+defmodule Accomplish.JobApplications.Company do
   @moduledoc false
 
   use Accomplish.Schema
 
-  @permitted ~w(name website notes)a
+  alias Accomplish.JobApplications.Application
+
+  @permitted ~w(name)a
   @required ~w(name)a
 
   @derive {JSON.Encoder,
            only: [
              :id,
              :name,
-             :website,
-             :notes,
              :inserted_at,
              :updated_at
            ]}
 
   schema "companies" do
     field :name, :string
-    field :website, :string
-    field :notes, :string
 
-    has_many :job_applications, Accomplish.Career.JobApplication
+    has_many :job_applications, Application
 
     timestamps(type: :utc_datetime)
   end
@@ -46,7 +44,6 @@ defmodule Accomplish.Career.Company do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
-    |> validate_format(:website, ~r/^https?:\/\/[\S]+$/, message: "must be a valid URL")
     |> unsafe_validate_unique(:name, Accomplish.Repo)
     |> unique_constraint(:name)
   end

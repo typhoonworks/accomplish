@@ -13,7 +13,9 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :last_updated_at, :utc_datetime
       add :source, :string
       add :notes, :text
+
       add :company_id, references(:companies, type: :uuid, on_delete: :delete_all), null: false
+
       add :applicant_id, references(:users, type: :uuid, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)
