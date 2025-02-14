@@ -7,7 +7,10 @@ defmodule AccomplishWeb.UserRegistrationController do
 
   def new(conn, _params) do
     changeset = Accounts.change_user_registration(%User{})
-    render(conn, :new, changeset: changeset)
+
+    conn
+    |> put_layout(html: {AccomplishWeb.Layouts, :auth})
+    |> render(:new, changeset: changeset)
   end
 
   def create(conn, %{"user" => user_params}) do

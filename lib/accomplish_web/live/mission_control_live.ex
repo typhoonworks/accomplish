@@ -4,7 +4,7 @@ defmodule AccomplishWeb.MissionControlLive do
   def render(assigns) do
     ~H"""
     <.header class="text-center">
-      Missiong Control
+      Mission Control
       <:subtitle>Manage your stuff</:subtitle>
     </.header>
     """
