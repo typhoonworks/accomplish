@@ -27,8 +27,9 @@ defmodule Accomplish.DataCase do
       import Ecto.Query
       import Accomplish.DataCase
       import Accomplish.AccountsFixtures
-      import Accomplish.RepositoriesFixtures
+      import Accomplish.JobApplicationsFixtures
       import Accomplish.OAuthFixtures
+      import Accomplish.RepositoriesFixtures
     end
   end
 

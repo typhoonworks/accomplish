@@ -1,13 +1,13 @@
-defmodule Accomplish.Career.JobApplication do
+defmodule Accomplish.JobApplications.Application do
   @moduledoc false
 
   use Accomplish.Schema
 
   alias Accomplish.Accounts.User
-  alias Accomplish.Career.Company
+  alias Accomplish.JobApplications.Company
 
-  @permitted ~w(role status applied_at last_updated_at source notes company_id applicant_id)a
-  @required ~w(role status applied_at company_id applicant_id)a
+  @permitted ~w(role status applied_at last_updated_at source notes)a
+  @required ~w(role status applied_at)a
 
   @status_types [:applied, :interviewing, :offer, :rejected]
 
@@ -40,8 +40,8 @@ defmodule Accomplish.Career.JobApplication do
   end
 
   @doc false
-  def changeset(job_application, attrs) do
-    job_application
+  def changeset(application, attrs) do
+    application
     |> cast(attrs, @permitted)
     |> common_validations()
   end
@@ -55,8 +55,8 @@ defmodule Accomplish.Career.JobApplication do
   end
 
   @doc false
-  def update_changeset(job_application, attrs) do
-    job_application |> changeset(attrs)
+  def update_changeset(application, attrs) do
+    application |> changeset(attrs)
   end
 
   defp common_validations(changeset) do

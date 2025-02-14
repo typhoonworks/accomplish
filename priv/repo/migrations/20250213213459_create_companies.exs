@@ -8,8 +8,6 @@ defmodule Accomplish.Repo.Migrations.CreateCompanies do
     create table(:companies, primary_key: false) do
       add :id, :uuid, primary_key: true
       add :name, :string, null: false
-      add :website, :string
-      add :notes, :text
 
       timestamps(type: :utc_datetime)
     end
