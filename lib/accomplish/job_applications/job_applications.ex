@@ -5,6 +5,7 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.Repo
   alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.Companies
+  alias Accomplish.JobApplications.Stage
 
   def create_application(applicant, attrs) do
     with {:company_name, true} <- {:company_name, Map.has_key?(attrs, :company_name)},
@@ -24,5 +25,10 @@ defmodule Accomplish.JobApplications do
       {:error, changeset} ->
         {:error, changeset}
     end
+  end
+
+  def add_stage(application, attrs) do
+    Stage.create_changeset(application, attrs)
+    |> Repo.insert()
   end
 end

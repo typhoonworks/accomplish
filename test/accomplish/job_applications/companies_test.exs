@@ -1,7 +1,7 @@
-defmodule Accomplish.CompaniesTest do
+defmodule Accomplish.JobApplications.CompaniesTest do
   use Accomplish.DataCase
 
-  alias Accomplish.Companies
+  alias Accomplish.JobApplications.Companies
 
   describe "get_or_create/1" do
     setup do

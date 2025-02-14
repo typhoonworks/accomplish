@@ -44,4 +44,40 @@ defmodule Accomplish.JobApplicationsTest do
       assert "can't be blank" in errors_on(changeset).applied_at
     end
   end
+
+  describe "add_stage/2" do
+    setup do
+      applicant = user_fixture()
+
+      %{application: job_application_fixture(applicant)}
+    end
+
+    test "adds a stage to an application", %{application: application} do
+      stage_attrs = %{
+        title: "Technical Interview",
+        type: :interview,
+        position: 1,
+        is_final_stage: false
+      }
+
+      {:ok, stage} = JobApplications.add_stage(application, stage_attrs)
+
+      assert stage.title == "Technical Interview"
+      assert stage.type == :interview
+      assert stage.position == 1
+      assert stage.is_final_stage == false
+      assert stage.application_id == application.id
+    end
+
+    test "returns an error when required fields are missing", %{application: application} do
+      invalid_attrs = %{}
+
+      {:error, changeset} = JobApplications.add_stage(application, invalid_attrs)
+
+      assert changeset.valid? == false
+      assert "can't be blank" in errors_on(changeset).title
+      assert "can't be blank" in errors_on(changeset).type
+      assert "can't be blank" in errors_on(changeset).position
+    end
+  end
 end
