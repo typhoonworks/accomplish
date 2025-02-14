@@ -1,4 +1,4 @@
-defmodule Accomplish.Companies do
+defmodule Accomplish.JobApplications.Companies do
   @moduledoc false
 
   use Accomplish.Context
