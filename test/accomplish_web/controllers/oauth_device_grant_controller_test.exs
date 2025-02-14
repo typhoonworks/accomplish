@@ -94,7 +94,7 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
 
     test "redirects if user is not logged in", %{conn: conn} do
       conn = get(conn, ~p"/auth/device/verify")
-      assert redirected_to(conn) == ~p"/users/log_in"
+      assert redirected_to(conn) == ~p"/login"
     end
 
     test "renders the verification page without a user_code", %{conn: conn, user: user} do
@@ -123,7 +123,7 @@ defmodule AccomplishWeb.OAuthDeviceGrantControllerTest do
 
     test "redirects if user is not logged in", %{conn: conn} do
       conn = get(conn, ~p"/auth/device/verify")
-      assert redirected_to(conn) == ~p"/users/log_in"
+      assert redirected_to(conn) == ~p"/login"
     end
 
     test "successfully links a device", %{

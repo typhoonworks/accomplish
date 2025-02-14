@@ -52,14 +52,14 @@ defmodule AccomplishWeb.Router do
   scope "/", AccomplishWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
-    get "/users/register", UserRegistrationController, :new
-    post "/users/register", UserRegistrationController, :create
-    get "/users/log_in", UserSessionController, :new
-    post "/users/log_in", UserSessionController, :create
-    get "/users/reset_password", UserResetPasswordController, :new
-    post "/users/reset_password", UserResetPasswordController, :create
-    get "/users/reset_password/:token", UserResetPasswordController, :edit
-    put "/users/reset_password/:token", UserResetPasswordController, :update
+    get "/signup", UserRegistrationController, :new
+    post "/signup", UserRegistrationController, :create
+    get "/login", UserSessionController, :new
+    post "/login", UserSessionController, :create
+    get "/password_reset", UserResetPasswordController, :new
+    post "/password_reset", UserResetPasswordController, :create
+    get "/password_reset/:token", UserResetPasswordController, :edit
+    put "/password_reset/:token", UserResetPasswordController, :update
 
     scope "/auth" do
       get "/:provider", OAuthController, :request
@@ -88,11 +88,11 @@ defmodule AccomplishWeb.Router do
 
     post "/session/set-timezone", SessionTimezoneController, :set
 
-    delete "/users/log_out", UserSessionController, :delete
-    get "/users/confirm", UserConfirmationController, :new
-    post "/users/confirm", UserConfirmationController, :create
-    get "/users/confirm/:token", UserConfirmationController, :edit
-    post "/users/confirm/:token", UserConfirmationController, :update
+    delete "/logout", UserSessionController, :delete
+    get "/confirm_user", UserConfirmationController, :new
+    post "/confirm_user", UserConfirmationController, :create
+    get "/confirm_user/:token", UserConfirmationController, :edit
+    post "/confirm_user/:token", UserConfirmationController, :update
   end
 
   scope "/", AccomplishWeb do

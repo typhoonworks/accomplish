@@ -1,14 +1,13 @@
 <div class="mx-auto max-w-sm">
   <.header class="text-center">Confirm account</.header>
 
-  <.simple_form for={@conn.params["user"]} as={:user} action={~p"/users/confirm/#{@token}"}>
+  <.simple_form for={@conn.params["user"]} as={:user} action={~p"/confirm_user/#{@token}"}>
     <:actions>
       <.button class="w-full">Confirm my account</.button>
     </:actions>
   </.simple_form>
 
   <p class="text-center mt-4">
-    <.link href={~p"/users/register"}>Register</.link>
-    | <.link href={~p"/users/log_in"}>Log in</.link>
+    <.link href={~p"/signup"}>Register</.link> | <.link href={~p"/login"}>Log in</.link>
   </p>
 </div>
