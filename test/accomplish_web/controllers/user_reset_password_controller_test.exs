@@ -9,19 +9,19 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
     %{user: user_fixture()}
   end
 
-  describe "GET /users/reset_password" do
+  describe "GET /password_reset" do
     test "renders the reset password page", %{conn: conn} do
-      conn = get(conn, ~p"/users/reset_password")
+      conn = get(conn, ~p"/password_reset")
       response = html_response(conn, 200)
       assert response =~ "Forgot your password?"
     end
   end
 
-  describe "POST /users/reset_password" do
+  describe "POST /password_reset" do
     @tag :capture_log
     test "sends a new reset password token", %{conn: conn, user: user} do
       conn =
-        post(conn, ~p"/users/reset_password", %{
+        post(conn, ~p"/password_reset", %{
           "user" => %{"email" => user.email}
         })
 
@@ -35,7 +35,7 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
 
     test "does not send reset password token if email is invalid", %{conn: conn} do
       conn =
-        post(conn, ~p"/users/reset_password", %{
+        post(conn, ~p"/password_reset", %{
           "user" => %{"email" => "unknown@example.com"}
         })
 
@@ -48,7 +48,7 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
     end
   end
 
-  describe "GET /users/reset_password/:token" do
+  describe "GET /password_reset/:token" do
     setup %{user: user} do
       token =
         extract_user_token(fn url ->
@@ -59,12 +59,12 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
     end
 
     test "renders reset password", %{conn: conn, token: token} do
-      conn = get(conn, ~p"/users/reset_password/#{token}")
+      conn = get(conn, ~p"/password_reset/#{token}")
       assert html_response(conn, 200) =~ "Reset password"
     end
 
     test "does not render reset password with invalid token", %{conn: conn} do
-      conn = get(conn, ~p"/users/reset_password/oops")
+      conn = get(conn, ~p"/password_reset/oops")
       assert redirected_to(conn) == ~p"/"
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
@@ -72,7 +72,7 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
     end
   end
 
-  describe "PUT /users/reset_password/:token" do
+  describe "PUT /password_reset/:token" do
     setup %{user: user} do
       token =
         extract_user_token(fn url ->
@@ -84,14 +84,14 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
 
     test "resets password once", %{conn: conn, user: user, token: token} do
       conn =
-        put(conn, ~p"/users/reset_password/#{token}", %{
+        put(conn, ~p"/password_reset/#{token}", %{
           "user" => %{
             "password" => "new valid password",
             "password_confirmation" => "new valid password"
           }
         })
 
-      assert redirected_to(conn) == ~p"/users/log_in"
+      assert redirected_to(conn) == ~p"/login"
       refute get_session(conn, :user_token)
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
@@ -102,7 +102,7 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
 
     test "does not reset password on invalid data", %{conn: conn, token: token} do
       conn =
-        put(conn, ~p"/users/reset_password/#{token}", %{
+        put(conn, ~p"/password_reset/#{token}", %{
           "user" => %{
             "password" => "too short",
             "password_confirmation" => "does not match"
@@ -113,7 +113,7 @@ defmodule AccomplishWeb.UserResetPasswordControllerTest do
     end
 
     test "does not reset password with invalid token", %{conn: conn} do
-      conn = put(conn, ~p"/users/reset_password/oops")
+      conn = put(conn, ~p"/password_reset/oops")
       assert redirected_to(conn) == ~p"/"
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~

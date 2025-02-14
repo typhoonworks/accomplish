@@ -3,7 +3,7 @@
     Reset Password
   </.header>
 
-  <.simple_form :let={f} for={@changeset} action={~p"/users/reset_password/#{@token}"}>
+  <.simple_form :let={f} for={@changeset} action={~p"/password_reset/#{@token}"}>
     <.error :if={@changeset.action}>
       Oops, something went wrong! Please check the errors below.
     </.error>
@@ -23,7 +23,6 @@
   </.simple_form>
 
   <p class="text-center text-sm mt-4">
-    <.link href={~p"/users/register"}>Register</.link>
-    | <.link href={~p"/users/log_in"}>Log in</.link>
+    <.link href={~p"/signup"}>Register</.link> | <.link href={~p"/login"}>Log in</.link>
   </p>
 </div>

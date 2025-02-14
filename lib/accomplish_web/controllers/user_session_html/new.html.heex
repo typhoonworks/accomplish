@@ -3,7 +3,7 @@
     Log in to account
     <:subtitle>
       Don't have an account?
-      <.link navigate={~p"/users/register"} class="font-semibold text-brand hover:underline">
+      <.link navigate={~p"/signup"} class="font-semibold text-brand hover:underline">
         Sign up
       </.link>
       for an account now.
@@ -14,7 +14,7 @@
     :let={f}
     for={@conn.params["user"]}
     as={:user}
-    action={~p"/users/log_in"}
+    action={~p"/login"}
     method="post"
     id="login_form"
     class="mt-10 space-y-6"
@@ -31,7 +31,7 @@
 
     <.form_item class="flex items-center justify-between">
       <.input field={f[:remember_me]} type="checkbox" label="Keep me logged in" />
-      <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
+      <.link href={~p"/password_reset"} class="text-sm font-semibold">
         Forgot your password?
       </.link>
     </.form_item>

@@ -3,7 +3,7 @@
     Register for an account
     <:subtitle>
       Already registered?
-      <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
+      <.link navigate={~p"/login"} class="font-semibold text-brand hover:underline">
         Log in
       </.link>
       to your account now.
@@ -13,7 +13,7 @@
   <.form
     :let={f}
     for={@changeset}
-    action={~p"/users/register"}
+    action={~p"/signup"}
     method="post"
     id="registration_form"
     class="mt-10 space-y-6"
