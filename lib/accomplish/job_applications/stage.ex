@@ -1,4 +1,6 @@
 defmodule Accomplish.JobApplications.Stage do
+  @moduledoc false
+
   use Accomplish.Schema
 
   alias Accomplish.JobApplications.Application
