@@ -648,7 +648,6 @@ defmodule AccomplishWeb.CoreComponents do
 
   def show_mobile_sidebar(js \\ %JS{}) do
     js
-    |> JS.dispatch("js:debug", to: "body", detail: %{message: "Opening sidebar"}, bubbles: true)
     |> JS.show(to: "#mobile-sidebar-container")
     |> JS.show(
       to: "#mobile-sidebar-backdrop",
@@ -675,22 +674,41 @@ defmodule AccomplishWeb.CoreComponents do
         "opacity-100"
       }
     )
-    |> JS.set_attribute({"aria-hidden", "false"}, to: "#mobile-sidebar-backdrop")
+    |> JS.remove_attribute("aria-hidden", to: "#mobile-sidebar-backdrop")
   end
 
   def hide_mobile_sidebar(js \\ %JS{}) do
-    IO.inspect("Closing sidebar")
-
     js
-    |> JS.hide(to: "#mobile-sidebar-container", transition: "fade-out")
+    |> JS.hide(
+      to: "#hide-mobile-sidebar",
+      transition: {
+        "ease-in-out duration-300",
+        "opacity-100",
+        "opacity-0"
+      }
+    )
     |> JS.hide(
       to: "#mobile-sidebar",
-      time: 300,
-      transition:
-        {"transition ease-in-out duration-300 transform", "translate-x-0", "-translate-x-full"}
+      transition: {
+        "transition ease-in-out duration-300 transform",
+        "translate-x-0",
+        "-translate-x-full"
+      }
     )
-    |> JS.show(to: "#show-mobile-sidebar", transition: "fade-in")
-    |> JS.dispatch("js:call", to: "#show-mobile-sidebar", detail: %{call: "focus", args: []})
+    |> JS.hide(
+      to: "#mobile-sidebar-backdrop",
+      transition: {
+        "transition-opacity ease-linear duration-300",
+        "opacity-100",
+        "opacity-0"
+      }
+    )
+    |> JS.hide(
+      to: "#mobile-sidebar-container",
+      transition: {"transition-opacity ease-linear duration-300", "opacity-100", "opacity-0"},
+      time: 300
+    )
+    |> JS.set_attribute({"aria-hidden", "true"}, to: "#mobile-sidebar-backdrop")
   end
 
   @doc """
