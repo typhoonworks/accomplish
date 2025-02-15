@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.Components.Sidebar do
+  @moduledoc false
+
   use AccomplishWeb, :live_component
 
   @doc """

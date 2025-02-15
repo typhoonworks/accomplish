@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.Nav do
+  @moduledoc false
+
   import Phoenix.LiveView, only: [attach_hook: 4]
   import Phoenix.Component, only: [assign: 2]
 
