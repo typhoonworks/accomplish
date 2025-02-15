@@ -646,6 +646,74 @@ defmodule AccomplishWeb.CoreComponents do
     |> JS.pop_focus()
   end
 
+  def show_mobile_sidebar(js \\ %JS{}) do
+    js
+    |> JS.show(to: "#mobile-sidebar-container")
+    |> JS.show(
+      to: "#mobile-sidebar-backdrop",
+      transition: {
+        "transition-opacity ease-linear duration-300",
+        "opacity-0",
+        "opacity-100"
+      }
+    )
+    |> JS.show(
+      to: "#mobile-sidebar",
+      display: "flex",
+      transition: {
+        "transition ease-in-out duration-300 transform",
+        "-translate-x-full",
+        "translate-x-0"
+      }
+    )
+    |> JS.show(
+      to: "#hide-mobile-sidebar",
+      transition: {
+        "ease-in-out duration-300",
+        "opacity-0",
+        "opacity-100"
+      }
+    )
+    |> JS.remove_attribute("aria-hidden", to: "#mobile-sidebar-backdrop")
+  end
+
+  def hide_mobile_sidebar(js \\ %JS{}) do
+    js
+    |> JS.hide(
+      to: "#hide-mobile-sidebar",
+      transition: {
+        "ease-in-out duration-300",
+        "opacity-100",
+        "opacity-0"
+      }
+    )
+    |> JS.hide(
+      to: "#mobile-sidebar",
+      transition: {
+        "transition ease-in-out duration-300 transform",
+        "translate-x-0",
+        "-translate-x-full"
+      }
+    )
+    |> JS.hide(
+      to: "#mobile-sidebar-backdrop",
+      transition: {
+        "transition-opacity ease-linear duration-300",
+        "opacity-100",
+        "opacity-0"
+      }
+    )
+    |> JS.hide(
+      to: "#mobile-sidebar-container",
+      transition: {
+        "transition-opacity ease-linear duration-200",
+        "opacity-100",
+        "opacity-0"
+      }
+    )
+    |> JS.set_attribute({"aria-hidden", "true"}, to: "#mobile-sidebar-backdrop")
+  end
+
   @doc """
   Translates an error message using gettext.
   """

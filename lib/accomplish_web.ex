@@ -53,7 +53,7 @@ defmodule AccomplishWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {AccomplishWeb.Layouts, :app}
+        layout: {AccomplishWeb.Layouts, :live}
 
       unquote(html_helpers())
     end
