@@ -1,5 +1,4 @@
 defmodule AccomplishWeb.Router do
-  alias Accomplish.JobApplications
   use AccomplishWeb, :router
 
   import AccomplishWeb.Plugs.UserAuth
