@@ -1,4 +1,5 @@
 defmodule AccomplishWeb.Router do
+  alias Accomplish.JobApplications
   use AccomplishWeb, :router
 
   import AccomplishWeb.Plugs.UserAuth
@@ -78,11 +79,15 @@ defmodule AccomplishWeb.Router do
 
     live_session :require_authenticated_user,
       root_layout: {AccomplishWeb.Layouts, :root_app},
-      on_mount: [{AccomplishWeb.Plugs.UserAuth, :ensure_authenticated}] do
+      on_mount: [
+        {AccomplishWeb.Plugs.UserAuth, :ensure_authenticated},
+        AccomplishWeb.Nav
+      ] do
       live "/settings", UserSettingsLive, :edit
       live "/settings/email_confirmation/:token", UserSettingsLive, :confirm_email
 
       live "/dashboard", MissionControlLive, :show
+      live "/job_applications", JobApplicationsLive, :index
     end
   end
 
