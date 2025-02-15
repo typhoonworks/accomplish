@@ -705,8 +705,11 @@ defmodule AccomplishWeb.CoreComponents do
     )
     |> JS.hide(
       to: "#mobile-sidebar-container",
-      transition: {"transition-opacity ease-linear duration-300", "opacity-100", "opacity-0"},
-      time: 300
+      transition: {
+        "transition-opacity ease-linear duration-200",
+        "opacity-100",
+        "opacity-0"
+      }
     )
     |> JS.set_attribute({"aria-hidden", "true"}, to: "#mobile-sidebar-backdrop")
   end
