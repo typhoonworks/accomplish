@@ -85,7 +85,7 @@ defmodule AccomplishWeb.Router do
       live "/settings", UserSettingsLive, :edit
       live "/settings/email_confirmation/:token", UserSettingsLive, :confirm_email
 
-      live "/dashboard", MissionControlLive, :show
+      live "/mission_control", MissionControlLive, :show
       live "/job_applications", JobApplicationsLive, :index
     end
   end
