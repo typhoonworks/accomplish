@@ -597,6 +597,12 @@ defmodule AccomplishWeb.CoreComponents do
     """
   end
 
+  def separator(assigns) do
+    ~H"""
+    <div role="separator" class="relative -mx-1 h-px bg-zinc-700"></div>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do
