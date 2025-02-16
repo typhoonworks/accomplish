@@ -7,6 +7,14 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
 
+  def list_user_applications(user) do
+    Repo.all(
+      from a in Application,
+        where: a.applicant_id == ^user.id,
+        preload: [:company]
+    )
+  end
+
   def create_application(applicant, attrs) do
     with {:company_name, true} <- {:company_name, Map.has_key?(attrs, :company_name)},
          {:ok, company} <- Companies.get_or_create(attrs[:company_name]),

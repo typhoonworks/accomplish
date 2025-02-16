@@ -90,6 +90,8 @@ defmodule AccomplishWeb do
       # Core UI components
       import AccomplishWeb.CoreComponents
 
+      import AccomplishWeb.TimeHelpers
+
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
 
