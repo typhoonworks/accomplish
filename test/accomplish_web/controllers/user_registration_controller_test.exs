@@ -15,7 +15,7 @@ defmodule AccomplishWeb.UserRegistrationControllerTest do
     test "redirects if already logged in", %{conn: conn} do
       conn = conn |> log_in_user(user_fixture()) |> get(~p"/signup")
 
-      assert redirected_to(conn) == ~p"/dashboard"
+      assert redirected_to(conn) == ~p"/mission_control"
     end
   end
 
@@ -30,7 +30,7 @@ defmodule AccomplishWeb.UserRegistrationControllerTest do
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/dashboard"
+      assert redirected_to(conn) == ~p"/mission_control"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")

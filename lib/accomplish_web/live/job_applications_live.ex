@@ -3,10 +3,13 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   def render(assigns) do
     ~H"""
-    <.header class="text-center">
-      Job Applications
-      <:subtitle>Manage your stuff</:subtitle>
-    </.header>
     """
+  end
+
+  def mount(_params, _session, socket) do
+    socket =
+      assign(socket, page_title: "Job Applications")
+
+    {:ok, socket}
   end
 end

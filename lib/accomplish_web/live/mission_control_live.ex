@@ -3,10 +3,13 @@ defmodule AccomplishWeb.MissionControlLive do
 
   def render(assigns) do
     ~H"""
-    <.header class="text-center">
-      Mission Control
-      <:subtitle>Manage your stuff</:subtitle>
-    </.header>
     """
+  end
+
+  def mount(_params, _session, socket) do
+    socket =
+      assign(socket, page_title: "Mission Control")
+
+    {:ok, socket}
   end
 end
