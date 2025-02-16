@@ -7,12 +7,23 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
 
-  def list_user_applications(user) do
-    Repo.all(
+  def list_user_applications(user, filter \\ "all") do
+    query =
       from a in Application,
         where: a.applicant_id == ^user.id,
         preload: [:company]
-    )
+
+    query =
+      case filter do
+        "active" ->
+          active_statuses = [:applied, :interviewing, :offer]
+          from a in query, where: a.status in ^active_statuses
+
+        _ ->
+          query
+      end
+
+    Repo.all(query)
   end
 
   def create_application(applicant, attrs) do

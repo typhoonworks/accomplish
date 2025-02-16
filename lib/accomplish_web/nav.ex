@@ -7,10 +7,10 @@ defmodule AccomplishWeb.Nav do
   def on_mount(:default, _params, _session, socket) do
     {:cont,
      socket
-     |> attach_hook(:active_tab, :handle_params, &set_active_tab/3)}
+     |> attach_hook(:current_path, :handle_params, &set_current_path/3)}
   end
 
-  defp set_active_tab(_params, url, socket) do
+  defp set_current_path(_params, url, socket) do
     {:cont, assign(socket, current_path: URI.parse(url).path)}
   end
 end
