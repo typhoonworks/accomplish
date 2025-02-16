@@ -2,6 +2,7 @@ defmodule AccomplishWeb.MissionControlLive do
   use AccomplishWeb, :live_view
 
   import AccomplishWeb.Layout
+  import AccomplishWeb.Components.Dialog
 
   def render(assigns) do
     ~H"""

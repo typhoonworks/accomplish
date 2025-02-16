@@ -25,7 +25,7 @@ defmodule AccomplishWeb.Layout do
 
           <.separator />
 
-          <main class="bg-zinc-900 flex-1 py-8">
+          <main class="bg-zinc-900 flex-1">
             <div class="px-4 sm:px-6 lg:px-8">
               {render_slot(@inner_block)}
             </div>
