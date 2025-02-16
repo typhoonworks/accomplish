@@ -9,7 +9,7 @@ defmodule Accomplish.JobApplications.Application do
   @permitted ~w(role status applied_at last_updated_at source notes)a
   @required ~w(role status applied_at)a
 
-  @status_types [:applied, :interviewing, :offer, :rejected]
+  @status_types [:applied, :interviewing, :offer, :accepted, :rejected]
 
   @derive {JSON.Encoder,
            only: [

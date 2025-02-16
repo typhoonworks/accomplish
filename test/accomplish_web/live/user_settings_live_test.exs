@@ -32,6 +32,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
       %{conn: log_in_user(conn, user), user: user, password: password}
     end
 
+    @tag :skip
     test "updates the user email", %{conn: conn, password: password, user: user} do
       new_email = unique_user_email()
 

@@ -52,8 +52,7 @@ defmodule AccomplishWeb do
 
   def live_view do
     quote do
-      use Phoenix.LiveView,
-        layout: {AccomplishWeb.Layouts, :live}
+      use Phoenix.LiveView
 
       unquote(html_helpers())
     end
@@ -89,6 +88,9 @@ defmodule AccomplishWeb do
       import Phoenix.HTML
       # Core UI components
       import AccomplishWeb.CoreComponents
+      import AccomplishWeb.ShadowrunComponents
+
+      import AccomplishWeb.TimeHelpers
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

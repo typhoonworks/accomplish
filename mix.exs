@@ -65,6 +65,7 @@ defmodule Accomplish.MixProject do
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
+      {:timex, "~> 3.7"},
       {:uuidv7, "~> 1.0"}
     ]
   end

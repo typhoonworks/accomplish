@@ -12,10 +12,12 @@
 
 alias Accomplish.Repo
 alias Accomplish.Accounts
+alias Accomplish.JobApplications
 
 IO.puts("Cleaning up the database...")
 
 tables = [
+  "job_applications",
   "api_keys",
   "users",
   "oauth_applications"
@@ -49,6 +51,36 @@ IO.puts("Creating initial user...")
     },
     min_length: 3
   )
+
+IO.puts("Seeding Job Applications...")
+
+job_apps = [
+  %{
+    company_name: "Basecamp",
+    role: "Software Engineer",
+    status: :applied,
+    applied_at: DateTime.new!(~D[2025-01-10], ~T[00:00:00], "Etc/UTC"),
+    last_updated: DateTime.new!(~D[2025-01-15], ~T[00:00:00], "Etc/UTC")
+  },
+  %{
+    company_name: "Stripe",
+    role: "Backend Engineer",
+    status: :interviewing,
+    applied_at: DateTime.new!(~D[2024-12-20], ~T[00:00:00], "Etc/UTC"),
+    last_updated: DateTime.new!(~D[2025-01-20], ~T[00:00:00], "Etc/UTC")
+  },
+  %{
+    company_name: "GitLab",
+    role: "Frontend Engineer",
+    status: :rejected,
+    applied_at: DateTime.new!(~D[2024-11-10], ~T[00:00:00], "Etc/UTC"),
+    last_updated: DateTime.new!(~D[2024-12-01], ~T[00:00:00], "Etc/UTC")
+  }
+]
+
+for job_attrs <- job_apps do
+  {:ok, _job} = JobApplications.create_application(user, job_attrs)
+end
 
 if Mix.env() == :dev do
   IO.puts("Generating API key for development environment...")

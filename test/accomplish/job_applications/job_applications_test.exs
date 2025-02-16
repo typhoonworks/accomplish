@@ -3,6 +3,54 @@ defmodule Accomplish.JobApplicationsTest do
 
   alias Accomplish.JobApplications
 
+  describe "list_user_applications/1" do
+    setup do
+      applicant = user_fixture()
+
+      job_apps = [
+        %{
+          role: "Software Engineer",
+          status: :applied,
+          applied_at: DateTime.utc_now(),
+          company_name: "Acme Corp"
+        },
+        %{
+          role: "Backend Engineer",
+          status: :interviewing,
+          applied_at: DateTime.utc_now(),
+          company_name: "Globex"
+        },
+        %{
+          role: "Frontend Engineer",
+          status: :rejected,
+          applied_at: DateTime.utc_now(),
+          company_name: "Hooli"
+        }
+      ]
+
+      for attrs <- job_apps do
+        {:ok, _job} = JobApplications.create_application(applicant, attrs)
+      end
+
+      %{applicant: applicant}
+    end
+
+    test "returns all job applications for the given user", %{applicant: applicant} do
+      job_apps = JobApplications.list_user_applications(applicant)
+
+      assert length(job_apps) == 3
+      assert Enum.all?(job_apps, fn app -> app.applicant_id == applicant.id end)
+    end
+
+    test "returns an empty list when user has no applications" do
+      another_user = user_fixture()
+
+      job_apps = JobApplications.list_user_applications(another_user)
+
+      assert job_apps == []
+    end
+  end
+
   describe "create_application/2" do
     setup do
       %{applicant: user_fixture()}
