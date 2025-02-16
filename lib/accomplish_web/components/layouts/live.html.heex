@@ -131,11 +131,62 @@
   <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
     <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-zinc-950 px-6 pb-4">
       <div class="flex h-16 shrink-0 items-center">
-        <img
-          class="h-8 w-auto"
-          src="https://tailwindui.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-          alt="Your Company"
-        />
+        <div class="relative">
+          <button
+            type="button"
+            class="-m-1.5 flex items-center p-1.5"
+            id="user-menu-button"
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span class="sr-only">Open user menu</span>
+            <.avatar name={@current_user.username} size={:sm} />
+            <span class="hidden lg:flex lg:items-center">
+              <span class="ml-4 text-sm/6 font-semibold text-zinc-50" aria-hidden="true">
+                {@current_user.username}
+              </span>
+              <.icon class="ml-2 size-4 text-zinc-400" name="hero-chevron-down" />
+            </span>
+          </button>
+          
+<!--
+           Dropdown menu, show/hide based on menu state.
+
+           Entering: "transition ease-out duration-100"
+             From: "transform opacity-0 scale-95"
+             To: "transform opacity-100 scale-100"
+           Leaving: "transition ease-in duration-75"
+             From: "transform opacity-100 scale-100"
+             To: "transform opacity-0 scale-95"
+         -->
+          <div
+            class="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-zinc-900 py-2 ring-[1px] ring-zinc-700 shadow-md focus:outline-none"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="user-menu-button"
+            tabindex="-1"
+          >
+            <!-- Active: "bg-gray-50 outline-none", Not Active: "" -->
+            <a
+              href="#"
+              class="block px-3 py-1 text-sm/6 text-zinc-200"
+              role="menuitem"
+              tabindex="-1"
+              id="user-menu-item-0"
+            >
+              Your profile
+            </a>
+            <a
+              href="#"
+              class="block px-3 py-1 text-sm/6 text-zinc-200"
+              role="menuitem"
+              tabindex="-1"
+              id="user-menu-item-1"
+            >
+              Sign out
+            </a>
+          </div>
+        </div>
       </div>
       <nav class="flex flex-1 flex-col">
         <ul role="list" class="flex flex-1 flex-col gap-y-4">
@@ -256,8 +307,8 @@
   </div>
 
   <div class="lg:pl-72 h-screen lg:p-2 flex flex-col">
-    <div class="relative lg:z-50 flex-1 flex flex-col lg:ring-1 lg:ring-zinc-200/50 lg:rounded-lg overflow-auto lg:after:absolute lg:after:left-0 lg:after:top-0 lg:after:bottom-0 lg:after:w-[1px] lg:after:bg-zinc-200/50">
-      <div class="sticky top- z-40 flex h-10 shrink-0 items-center gap-x-2 ring-b-1 ring-zinc-200/50 bg-zinc-900 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-zinc-200/50">
+    <div class="relative lg:z-50 flex-1 flex flex-col lg:ring-1 lg:ring-zinc-700 lg:rounded-lg overflow-auto">
+      <div class="sticky top- z-40 flex h-10 shrink-0 items-center gap-x-2 bg-zinc-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-zinc-200/50">
         <button
           type="button"
           id="show-mobile-sidebar"

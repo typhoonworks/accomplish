@@ -10,6 +10,7 @@ defmodule AccomplishWeb.Layouts do
   """
   use AccomplishWeb, :html
 
+  import AccomplishWeb.Components.Avatar
   import AccomplishWeb.Components.Sidebar
 
   embed_templates "layouts/*"
