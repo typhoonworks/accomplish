@@ -38,7 +38,7 @@ defmodule Accomplish.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dns_cluster, "~> 0.1.1"},
       {:ecto_sql, "~> 3.10"},
-      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
+      # {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:excellent_migrations, "~> 0.1", only: [:dev, :test], runtime: false},
       {:finch, "~> 0.13"},
       {:floki, ">= 0.30.0", only: :test},
@@ -51,6 +51,7 @@ defmodule Accomplish.MixProject do
        app: false,
        compile: false,
        depth: 1},
+      {:live_svelte, "~> 0.15.0"},
       {:open_api_spex, "~> 3.21"},
       {:phoenix, "~> 1.7.18"},
       {:phoenix_ecto, "~> 4.5"},
@@ -78,16 +79,24 @@ defmodule Accomplish.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
+      setup: ["deps.get", "ecto.setup", "cmd --cd assets npm install"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.typecheck": ["cmd npm --prefix assets run typecheck"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind accomplish", "esbuild accomplish"],
+      "assets.lint": [
+        "cmd --cd assets npx eslint .",
+        "cmd --cd assets npx stylelint '**/*.{css,scss,svelte}'"
+      ],
+      "assets.format": [
+        "cmd --cd assets npx prettier --write .",
+        "cmd --cd assets npx stylelint --fix '**/*.{css,scss,svelte}'"
+      ],
+      # "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
+      # "assets.build": ["tailwind accomplish", "esbuild accomplish"],
       "assets.deploy": [
         "tailwind accomplish --minify",
-        "esbuild accomplish --minify",
+        "cmd --cd assets node build.js --deploy",
         "phx.digest"
       ]
     ]

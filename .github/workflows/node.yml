@@ -16,13 +16,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Read .tool-versions
-      uses: marocchino/tool-versions-action@v1
-      id: versions
-    - name: Set up Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{steps.versions.outputs.nodejs}}
-    - run: npm install --prefix ./assets
-    - run: npm run typecheck --prefix ./assets
+      - uses: actions/checkout@v4
+
+      - name: Read .tool-versions
+        uses: marocchino/tool-versions-action@v1
+        id: versions
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.versions.outputs.nodejs }}
+          cache: "npm"
+          cache-dependency-path: ./assets/package-lock.json
+
+      - name: Install Node Dependencies
+        run: npm install --prefix ./assets
+
+      - name: Type Check
+        run: npm run typecheck --prefix ./assets
+
+      - name: Lint JavaScript/TypeScript/Svelte
+        run: npm run lint --prefix ./assets
+
+      - name: Lint CSS/SCSS/Svelte styles
+        run: cd assets && npx stylelint '**/*.{css,scss,svelte}' --allow-empty-input --config .stylelintrc.json
+
+      - name: Check Formatting
+        run: npm run format:check --prefix ./assets
+

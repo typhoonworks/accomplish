@@ -1,4 +1,4 @@
-import { Hook } from "phoenix_live_view";
+import type { Hook } from "phoenix_live_view";
 
 const CodeInput: Hook = {
   mounted() {

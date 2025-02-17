@@ -1,0 +1,13 @@
+{
+  "extends": ["stylelint-config-recommended", "stylelint-config-tailwindcss"],
+  "rules": {
+    "block-no-empty": true,
+    "color-no-invalid-hex": true
+  },
+  "overrides": [
+    {
+      "files": ["**/*.svelte"],
+      "customSyntax": "postcss-html"
+    }
+  ]
+}
