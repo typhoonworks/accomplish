@@ -29,7 +29,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./assets/package-lock.json
 
-      - run: npm install --prefix ./assets
+      - name: Install Node Dependencies
+        run: npm install --prefix ./assets
 
       - name: Type Check
         run: npm run typecheck --prefix ./assets
@@ -38,7 +39,7 @@ jobs:
         run: npm run lint --prefix ./assets
 
       - name: Lint CSS/SCSS/Svelte styles
-        run: npx stylelint '**/*.{css,scss,svelte}' --allow-empty-input --config ./assets/.stylelintrc.json
+        run: cd assets && npx stylelint '**/*.{css,scss,svelte}' --allow-empty-input --config .stylelintrc.json
 
       - name: Check Formatting
         run: npm run format --prefix ./assets -- --check
