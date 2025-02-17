@@ -1,5 +1,6 @@
 defmodule AccomplishWeb.MissionControlLive do
   use AccomplishWeb, :live_view
+  use LiveSvelte.Components
 
   import AccomplishWeb.Layout
 
@@ -9,8 +10,6 @@ defmodule AccomplishWeb.MissionControlLive do
       <:page_header>
         <.page_header page_title="Mission Control" />
       </:page_header>
-
-      <.svelte name="Example" props={%{number: @number}} socket={@socket} />
     </.layout>
     """
   end

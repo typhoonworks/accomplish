@@ -1,5 +1,6 @@
 defmodule AccomplishWeb.JobApplicationsLive do
   use AccomplishWeb, :live_view
+  use LiveSvelte.Components
 
   alias Accomplish.JobApplications
 
@@ -43,7 +44,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
                   </div>
                   <button
                     class="text-zinc-400 hover:text-zinc-200"
-                    phx-click={show_modal("my-modal")}
+                    phx-click={show_modal("new-job-application")}
                     phx-value-status={status}
                   >
                     <.icon class="text-current size-4" name="hero-plus" />
@@ -72,8 +73,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
     </.layout>
 
     <.dialog
-      id="my-modal"
-      on_cancel={hide_modal("my-modal")}
+      id="new-job-application"
+      on_cancel={hide_modal("new-job-application")}
       class="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
     >
       <.dialog_header>
@@ -82,6 +83,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
           Fill in the details to create a new job application.
         </.dialog_description>
       </.dialog_header>
+
+      <.InlineEditor
+        id="job-title-editor"
+        placeholder="Role"
+        classList="text-zinc-300 text-md font-semibold"
+        socket={@socket}
+        phx-hook="FocusEditorHook"
+        phx-value-target="job-title-editor"
+      />
 
       <.dialog_footer>
         <.button phx-disable-with="Saving application..." class="w-full btn-primary">
@@ -123,10 +133,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:ok, socket}
   end
 
-  def handle_event("open_modal", %{"status" => status}, socket) do
-    {:noreply, assign(socket, modal_status: status)}
-  end
-
   def handle_event("validate_application", %{"application" => application_params}, socket) do
     changeset = JobApplications.change_application(application_params)
     {:noreply, assign(socket, changeset: changeset, form: application_params)}
@@ -139,7 +145,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
          socket
          |> put_flash(:info, "Job application created successfully.")
          |> assign(:changeset, JobApplications.change_application(%{}))
-         |> push_event("phx-hide-modal", %{id: "my-modal"})}
+         |> push_event("phx-hide-modal", %{id: "new-job-application"})}
 
       {:error, changeset} ->
         {:noreply, assign(socket, changeset: changeset)}

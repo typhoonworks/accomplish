@@ -1,0 +1,74 @@
+.tiptap {
+  > * + * {
+    margin-top: 0.75em;
+  }
+
+  a {
+    color: #2B67EB;
+  }
+
+  ul,
+  ol {
+    padding: 0 1rem;
+  }
+
+  /* ul {
+    @apply list-disc;
+  } */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    line-height: 1.1;
+  }
+
+  .inline {
+    @apply bg-zinc-800 tracking-tight px-1 py-[0.5px] ring-1 ring-zinc-700 rounded font-extralight;
+  }
+
+  pre {
+    @apply bg-gray-50 text-gray-900 border border-gray-200 mt-2;
+    font-family: 'JetBrainsMono', monospace;
+    padding: 0rem 0.75rem;
+    border-radius: 0.5rem;
+
+    code {
+      @apply border-0;
+      color: inherit;
+      padding: 0;
+      background: none;
+      font-size: 0.8rem;
+    }
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  blockquote {
+    @apply p-2 my-2 bg-gray-50 border-l-4 border-gray-300 rounded-sm;
+  }
+
+  hr {
+    border: none;
+    border-top: 2px solid rgba(#0D0D0D, 0.1);
+    margin: 2rem 0;
+  }
+}
+
+.ProseMirror-focused {
+  @apply outline-none;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  @apply text-zinc-500;
+
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

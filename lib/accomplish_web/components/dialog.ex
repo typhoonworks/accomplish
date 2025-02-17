@@ -21,7 +21,7 @@ defmodule AccomplishWeb.Components.Dialog do
     >
       <div
         id={"#{@id}-bg"}
-        class="fixed inset-0 bg-zinc-900/80 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0"
+        class="fixed inset-0 bg-zinc-900/50 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0"
         aria-hidden="true"
       />
       <div
@@ -42,7 +42,7 @@ defmodule AccomplishWeb.Components.Dialog do
             aria-modal="true"
             tabindex="0"
             class={[
-              "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-700 bg-zinc-950/85 text-zinc-300 p-6 shadow-lg duration-200 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0 peer-data-[state=closed]:zoom-out-95 peer-data-[state=open]:zoom-in-95 peer-data-[state=closed]:slide-out-to-left-1/2 peer-data-[state=closed]:slide-out-to-top-[48%] peer-data-[state=open]:slide-in-from-left-1/2 peer-data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+              "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-700 bg-zinc-800 text-zinc-300 p-6 shadow-lg duration-200 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0 peer-data-[state=closed]:zoom-out-95 peer-data-[state=open]:zoom-in-95 peer-data-[state=closed]:slide-out-to-left-1/2 peer-data-[state=closed]:slide-out-to-top-[48%] peer-data-[state=open]:slide-in-from-left-1/2 peer-data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
               @class
             ]}
           >
