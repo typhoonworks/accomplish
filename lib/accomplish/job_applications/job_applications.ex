@@ -46,6 +46,11 @@ defmodule Accomplish.JobApplications do
     end
   end
 
+  def change_application(attrs \\ %{}) do
+    %Application{}
+    |> Application.changeset(attrs)
+  end
+
   def add_stage(application, attrs) do
     Stage.create_changeset(application, attrs)
     |> Repo.insert()

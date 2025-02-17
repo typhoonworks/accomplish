@@ -77,18 +77,16 @@ defmodule AccomplishWeb.JobApplicationsLive do
       class="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
     >
       <.dialog_header>
-        <.dialog_title>Job Application</.dialog_title>
+        <.dialog_title>New Job Application</.dialog_title>
         <.dialog_description>
           Fill in the details to create a new job application.
         </.dialog_description>
       </.dialog_header>
-      <div class="grid gap-4 py-4">
-        <p class="text-sm text-zinc-400">
-          Status: <strong class="text-zinc-300">{assigns[:modal_status] || "None"}</strong>
-        </p>
-      </div>
+
       <.dialog_footer>
-        Save
+        <.button phx-disable-with="Saving application..." class="w-full btn-primary">
+          Save
+        </.button>
       </.dialog_footer>
     </.dialog>
     """
@@ -111,11 +109,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> Enum.group_by(& &1.status)
       |> Enum.sort_by(fn {status, _} -> Map.get(status_priority, status, 999) end)
 
+    changeset = JobApplications.change_application(%{})
+
     socket =
       assign(socket,
         page_title: "Job Applications",
         active_filter: active_filter,
-        applications_by_status: applications_by_status
+        applications_by_status: applications_by_status,
+        changeset: changeset,
+        form: %{}
       )
 
     {:ok, socket}
@@ -123,6 +125,25 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   def handle_event("open_modal", %{"status" => status}, socket) do
     {:noreply, assign(socket, modal_status: status)}
+  end
+
+  def handle_event("validate_application", %{"application" => application_params}, socket) do
+    changeset = JobApplications.change_application(application_params)
+    {:noreply, assign(socket, changeset: changeset, form: application_params)}
+  end
+
+  def handle_event("save_application", %{"application" => application_params}, socket) do
+    case JobApplications.create_application(socket.assigns.current_user, application_params) do
+      {:ok, _application} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Job application created successfully.")
+         |> assign(:changeset, JobApplications.change_application(%{}))
+         |> push_event("phx-hide-modal", %{id: "my-modal"})}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, changeset: changeset)}
+    end
   end
 
   defp format_status(:applied), do: "Applied"
