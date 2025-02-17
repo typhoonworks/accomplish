@@ -2,7 +2,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit --pretty",
     "lint": "eslint . && stylelint '**/*.{css,scss,svelte}'",
-    "format": "prettier --write . && stylelint --fix '**/*.{css,scss,svelte}'"
+    "format": "prettier --write . && stylelint --fix '**/*.{css,scss,svelte}'",
+    "format:check": "prettier --check . && stylelint '**/*.{css,scss,svelte}'"
   },
   "type": "module",
   "devDependencies": {

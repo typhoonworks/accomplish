@@ -13,8 +13,8 @@
     "paths": {
       "$lib": ["svelte"],
       "$lib/*": ["svelte/*"]
-    },
+    }
   },
-  "include": ["src", "svelte", "**/*.ts",  "**/*.svelte"],
+  "include": ["src", "svelte", "**/*.ts", "**/*.svelte"],
   "exclude": ["node_modules", "dist"]
 }
