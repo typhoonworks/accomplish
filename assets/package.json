@@ -3,7 +3,21 @@
     "typecheck": "tsc --noEmit --pretty",
     "lint": "eslint . && stylelint '**/*.{css,scss,svelte}'",
     "format": "prettier --write . && stylelint --fix '**/*.{css,scss,svelte}'",
-    "format:check": "prettier --check . && stylelint '**/*.{css,scss,svelte}'"
+    "format:check": "prettier --check . && stylelint '**/*.{css,scss,svelte}'",
+    "prepare": "husky",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "**/*.{js,ts,svelte}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.{css,scss,svelte}": [
+      "stylelint --fix"
+    ],
+    "**/*.ts": [
+      "tsc --noEmit"
+    ]
   },
   "type": "module",
   "devDependencies": {
@@ -20,6 +34,8 @@
     "eslint": "^9.20.1",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-svelte": "^2.46.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "postcss-html": "^1.8.0",
     "prettier": "^3.5.1",
     "prettier-plugin-svelte": "^3.3.3",
