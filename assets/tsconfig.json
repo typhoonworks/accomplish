@@ -13,8 +13,9 @@
     "paths": {
       "$lib": ["svelte"],
       "$lib/*": ["svelte/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./assets/types"]
   },
-  "include": ["src", "svelte", "**/*.ts", "svelte.d.ts",  "**/*.svelte"],
+  "include": ["src", "svelte", "**/*.ts",  "**/*.svelte"],
   "exclude": ["node_modules", "dist"]
 }
