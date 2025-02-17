@@ -90,10 +90,14 @@ defmodule AccomplishWeb do
       import AccomplishWeb.CoreComponents
       import AccomplishWeb.ShadowrunComponents
 
-      import AccomplishWeb.TimeHelpers
+      # LiveSvelte helpers
+      import LiveSvelte
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
+
+      # Accomplish helpers
+      import AccomplishWeb.TimeHelpers
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())
