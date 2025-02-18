@@ -113,37 +113,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 id="application-status-select"
                 field={@form[:status]}
                 prompt="Change application status"
-                value="applied"
-                options={[
-                  %{
-                    label: "Applied",
-                    value: "applied",
-                    icon: "hero-paper-airplane",
-                    color: "text-green-600",
-                    shortcut: "1"
-                  },
-                  %{
-                    label: "Interviewing",
-                    value: "interviewing",
-                    icon: "hero-envelope-open",
-                    color: "text-yellow-600",
-                    shortcut: "2"
-                  },
-                  %{
-                    label: "Offer",
-                    value: "offer",
-                    icon: "hero-hand-thumb-up",
-                    color: "text-blue-600",
-                    shortcut: "3"
-                  },
-                  %{
-                    label: "Rejected",
-                    value: "rejected",
-                    icon: "hero-hand-thumb-down",
-                    color: "text-red-600",
-                    shortcut: "4"
-                  }
-                ]}
+                value={@form[:status].value}
+                options={options_for_application_status()}
                 on_select="update_application_status"
               />
             </div>
@@ -198,12 +169,11 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> Enum.sort_by(fn {status, _} -> Map.get(status_priority, status, 999) end)
 
     socket =
-      assign(socket,
-        page_title: "Job Applications",
-        active_filter: active_filter,
-        applications_by_status: applications_by_status,
-        form: to_form(changeset)
-      )
+      socket
+      |> assign(:page_title, "Job Applications")
+      |> assign(:active_filter, active_filter)
+      |> assign(:applications_by_status, applications_by_status)
+      |> assign(:form, to_form(changeset))
 
     {:ok, socket}
   end
@@ -260,4 +230,37 @@ defmodule AccomplishWeb.JobApplicationsLive do
   defp status_color(:interviewing), do: "bg-yellow-600"
   defp status_color(:offer), do: "bg-blue-500"
   defp status_color(:rejected), do: "bg-red-600"
+
+  defp options_for_application_status do
+    [
+      %{
+        label: "Applied",
+        value: "applied",
+        icon: "hero-paper-airplane",
+        color: "text-green-600",
+        shortcut: "1"
+      },
+      %{
+        label: "Interviewing",
+        value: "interviewing",
+        icon: "hero-envelope-open",
+        color: "text-yellow-600",
+        shortcut: "2"
+      },
+      %{
+        label: "Offer",
+        value: "offer",
+        icon: "hero-hand-thumb-up",
+        color: "text-blue-600",
+        shortcut: "3"
+      },
+      %{
+        label: "Rejected",
+        value: "rejected",
+        icon: "hero-hand-thumb-down",
+        color: "text-red-600",
+        shortcut: "4"
+      }
+    ]
+  end
 end
