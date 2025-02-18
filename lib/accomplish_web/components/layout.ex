@@ -3,10 +3,10 @@ defmodule AccomplishWeb.Layout do
 
   use AccomplishWeb, :live_view
 
-  import AccomplishWeb.Components.Avatar
-  import AccomplishWeb.Components.DropdownMenu
-  import AccomplishWeb.Components.Menu
-  import AccomplishWeb.Components.Sidebar
+  import AccomplishWeb.Shadownrun.Avatar
+  import AccomplishWeb.Shadownrun.DropdownMenu
+  import AccomplishWeb.Shadownrun.Menu
+  import AccomplishWeb.Shadownrun.Sidebar
 
   attr :current_user, :map, default: nil
   attr :current_path, :string, default: "/"

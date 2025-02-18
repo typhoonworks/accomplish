@@ -10,10 +10,10 @@ defmodule AccomplishWeb.Layouts do
   """
   use AccomplishWeb, :html
 
-  import AccomplishWeb.Components.Avatar
-  import AccomplishWeb.Components.DropdownMenu
-  import AccomplishWeb.Components.Menu
-  import AccomplishWeb.Components.Sidebar
+  import AccomplishWeb.Shadownrun.Avatar
+  import AccomplishWeb.Shadownrun.DropdownMenu
+  import AccomplishWeb.Shadownrun.Menu
+  import AccomplishWeb.Shadownrun.Sidebar
 
   embed_templates "layouts/*"
 end

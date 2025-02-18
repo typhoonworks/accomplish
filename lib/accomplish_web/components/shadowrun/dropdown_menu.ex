@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.Components.DropdownMenu do
+defmodule AccomplishWeb.Shadownrun.DropdownMenu do
   @moduledoc false
 
   use AccomplishWeb, :live_component

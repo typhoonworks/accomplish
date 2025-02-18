@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.Components.Avatar do
+defmodule AccomplishWeb.Shadownrun.Avatar do
   @moduledoc false
 
   use AccomplishWeb, :live_component

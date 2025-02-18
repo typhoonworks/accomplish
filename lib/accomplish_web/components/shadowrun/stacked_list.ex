@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.Components.StackedList do
+defmodule AccomplishWeb.Shadownrun.StackedList do
   @moduledoc false
 
   use AccomplishWeb, :live_component

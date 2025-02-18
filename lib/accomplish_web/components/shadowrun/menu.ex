@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.Components.Menu do
+defmodule AccomplishWeb.Shadownrun.Menu do
   @moduledoc false
 
   use AccomplishWeb, :live_component

@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.Components.Dialog do
+defmodule AccomplishWeb.Shadownrun.Dialog do
   @moduledoc false
 
   use AccomplishWeb, :live_component

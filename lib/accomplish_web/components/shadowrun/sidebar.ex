@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.Components.Sidebar do
+defmodule AccomplishWeb.Shadownrun.Sidebar do
   @moduledoc false
 
   use AccomplishWeb, :live_component
