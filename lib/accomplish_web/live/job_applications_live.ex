@@ -5,8 +5,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
   alias Accomplish.JobApplications
 
   import AccomplishWeb.Layout
-  import AccomplishWeb.Components.Dialog
-  import AccomplishWeb.Components.StackedList
+  import AccomplishWeb.Shadownrun.Dialog
+  import AccomplishWeb.Shadownrun.StackedList
 
   def render(assigns) do
     ~H"""
@@ -78,26 +78,39 @@ defmodule AccomplishWeb.JobApplicationsLive do
       class="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
     >
       <.dialog_header>
-        <.dialog_title>New Job Application</.dialog_title>
+        <.dialog_title class="text-sm text-zinc-200">New Job Application</.dialog_title>
         <.dialog_description>
           Fill in the details to create a new job application.
         </.dialog_description>
       </.dialog_header>
+      <.shadow_form
+        for={@form}
+        id="application_form"
+        as="application"
+        phx-change="validate_application"
+        phx-submit="save_application"
+      >
+        <.dialog_content id="new-job-application-content">
+          <div class="space-y-3">
+            <.shadow_input field={@form[:role]} placeholder="Job Role" class="text-lg" />
+            <.shadow_input field={@form[:source]} placeholder="Source (e.g., LinkedIn, referral)" />
+          </div>
+        </.dialog_content>
 
-      <.InlineEditor
-        id="job-title-editor"
-        placeholder="Role"
-        classList="text-zinc-300 text-md font-semibold"
-        socket={@socket}
-        phx-hook="FocusEditorHook"
-        phx-value-target="job-title-editor"
-      />
-
-      <.dialog_footer>
-        <.button phx-disable-with="Saving application..." class="w-full btn-primary">
-          Save
-        </.button>
-      </.dialog_footer>
+        <.dialog_footer>
+          <div class="flex justify-end gap-2">
+            <.shadow_button
+              type="button"
+              variant="secondary"
+              phx-click="reset_application_form"
+              phx-value-id="new-job-application"
+            >
+              Cancel
+            </.shadow_button>
+            <.shadow_button type="submit" variant="primary">Create application</.shadow_button>
+          </div>
+        </.dialog_footer>
+      </.shadow_form>
     </.dialog>
     """
   end
@@ -106,6 +119,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     active_filter = params["filter"] || "active"
     user = socket.assigns.current_user
     applications = JobApplications.list_user_applications(user, active_filter)
+    changeset = JobApplications.change_application_form(%{})
 
     status_priority = %{
       offer: 1,
@@ -119,37 +133,48 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> Enum.group_by(& &1.status)
       |> Enum.sort_by(fn {status, _} -> Map.get(status_priority, status, 999) end)
 
-    changeset = JobApplications.change_application(%{})
-
     socket =
       assign(socket,
         page_title: "Job Applications",
         active_filter: active_filter,
         applications_by_status: applications_by_status,
-        changeset: changeset,
-        form: %{}
+        form: to_form(changeset)
       )
 
     {:ok, socket}
   end
 
-  def handle_event("validate_application", %{"application" => application_params}, socket) do
-    changeset = JobApplications.change_application(application_params)
-    {:noreply, assign(socket, changeset: changeset, form: application_params)}
+  def handle_event("validate_application", %{"application_form" => application_params}, socket) do
+    changeset = JobApplications.change_application_form(application_params)
+    {:noreply, assign(socket, form: to_form(changeset))}
   end
 
-  def handle_event("save_application", %{"application" => application_params}, socket) do
+  def handle_event("save_application", %{"application_form" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
       {:ok, _application} ->
+        changeset = JobApplications.change_application_form(%{})
+
         {:noreply,
          socket
          |> put_flash(:info, "Job application created successfully.")
-         |> assign(:changeset, JobApplications.change_application(%{}))
+         |> assign(:form, to_form(changeset))
          |> push_event("phx-hide-modal", %{id: "new-job-application"})}
 
       {:error, changeset} ->
         {:noreply, assign(socket, changeset: changeset)}
     end
+  end
+
+  def handle_event("reset_application_form", %{"id" => modal_id}, socket) do
+    changeset = JobApplications.change_application_form(%{})
+
+    {:noreply,
+     socket
+     |> assign(:form, to_form(changeset))
+     |> push_event("js-exec", %{
+       to: "##{modal_id}",
+       attr: "phx-remove"
+     })}
   end
 
   defp format_status(:applied), do: "Applied"

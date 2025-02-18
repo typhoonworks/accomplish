@@ -42,7 +42,7 @@ defmodule AccomplishWeb.Shadownrun.Dialog do
             aria-modal="true"
             tabindex="0"
             class={[
-              "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-700 bg-zinc-800 text-zinc-300 p-6 shadow-lg duration-200 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0 peer-data-[state=closed]:zoom-out-95 peer-data-[state=open]:zoom-in-95 peer-data-[state=closed]:slide-out-to-left-1/2 peer-data-[state=closed]:slide-out-to-top-[48%] peer-data-[state=open]:slide-in-from-left-1/2 peer-data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+              "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-700 bg-zinc-800 text-zinc-300 shadow-lg duration-200 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0 peer-data-[state=closed]:zoom-out-95 peer-data-[state=open]:zoom-in-95 peer-data-[state=closed]:slide-out-to-left-1/2 peer-data-[state=closed]:slide-out-to-top-[48%] peer-data-[state=open]:slide-in-from-left-1/2 peer-data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
               @class
             ]}
           >
@@ -68,7 +68,7 @@ defmodule AccomplishWeb.Shadownrun.Dialog do
 
   def dialog_header(assigns) do
     ~H"""
-    <div class={["flex flex-col space-y-1.5 text-center sm:text-left text-zinc-50", @class]}>
+    <div class={["flex flex-col space-y-1.5 px-6 pt-6  text-center sm:text-left text-zinc-50", @class]}>
       {render_slot(@inner_block)}
     </div>
     """
@@ -96,12 +96,30 @@ defmodule AccomplishWeb.Shadownrun.Dialog do
     """
   end
 
+  attr :id, :string, default: nil
+  attr :class, :string, default: nil
+  slot :inner_block, required: true
+
+  def dialog_content(assigns) do
+    ~H"""
+    <div
+      id={@id}
+      class={["flex flex-col space-y-1.5 px-6 text-center sm:text-left text-zinc-200", @class]}
+    >
+      {render_slot(@inner_block)}
+    </div>
+    """
+  end
+
   attr :class, :string, default: nil
   slot :inner_block, required: true
 
   def dialog_footer(assigns) do
     ~H"""
-    <div class={["flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", @class]}>
+    <div class={[
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 px-6 py-2 ring-1 ring-zinc-700",
+      @class
+    ]}>
       {render_slot(@inner_block)}
     </div>
     """
