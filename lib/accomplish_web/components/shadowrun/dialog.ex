@@ -9,7 +9,17 @@ defmodule AccomplishWeb.Shadownrun.Dialog do
   attr :class, :string, default: nil
   slot :inner_block, required: true
 
+  attr :position, :atom, default: :center
+
   def dialog(assigns) do
+    position_classes =
+      case assigns[:position] do
+        :upper_third -> "top-[23%] translate-y-[-23%]"
+        _ -> "top-[50%] translate-y-[-50%]"
+      end
+
+    assigns = assign(assigns, :position_classes, position_classes)
+
     ~H"""
     <div
       id={@id}
@@ -42,7 +52,14 @@ defmodule AccomplishWeb.Shadownrun.Dialog do
             aria-modal="true"
             tabindex="0"
             class={[
-              "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-700 bg-zinc-800 text-zinc-300 shadow-lg duration-200 peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0 peer-data-[state=closed]:zoom-out-95 peer-data-[state=open]:zoom-in-95 peer-data-[state=closed]:slide-out-to-left-1/2 peer-data-[state=closed]:slide-out-to-top-[48%] peer-data-[state=open]:slide-in-from-left-1/2 peer-data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+              "fixed left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%]",
+              @position_classes,
+              "gap-4 border border-zinc-700 bg-zinc-800 text-zinc-300 shadow-lg duration-200",
+              "peer-data-[state=open]:animate-in peer-data-[state=closed]:animate-out",
+              "peer-data-[state=closed]:fade-out-0 peer-data-[state=open]:fade-in-0",
+              "peer-data-[state=closed]:zoom-out-95 peer-data-[state=open]:zoom-in-95",
+              "peer-data-[state=closed]:slide-out-to-left-1/2 peer-data-[state=closed]:slide-out-to-top-[48%]",
+              "peer-data-[state=open]:slide-in-from-left-1/2 peer-data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
               @class
             ]}
           >

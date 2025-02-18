@@ -4,9 +4,11 @@ defmodule AccomplishWeb.ShadowrunComponents do
   use Phoenix.Component
   use Gettext, backend: AccomplishWeb.Gettext
 
-  # alias Phoenix.LiveView.JS
+  alias Phoenix.LiveView.JS
 
   import AccomplishWeb.CoreComponents
+  import AccomplishWeb.Shadownrun.DropdownMenu
+  import AccomplishWeb.Shadownrun.Menu
 
   attr :type, :string, default: "button"
   attr :variant, :string, default: "primary", values: ["primary", "secondary"]
@@ -22,6 +24,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
       class={[
         "px-2.5 py-1 rounded-md text-xs font-light leading-normal transition-colors duration-150",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+        "flex items-center justify-center gap-2",
         button_variant_class(@variant),
         @disabled && "opacity-50 cursor-not-allowed",
         @class
@@ -39,7 +42,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
   defp button_variant_class("secondary"),
     do:
-      "bg-zinc-700 text-zinc-200 hover:bg-zinc-600 border border-solid border-zinc-500 shadow-md"
+      "bg-zinc-700 text-zinc-200 hover:bg-zinc-600 border border-solid border-zinc-600 shadow-md"
 
   attr :active, :boolean, default: false
   attr :icon, :string, default: nil
@@ -67,9 +70,11 @@ defmodule AccomplishWeb.ShadowrunComponents do
     """
   end
 
+  attr :id, :any, default: nil
+
   def separator(assigns) do
     ~H"""
-    <div role="separator" class="relative -mx-1 h-px bg-zinc-700"></div>
+    <div role="separator" id={@id} class="relative -mx-1 h-px bg-zinc-700"></div>
     """
   end
 
@@ -97,6 +102,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
   end
 
   attr :id, :any, default: nil
+  attr :class, :string, default: nil
   attr :name, :any
   attr :label, :string, default: nil
   attr :value, :any
@@ -151,7 +157,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         />
         {@label}
       </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
     """
   end
@@ -169,7 +175,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         <option :if={@prompt} value="">{@prompt}</option>
         {Phoenix.HTML.Form.options_for_select(@options, @value)}
       </select>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
     """
   end
@@ -180,10 +186,10 @@ defmodule AccomplishWeb.ShadowrunComponents do
       <textarea
         id={@id}
         name={@name}
-        class="w-full bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none focus:ring-0 min-h-[6rem] resize-none"
+        class="w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0 min-h-[6rem] resize-none"
         {@rest}
       ><%= Phoenix.HTML.Form.normalize_value("textarea", @value) %></textarea>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
     """
   end
@@ -196,11 +202,116 @@ defmodule AccomplishWeb.ShadowrunComponents do
         name={@name}
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-        class="w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0"
+        class={[
+          "w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0",
+          @class
+        ]}
         {@rest}
       />
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
+    """
+  end
+
+  attr :id, :any, default: nil
+  attr :name, :any
+  attr :label, :string, default: nil
+  attr :value, :any
+  attr :field, Phoenix.HTML.FormField
+  attr :errors, :list, default: []
+  attr :hint, :string, default: nil
+  attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
+  attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
+  attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
+  attr :on_select, :any, default: nil, doc: "Event handler for selection"
+
+  def shadow_select_input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
+    assigns
+    |> assign(field: nil, id: assigns.id || field.id)
+    |> assign(:errors, Enum.map(field.errors, &translate_error/1))
+    |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
+    |> assign_new(:value, fn ->
+      case field.value do
+        value when is_atom(value) -> Atom.to_string(value)
+        value -> value
+      end
+    end)
+    |> assign(
+      :selected,
+      Enum.find(assigns.options, fn option ->
+        to_string(option.value) == to_string(assigns.value)
+      end) || Enum.at(assigns.options, 0)
+    )
+    |> shadow_select_input()
+  end
+
+  def shadow_select_input(assigns) do
+    ~H"""
+    <div id={"#{@id}-container"} phx-feedback-for={@name}>
+      <div class="relative mt-2">
+        <input type="hidden" name={@name} id={"#{@id}-hidden"} value={@value} />
+
+        <.dropdown_menu>
+          <.dropdown_menu_trigger class="group">
+            <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant="secondary">
+              <%= if Map.has_key?(@selected, :icon) do %>
+                <.icon name={@selected.icon} class={["size-4", @selected.color]} />
+              <% end %>
+              <span>{@selected.label}</span>
+            </.shadow_button>
+          </.dropdown_menu_trigger>
+
+          <.dropdown_menu_content>
+            <.menu class="w-56 text-zinc-300 bg-zinc-800">
+              <.menu_group>
+                <.menu_item>
+                  <span class="text-zinc-400 font-extralight tracking-tighter">
+                    {@prompt}
+                  </span>
+                </.menu_item>
+              </.menu_group>
+
+              <.menu_separator />
+
+              <.menu_group>
+                <%= for option <- @options do %>
+                  <.menu_item
+                    phx-click={JS.push(@on_select)}
+                    phx-value-value={option.value}
+                    class="hover:bg-zinc-600 rounded-md"
+                  >
+                    <div class="w-full flex items-center gap-2">
+                      <%= if Map.has_key?(option, :icon) do %>
+                        <.icon name={option.icon} class={["size-4", option.color]} />
+                      <% end %>
+                      <span>{option.label}</span>
+                      <.menu_shortcut>
+                        <div class="w-full flex items-center gap-2 justify-between">
+                          <%= if option.value == @value do %>
+                            <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                          <% end %>
+                          <span>{option.shortcut}</span>
+                        </div>
+                      </.menu_shortcut>
+                    </div>
+                  </.menu_item>
+                <% end %>
+              </.menu_group>
+            </.menu>
+          </.dropdown_menu_content>
+        </.dropdown_menu>
+      </div>
+    </div>
+    """
+  end
+
+  slot :inner_block, required: true
+
+  def shadow_error(assigns) do
+    ~H"""
+    <p class="flex gap-2 text-xs leading-6 text-red-700">
+      {render_slot(@inner_block)}
+    </p>
     """
   end
 end
