@@ -44,8 +44,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
                   </div>
                   <button
                     class="text-zinc-400 hover:text-zinc-200"
-                    phx-click={show_modal("new-job-application")}
+                    phx-click="prepare_new_application"
                     phx-value-status={status}
+                    phx-value-modal_id="new-job-application"
                   >
                     <.icon class="text-current size-4" name="hero-plus" />
                   </button>
@@ -102,7 +103,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 class="text-xl tracking-tighter"
               />
               <.shadow_input
-                field={@form[:role]}
+                field={@form[:company_name]}
                 placeholder="Company name"
                 class="text-base tracking-tighter"
               />
@@ -178,13 +179,22 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:ok, socket}
   end
 
+  def handle_event(
+        "prepare_new_application",
+        %{"status" => status, "modal_id" => modal_id},
+        socket
+      ) do
+    {:noreply,
+     socket
+     |> assign_application_form_status(status)
+     |> push_event("js-exec", %{
+       to: "##{modal_id}",
+       attr: "phx-show-modal"
+     })}
+  end
+
   def handle_event("update_application_status", %{"value" => value}, socket) do
-    form = socket.assigns.form
-
-    updated_changeset =
-      Ecto.Changeset.put_change(form.source, :status, value)
-
-    {:noreply, assign(socket, :form, to_form(updated_changeset))}
+    {:noreply, socket |> assign_application_form_status(value)}
   end
 
   def handle_event("validate_application", %{"application_form" => application_params}, socket) do
@@ -219,6 +229,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
        to: "##{modal_id}",
        attr: "phx-remove"
      })}
+  end
+
+  defp assign_application_form_status(socket, status) do
+    form = socket.assigns.form
+
+    updated_changeset =
+      Ecto.Changeset.put_change(form.source, :status, status)
+
+    assign(socket, :form, to_form(updated_changeset))
   end
 
   defp format_status(:applied), do: "Applied"

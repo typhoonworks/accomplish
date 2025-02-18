@@ -11,13 +11,11 @@ defmodule AccomplishWeb.MissionControlLive do
         <.page_header page_title="Mission Control" />
       </:page_header>
 
-      <.InlineEditor
-        id="job-title-editor"
-        placeholder="Role"
+      <.Editor
+        id="notes-editor"
+        placeholder="Write down key details, next moves, or important notes..."
         classList="text-zinc-300 text-md font-semibold"
         socket={@socket}
-        phx-hook="FocusEditorHook"
-        phx-value-target="job-title-editor"
       />
     </.layout>
     """
