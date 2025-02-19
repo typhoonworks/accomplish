@@ -4,17 +4,17 @@
   }
 
   a {
-    color: #2B67EB;
+    color: theme("colors.blue.600");
   }
 
   ul,
   ol {
-    padding: 0 1rem;
+    padding: 0 theme("spacing.4");
   }
 
-  /* ul {
-    @apply list-disc;
-  } */
+  ul {
+    list-style-type: disc;
+  }
 
   h1,
   h2,
@@ -22,26 +22,34 @@
   h4,
   h5,
   h6 {
-    line-height: 1.1;
+    line-height: theme("lineHeight.tight");
   }
 
   .inline {
-    @apply bg-zinc-800 tracking-tight px-1 py-[0.5px] ring-1 ring-zinc-700 rounded font-extralight;
+    background-color: theme("colors.zinc.800");
+    letter-spacing: theme("letterSpacing.tight");
+    padding: theme("spacing.px") theme("spacing.1");
+    border-radius: theme("borderRadius.DEFAULT");
+    font-weight: theme("fontWeight.extralight");
+    border: 1px solid theme("colors.zinc.700");
   }
 
   pre {
-    @apply bg-gray-50 text-gray-900 border border-gray-200 mt-2;
-    font-family: 'JetBrainsMono', monospace;
-    padding: 0rem 0.75rem;
-    border-radius: 0.5rem;
+    background-color: theme("colors.gray.50");
+    color: theme("colors.gray.900");
+    border: 1px solid theme("colors.gray.200");
+    margin-top: theme("spacing.2");
+    font-family: "JetBrainsMono", monospace;
+    padding: theme("spacing.3");
+    border-radius: theme("borderRadius.md");
+  }
 
-    code {
-      @apply border-0;
-      color: inherit;
-      padding: 0;
-      background: none;
-      font-size: 0.8rem;
-    }
+  pre code {
+    border: none;
+    color: inherit;
+    padding: 0;
+    background: none;
+    font-size: theme("fontSize.sm");
   }
 
   img {
@@ -50,23 +58,26 @@
   }
 
   blockquote {
-    @apply p-2 my-2 bg-gray-50 border-l-4 border-gray-300 rounded-sm;
+    padding: theme("spacing.2");
+    margin: theme("spacing.2") 0;
+    background-color: theme("colors.gray.50");
+    border-left: 4px solid theme("colors.gray.300");
+    border-radius: theme("borderRadius.sm");
   }
 
   hr {
     border: none;
-    border-top: 2px solid rgba(#0D0D0D, 0.1);
-    margin: 2rem 0;
+    border-top: 2px solid rgba(13, 13, 13, 0.1);
+    margin: theme("spacing.8") 0;
   }
 }
 
 .ProseMirror-focused {
-  @apply outline-none;
+  outline: none;
 }
 
 .tiptap p.is-editor-empty:first-child::before {
-  @apply text-zinc-500;
-
+  color: theme("colors.zinc.500");
   content: attr(data-placeholder);
   float: left;
   height: 0;
