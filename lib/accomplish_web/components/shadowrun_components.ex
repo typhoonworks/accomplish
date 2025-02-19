@@ -261,7 +261,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
           <.dropdown_menu_trigger class="group">
             <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant="secondary">
               <%= if Map.has_key?(@selected, :icon) do %>
-                <.icon name={@selected.icon} class={["size-4", @selected.color]} />
+                <.icon name={@selected.icon} class={Enum.join(["size-4", @selected.color], " ")} />
               <% end %>
               <span>{@selected.label}</span>
             </.shadow_button>
@@ -288,7 +288,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
                   >
                     <div class="w-full flex items-center gap-2">
                       <%= if Map.has_key?(option, :icon) do %>
-                        <.icon name={option.icon} class={["size-4", option.color]} />
+                        <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
                       <% end %>
                       <span>{option.label}</span>
                       <.menu_shortcut>
