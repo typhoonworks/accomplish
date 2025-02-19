@@ -211,7 +211,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
   def handle_event("save_application", %{"application_form" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
       {:ok, application} ->
-        IO.inspect(application)
         changeset = JobApplications.change_application_form(%{})
 
         socket =
@@ -223,7 +222,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
         {:noreply, socket}
 
       {:error, changeset} ->
-        IO.inspect(changeset)
         changeset = %{changeset | action: :insert}
         {:noreply, assign(socket, form: to_form(changeset))}
     end
