@@ -155,7 +155,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
     active_filter = params["filter"] || "active"
     user = socket.assigns.current_user
     applications = JobApplications.list_user_applications(user, active_filter)
-    changeset = JobApplications.change_application_form(%{})
 
     status_priority = %{
       offer: 1,
@@ -174,7 +173,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> assign(:page_title, "Job Applications")
       |> assign(:active_filter, active_filter)
       |> assign(:applications_by_status, applications_by_status)
-      |> assign(:form, to_form(changeset))
+      |> assign_new_form()
 
     {:ok, socket}
   end
@@ -186,6 +185,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       ) do
     {:noreply,
      socket
+     |> assign_new_form()
      |> assign_application_form_status(status)
      |> push_event("js-exec", %{
        to: "##{modal_id}",
@@ -229,6 +229,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
        to: "##{modal_id}",
        attr: "phx-remove"
      })}
+  end
+
+  defp assign_new_form(socket) do
+    changeset = JobApplications.change_application_form(%{})
+
+    assign(socket, :form, to_form(changeset))
   end
 
   defp assign_application_form_status(socket, status) do
