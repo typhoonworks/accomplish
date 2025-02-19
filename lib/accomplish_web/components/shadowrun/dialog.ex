@@ -1,7 +1,10 @@
-defmodule AccomplishWeb.Shadownrun.Dialog do
+defmodule AccomplishWeb.Shadowrun.Dialog do
   @moduledoc false
 
-  use AccomplishWeb, :live_component
+  use Phoenix.LiveComponent
+  alias Phoenix.LiveView.JS
+
+  import AccomplishWeb.CoreComponents
 
   attr :id, :string, required: true
   attr :show, :boolean, default: false

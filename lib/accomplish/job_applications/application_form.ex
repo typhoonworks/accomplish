@@ -20,6 +20,7 @@ defmodule Accomplish.JobApplications.ApplicationForm do
   def changeset(attrs) do
     %__MODULE__{}
     |> cast(attrs, @permitted)
+    |> put_change(:applied_at, attrs["applied_at"] || DateTime.utc_now())
     |> validate_required(@required)
     |> validate_length(:role, min: 2)
   end

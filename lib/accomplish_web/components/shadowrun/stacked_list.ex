@@ -1,7 +1,7 @@
-defmodule AccomplishWeb.Shadownrun.StackedList do
+defmodule AccomplishWeb.Shadowrun.StackedList do
   @moduledoc false
 
-  use AccomplishWeb, :live_component
+  use Phoenix.LiveComponent
 
   attr :id, :string, default: nil
   attr :class, :string, default: nil

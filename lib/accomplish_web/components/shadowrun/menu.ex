@@ -1,7 +1,7 @@
-defmodule AccomplishWeb.Shadownrun.Menu do
+defmodule AccomplishWeb.Shadowrun.Menu do
   @moduledoc false
 
-  use AccomplishWeb, :live_component
+  use Phoenix.LiveComponent
 
   attr :class, :string, default: "top-0 left-full"
   slot :inner_block, required: true

@@ -1,6 +1,5 @@
 defmodule AccomplishWeb.MissionControlLive do
   use AccomplishWeb, :live_view
-  use LiveSvelte.Components
 
   import AccomplishWeb.Layout
 

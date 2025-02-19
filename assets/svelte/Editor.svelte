@@ -54,9 +54,8 @@
 
   function updateHiddenInput() {
     const markdownOutput = editor.storage.markdown.getMarkdown();
-    console.log(markdownOutput);
     if (hiddenInput && editor) {
-      hiddenInput.value = JSON.stringify(editor.getJSON());
+      hiddenInput.value = markdownOutput;
     }
   }
 
@@ -76,7 +75,6 @@
             class: "list-decimal",
           },
         }),
-        ListItem,
         Placeholder.configure({
           placeholder,
         }),
@@ -99,7 +97,7 @@
 
     hiddenInput = document.getElementById(inputId);
     updateHiddenInput();
-    // hiddenInput.parentElement.addEventListener("click", handleParentClick);
+    hiddenInput.parentElement.addEventListener("click", handleParentClick);
   });
 
   onDestroy(() => {

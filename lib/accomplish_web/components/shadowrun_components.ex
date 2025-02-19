@@ -2,13 +2,15 @@ defmodule AccomplishWeb.ShadowrunComponents do
   @moduledoc false
 
   use Phoenix.Component
+  use LiveSvelte.Components
+
   use Gettext, backend: AccomplishWeb.Gettext
 
   alias Phoenix.LiveView.JS
 
   import AccomplishWeb.CoreComponents
-  import AccomplishWeb.Shadownrun.DropdownMenu
-  import AccomplishWeb.Shadownrun.Menu
+  import AccomplishWeb.Shadowrun.DropdownMenu
+  import AccomplishWeb.Shadowrun.Menu
 
   attr :type, :string, default: "button"
   attr :variant, :string, default: "primary", values: ["primary", "secondary"]
@@ -121,6 +123,8 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
 
+  attr :socket, :any
+
   attr :rest, :global,
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
                 multiple pattern placeholder readonly required rows size step)
@@ -182,13 +186,15 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
   def shadow_input(%{type: "textarea"} = assigns) do
     ~H"""
-    <div>
-      <textarea
-        id={@id}
-        name={@name}
-        class="w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0 min-h-[6rem] resize-none"
-        {@rest}
-      ><%= Phoenix.HTML.Form.normalize_value("textarea", @value) %></textarea>
+    <div class="w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0 min-h-[6rem] resize-none">
+      <input id={@id} type="hidden" name={@name} value={@value} {@rest} />
+      <.Editor
+        :if={!@rest[:disabled]}
+        content={@value}
+        placeholder={@rest[:placeholder]}
+        inputId={@id}
+        socket={@socket}
+      />
       <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
     """

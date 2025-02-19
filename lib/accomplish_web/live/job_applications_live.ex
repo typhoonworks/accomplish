@@ -1,12 +1,11 @@
 defmodule AccomplishWeb.JobApplicationsLive do
   use AccomplishWeb, :live_view
-  use LiveSvelte.Components
 
   alias Accomplish.JobApplications
 
   import AccomplishWeb.Layout
-  import AccomplishWeb.Shadownrun.Dialog
-  import AccomplishWeb.Shadownrun.StackedList
+  import AccomplishWeb.Shadowrun.Dialog
+  import AccomplishWeb.Shadowrun.StackedList
 
   def render(assigns) do
     ~H"""
@@ -120,6 +119,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
               />
             </div>
 
+            <input
+              type="hidden"
+              name="application[applied_at]"
+              value={DateTime.utc_now() |> DateTime.to_iso8601()}
+            />
+
             <.separator />
 
             <div class="space-y-3 mt-4">
@@ -128,6 +133,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 type="textarea"
                 placeholder="Write down key details, next moves, or important notes..."
                 class="text-base tracking-tighter"
+                socket={@socket}
               />
             </div>
           </div>
@@ -204,16 +210,20 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   def handle_event("save_application", %{"application_form" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
-      {:ok, _application} ->
+      {:ok, application} ->
+        IO.inspect(application)
         changeset = JobApplications.change_application_form(%{})
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Job application created successfully.")
-         |> assign(:form, to_form(changeset))
-         |> push_event("phx-hide-modal", %{id: "new-job-application"})}
+        socket =
+          socket
+          |> put_flash(:info, "Job application created successfully.")
+          |> assign(:form, to_form(changeset))
+          |> close_modal("new-job-application")
+
+        {:noreply, socket}
 
       {:error, changeset} ->
+        IO.inspect(changeset)
         changeset = %{changeset | action: :insert}
         {:noreply, assign(socket, form: to_form(changeset))}
     end
@@ -222,13 +232,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
   def handle_event("reset_application_form", %{"id" => modal_id}, socket) do
     changeset = JobApplications.change_application_form(%{})
 
-    {:noreply,
-     socket
-     |> assign(:form, to_form(changeset))
-     |> push_event("js-exec", %{
-       to: "##{modal_id}",
-       attr: "phx-remove"
-     })}
+    socket =
+      socket
+      |> assign(:form, to_form(changeset))
+      |> close_modal(modal_id)
+
+    {:noreply, socket}
   end
 
   defp assign_new_form(socket) do
@@ -244,6 +253,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
       Ecto.Changeset.put_change(form.source, :status, status)
 
     assign(socket, :form, to_form(updated_changeset))
+  end
+
+  defp close_modal(socket, modal_id) do
+    socket
+    |> push_event("js-exec", %{
+      to: "##{modal_id}",
+      attr: "phx-remove"
+    })
   end
 
   defp format_status(:applied), do: "Applied"
