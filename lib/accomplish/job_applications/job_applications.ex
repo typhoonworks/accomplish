@@ -4,6 +4,7 @@ defmodule Accomplish.JobApplications do
   use Accomplish.Context
   alias Accomplish.Repo
   alias Accomplish.JobApplications.Application
+  alias Accomplish.JobApplications.ApplicationForm
   alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
 
@@ -27,23 +28,28 @@ defmodule Accomplish.JobApplications do
   end
 
   def create_application(applicant, attrs) do
-    with {:company_name, true} <- {:company_name, Map.has_key?(attrs, :company_name)},
-         {:ok, company} <- Companies.get_or_create(attrs[:company_name]),
-         changeset <- Application.create_changeset(company, applicant, attrs),
+    with {:ok, form_changeset} <- validate_application_form(attrs),
+         {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name),
+         changeset <- Application.create_changeset(company, applicant, form_changeset.changes),
          {:ok, job_application} <- Repo.insert(changeset) do
       {:ok, job_application}
     else
-      {:company_name, false} ->
-        {:error,
-         %Ecto.Changeset{
-           valid?: false,
-           errors: [company_name: {"can't be blank", []}],
-           data: %Application{}
-         }}
-
-      {:error, changeset} ->
-        {:error, changeset}
+      {:error, changeset} -> {:error, changeset}
     end
+  end
+
+  defp validate_application_form(attrs) do
+    changeset = change_application_form(attrs)
+
+    if changeset.valid? do
+      {:ok, changeset}
+    else
+      {:error, changeset}
+    end
+  end
+
+  def change_application_form(attrs \\ %{}) do
+    ApplicationForm.changeset(attrs)
   end
 
   def add_stage(application, attrs) do

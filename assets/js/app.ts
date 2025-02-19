@@ -31,12 +31,6 @@ let liveSocket = new LiveSocket("/live", Socket, {
   hooks,
 });
 
-// Handle custom JS execution for LiveView
-// interface PhxJsExecDetail {
-//   to: string;
-//   attr: string;
-// }
-
 window.addEventListener("phx:js-exec", (event: any) => {
   const { detail } = event;
   document.querySelectorAll(detail.to).forEach((el) => {

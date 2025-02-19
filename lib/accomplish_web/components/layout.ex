@@ -3,10 +3,10 @@ defmodule AccomplishWeb.Layout do
 
   use AccomplishWeb, :live_view
 
-  import AccomplishWeb.Components.Avatar
-  import AccomplishWeb.Components.DropdownMenu
-  import AccomplishWeb.Components.Menu
-  import AccomplishWeb.Components.Sidebar
+  import AccomplishWeb.Shadowrun.Avatar
+  import AccomplishWeb.Shadowrun.DropdownMenu
+  import AccomplishWeb.Shadowrun.Menu
+  import AccomplishWeb.Shadowrun.Sidebar
 
   attr :current_user, :map, default: nil
   attr :current_path, :string, default: "/"
@@ -25,7 +25,7 @@ defmodule AccomplishWeb.Layout do
 
           <.separator />
 
-          <main class="bg-zinc-900 flex-1 py-8">
+          <main class="bg-zinc-900 flex-1">
             <div class="px-4 sm:px-6 lg:px-8">
               {render_slot(@inner_block)}
             </div>

@@ -1,7 +1,10 @@
-defmodule AccomplishWeb.Components.Sidebar do
+defmodule AccomplishWeb.Shadowrun.Sidebar do
   @moduledoc false
 
-  use AccomplishWeb, :live_component
+  use Phoenix.LiveComponent
+  alias Phoenix.LiveView.JS
+
+  import AccomplishWeb.CoreComponents
 
   attr :id, :string, required: true
   attr :class, :string, default: nil

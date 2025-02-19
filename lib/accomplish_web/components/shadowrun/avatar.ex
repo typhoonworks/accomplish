@@ -1,7 +1,7 @@
-defmodule AccomplishWeb.Components.Avatar do
+defmodule AccomplishWeb.Shadowrun.Avatar do
   @moduledoc false
 
-  use AccomplishWeb, :live_component
+  use Phoenix.LiveComponent
 
   attr :name, :string
   attr :src, :string, default: nil

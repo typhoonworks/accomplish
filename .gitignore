@@ -43,10 +43,16 @@ plausible-report.xml
 *.iml
 *.log
 *.code-workspace
-.vscode
 
 # Secrets
 /config/.env.exs
 
 # Rust CLI build artifacts
 /cli/target/
+
+# Ignore automatically generated Svelte files by the ~V sigil
+/assets/svelte/_build/
+
+# Ignore ssr build for svelte.
+/priv/svelte/
+.DS_Store

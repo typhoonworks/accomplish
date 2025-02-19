@@ -1,7 +1,8 @@
-defmodule AccomplishWeb.Components.DropdownMenu do
+defmodule AccomplishWeb.Shadowrun.DropdownMenu do
   @moduledoc false
 
-  use AccomplishWeb, :live_component
+  use Phoenix.LiveComponent
+  alias Phoenix.LiveView.JS
 
   attr :class, :string, default: nil
   slot :inner_block, required: true
