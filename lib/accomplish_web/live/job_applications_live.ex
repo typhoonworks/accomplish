@@ -2,10 +2,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
+  alias Accomplish.JobApplications.Application
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.StackedList
+  import AccomplishWeb.Components.JobApplicationComponents
+
+  @pubsub Accomplish.PubSub
+  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
@@ -33,38 +38,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div class="inline-block min-w-full py-2 align-middle">
             <.stacked_list>
-              <%= for {status, applications} <- @applications_by_status do %>
-                <.list_header>
-                  <div class="flex items-center gap-2">
-                    <div class={"h-3 w-3 rounded-full #{status_color(status)}"}></div>
-                    <h2 class="text-sm tracking-tight text-zinc-300">
-                      {format_status(status)}
-                    </h2>
-                  </div>
-                  <button
-                    class="text-zinc-400 hover:text-zinc-200"
-                    phx-click="prepare_new_application"
-                    phx-value-status={status}
-                    phx-value-modal_id="new-job-application"
-                  >
-                    <.icon class="text-current size-4" name="hero-plus" />
-                  </button>
-                </.list_header>
-
-                <.list_content>
-                  <%= for application <- applications do %>
-                    <.list_item clickable={true} href="#">
-                      <p class="text-[13px] text-zinc-300 leading-tight">
-                        {application.company.name}
-                        <span class="text-zinc-400">• {application.role}</span>
-                      </p>
-                      <p class="text-[13px] text-zinc-400 leading-tight"></p>
-                      <p class="text-[13px] text-zinc-400 leading-tight text-right">
-                        {formatted_relative_time(application.applied_at)}
-                      </p>
-                    </.list_item>
-                  <% end %>
-                </.list_content>
+              <%= for status <- @statuses do %>
+                <.application_group status={status} applications={@streams[stream_key(status)]} />
               <% end %>
             </.stacked_list>
           </div>
@@ -158,6 +133,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def mount(params, _session, socket) do
+    if connected?(socket), do: subscribe_to_notifications_topic()
+
     active_filter = params["filter"] || "active"
     user = socket.assigns.current_user
     applications = JobApplications.list_user_applications(user, active_filter)
@@ -178,8 +155,10 @@ defmodule AccomplishWeb.JobApplicationsLive do
       socket
       |> assign(:page_title, "Job Applications")
       |> assign(:active_filter, active_filter)
-      |> assign(:applications_by_status, applications_by_status)
       |> assign_new_form()
+      |> assign(:applications_by_status, applications_by_status)
+      |> assign(:statuses, Enum.map(applications_by_status, &elem(&1, 0)))
+      |> stream_applications(applications_by_status)
 
     {:ok, socket}
   end
@@ -238,6 +217,26 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket}
   end
 
+  def handle_info({JobApplications, event}, socket) do
+    handle_event(event, socket)
+  end
+
+  defp handle_event(%{name: "job_application:created"} = event, socket) do
+    {:noreply, insert_new_application(socket, event.application, event.company)}
+  end
+
+  defp handle_event(_, socket), do: {:noreply, socket}
+
+  defp subscribe_to_notifications_topic do
+    Phoenix.PubSub.subscribe(@pubsub, @notifications_topic)
+  end
+
+  defp insert_new_application(socket, application, company) do
+    application = %Application{application | company: company}
+    key = stream_key(application.status)
+    stream_insert(socket, key, application, at: 0)
+  end
+
   defp assign_new_form(socket) do
     changeset = JobApplications.change_application_form(%{})
 
@@ -253,6 +252,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
     assign(socket, :form, to_form(updated_changeset))
   end
 
+  defp stream_applications(socket, applications) do
+    Enum.reduce(applications, socket, fn {status, apps}, socket ->
+      stream(socket, stream_key(status), apps)
+    end)
+  end
+
+  def stream_key(status), do: String.to_atom("applications_#{status}")
+
   defp close_modal(socket, modal_id) do
     socket
     |> push_event("js-exec", %{
@@ -260,16 +267,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
       attr: "phx-remove"
     })
   end
-
-  defp format_status(:applied), do: "Applied"
-  defp format_status(:interviewing), do: "Interviewing"
-  defp format_status(:offer), do: "Offer"
-  defp format_status(:rejected), do: "Rejected"
-
-  defp status_color(:applied), do: "bg-green-600"
-  defp status_color(:interviewing), do: "bg-yellow-600"
-  defp status_color(:offer), do: "bg-blue-500"
-  defp status_color(:rejected), do: "bg-red-600"
 
   defp options_for_application_status do
     [
