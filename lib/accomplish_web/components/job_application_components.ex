@@ -46,7 +46,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
 
             <.menu id={"context-menu-#{application.id}"} class="hidden w-56 text-zinc-300 bg-zinc-900">
               <.menu_group>
-                <.menu_item phx-click="edit_application" phx-value-id={application.id}>
+                <.menu_item phx-click="delete_application" phx-value-id={application.id}>
                   <div class="w-full flex items-center gap-2">
                     <.icon name="hero-trash" class="size-4" />
                     <span>Delete</span>
