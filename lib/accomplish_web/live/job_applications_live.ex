@@ -156,6 +156,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> assign(:page_title, "Job Applications")
       |> assign(:active_filter, active_filter)
       |> assign_new_form()
+      |> assign(:applications_by_status, applications_by_status)
       |> assign(:statuses, Enum.map(applications_by_status, &elem(&1, 0)))
       |> stream_applications(applications_by_status)
 
@@ -232,7 +233,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   defp insert_new_application(socket, application, company) do
     application = %Application{application | company: company}
-    stream_insert(socket, stream_key(application.status), application)
+    key = stream_key(application.status)
+    stream_insert(socket, key, application, at: 0)
   end
 
   defp assign_new_form(socket) do

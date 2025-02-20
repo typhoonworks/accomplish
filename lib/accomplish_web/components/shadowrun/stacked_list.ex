@@ -27,12 +27,15 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
     """
   end
 
+  attr :id, :string, default: nil
   attr :class, :string, default: nil
+  attr :rest, :global, default: %{}
+
   slot :inner_block, required: true
 
   def list_content(assigns) do
     ~H"""
-    <div class={["bg-zinc-900", @class]}>
+    <div id={@id} class={["bg-zinc-900", @class]} {@rest}>
       {render_slot(@inner_block)}
     </div>
     """

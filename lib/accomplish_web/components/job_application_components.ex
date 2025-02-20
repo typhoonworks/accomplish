@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.Components.JobApplicationComponents do
+  @moduledoc false
+
   use Phoenix.Component
 
   import AccomplishWeb.CoreComponents
@@ -23,19 +25,17 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
         <.icon class="text-current size-4" name="hero-plus" />
       </button>
     </.list_header>
-    <.list_content>
-      <%= for {dom_id, application} <- @applications do %>
-        <.list_item clickable={true} href="#" id={dom_id}>
-          <p class="text-[13px] text-zinc-300 leading-tight">
-            {application.company.name}
-            <span class="text-zinc-400">• {application.role}</span>
-          </p>
-          <p class="text-[13px] text-zinc-400 leading-tight"></p>
-          <p class="text-[13px] text-zinc-400 leading-tight text-right">
-            {formatted_relative_time(application.applied_at)}
-          </p>
-        </.list_item>
-      <% end %>
+    <.list_content id={"#{@status}-container"} phx-update="stream">
+      <.list_item :for={{dom_id, application} <- @applications} clickable={true} href="#" id={dom_id}>
+        <p class="text-[13px] text-zinc-300 leading-tight">
+          {application.company.name}
+          <span class="text-zinc-400">• {application.role}</span>
+        </p>
+        <p class="text-[13px] text-zinc-400 leading-tight"></p>
+        <p class="text-[13px] text-zinc-400 leading-tight text-right">
+          {formatted_relative_time(application.applied_at)}
+        </p>
+      </.list_item>
     </.list_content>
     """
   end
