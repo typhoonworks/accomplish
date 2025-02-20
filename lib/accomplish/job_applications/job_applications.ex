@@ -7,6 +7,11 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.ApplicationForm
   alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
+  alias Accomplish.JobApplications.Events
+  alias AccomplishWeb.Endpoint
+
+  @pubsub Accomplish.PubSub
+  @notifications_topic "notifications:events"
 
   def list_user_applications(user, filter \\ "all") do
     query =
@@ -32,6 +37,7 @@ defmodule Accomplish.JobApplications do
          {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name),
          changeset <- Application.create_changeset(company, applicant, form_changeset.changes),
          {:ok, job_application} <- Repo.insert(changeset) do
+      broadcast_application_created(job_application, company)
       {:ok, job_application}
     else
       {:error, changeset} -> {:error, changeset}
@@ -52,8 +58,20 @@ defmodule Accomplish.JobApplications do
     ApplicationForm.changeset(attrs)
   end
 
+  def broadcast_application_created(job_application, company) do
+    broadcast!(%Events.NewJobApplication{
+      name: "job_application:created",
+      application: job_application,
+      company: company
+    })
+  end
+
   def add_stage(application, attrs) do
     Stage.create_changeset(application, attrs)
     |> Repo.insert()
+  end
+
+  defp broadcast!(msg) do
+    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
   end
 end
