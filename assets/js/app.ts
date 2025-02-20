@@ -13,11 +13,13 @@ import * as Components from "../svelte/**/*.svelte";
 
 // Import custom hooks
 import CodeInput from "./hooks/code_input";
+import ContextMenu from "./hooks/context_menu";
 
 sendTimezoneToServer();
 
 const hooks = {
   CodeInput,
+  ContextMenu,
   ...getHooks(Components),
 };
 

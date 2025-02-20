@@ -270,7 +270,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
           <.dropdown_menu_content>
             <.menu class="w-56 text-zinc-300 bg-zinc-800">
               <.menu_group>
-                <.menu_item>
+                <.menu_item class="pointer-events-none">
                   <span class="text-zinc-400 font-extralight tracking-tighter">
                     {@prompt}
                   </span>
@@ -281,11 +281,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
               <.menu_group>
                 <%= for option <- @options do %>
-                  <.menu_item
-                    phx-click={JS.push(@on_select)}
-                    phx-value-value={option.value}
-                    class="hover:bg-zinc-600 rounded-md"
-                  >
+                  <.menu_item phx-click={JS.push(@on_select)} phx-value-value={option.value}>
                     <div class="w-full flex items-center gap-2">
                       <%= if Map.has_key?(option, :icon) do %>
                         <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />

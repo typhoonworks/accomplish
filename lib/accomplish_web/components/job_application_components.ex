@@ -4,6 +4,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   use Phoenix.Component
 
   import AccomplishWeb.CoreComponents
+  import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.TimeHelpers
 
@@ -25,17 +26,40 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
         <.icon class="text-current size-4" name="hero-plus" />
       </button>
     </.list_header>
-    <.list_content id={"#{@status}-container"} phx-update="stream">
-      <.list_item :for={{dom_id, application} <- @applications} clickable={true} href="#" id={dom_id}>
-        <p class="text-[13px] text-zinc-300 leading-tight">
-          {application.company.name}
-          <span class="text-zinc-400">• {application.role}</span>
-        </p>
-        <p class="text-[13px] text-zinc-400 leading-tight"></p>
-        <p class="text-[13px] text-zinc-400 leading-tight text-right">
-          {formatted_relative_time(application.applied_at)}
-        </p>
-      </.list_item>
+    <.list_content>
+      <div id={"#{@status}-container"} phx-update="stream">
+        <div
+          :for={{dom_id, application} <- @applications}
+          id={dom_id}
+          data-menu={"context-menu-#{application.id}"}
+          phx-hook="ContextMenu"
+        >
+          <.list_item clickable={true} href="#">
+            <p class="text-[13px] text-zinc-300 leading-tight">
+              {application.company.name}
+              <span class="text-zinc-400">• {application.role}</span>
+            </p>
+            <p class="text-[13px] text-zinc-400 leading-tight"></p>
+            <p class="text-[13px] text-zinc-400 leading-tight text-right">
+              {formatted_relative_time(application.applied_at)}
+            </p>
+
+            <.menu id={"context-menu-#{application.id}"} class="hidden w-56 text-zinc-300 bg-zinc-900">
+              <.menu_group>
+                <.menu_item phx-click="edit_application" phx-value-id={application.id}>
+                  <div class="w-full flex items-center gap-2">
+                    <.icon name="hero-trash" class="size-4" />
+                    <span>Delete</span>
+                    <.menu_shortcut>
+                      <span>⌘⌫</span>
+                    </.menu_shortcut>
+                  </div>
+                </.menu_item>
+              </.menu_group>
+            </.menu>
+          </.list_item>
+        </div>
+      </div>
     </.list_content>
     """
   end
