@@ -93,6 +93,27 @@ defmodule Accomplish.JobApplicationsTest do
     end
   end
 
+  describe "delete_application/1" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+
+      %{applicant: applicant, application: application}
+    end
+
+    test "successfully deletes a job application", %{application: application} do
+      assert {:ok, _deleted_application} = JobApplications.delete_application(application.id)
+
+      assert Repo.get(Accomplish.JobApplications.Application, application.id) == nil
+    end
+
+    test "returns an error when application is not found" do
+      non_existent_id = UUIDv7.generate()
+
+      assert {:error, :not_found} = JobApplications.delete_application(non_existent_id)
+    end
+  end
+
   describe "add_stage/2" do
     setup do
       applicant = user_fixture()

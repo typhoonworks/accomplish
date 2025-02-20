@@ -47,6 +47,21 @@ defmodule Accomplish.JobApplications do
     end
   end
 
+  def delete_application(application_id) do
+    with %Application{} = application <- Repo.get(Application, application_id),
+         {:ok, _} <-
+           Repo.transaction(fn ->
+             Repo.delete!(application)
+             broadcast_application_deleted(application)
+           end) do
+      {:ok, application}
+    else
+      nil -> {:error, :not_found}
+      {:error, e} -> {:error, e}
+      _ -> {:error, :unexpected_error}
+    end
+  end
+
   defp validate_application_form(attrs) do
     changeset = change_application_form(attrs)
 
@@ -66,6 +81,13 @@ defmodule Accomplish.JobApplications do
       name: "job_application:created",
       application: job_application,
       company: company
+    })
+  end
+
+  defp broadcast_application_deleted(application) do
+    broadcast!(%Events.JobApplicationDeleted{
+      name: "job_application:deleted",
+      application: application
     })
   end
 
