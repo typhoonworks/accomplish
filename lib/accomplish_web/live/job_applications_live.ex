@@ -36,7 +36,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
       <div class="mt-8 w-full">
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div class="inline-block min-w-full py-2 align-middle">
+          <div
+            id="applications"
+            class="inline-block min-w-full py-2 align-middle"
+            phx-hook="AudioMp3"
+            data-sounds={@sounds}
+          >
             <.stacked_list>
               <%= for status <- @statuses do %>
                 <.application_group status={status} applications={@streams[stream_key(status)]} />
@@ -154,6 +159,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
     socket =
       socket
       |> assign(:page_title, "Job Applications")
+      |> assign_sounds()
+      |> assign_play_sounds(true)
       |> assign(:active_filter, active_filter)
       |> assign_new_form()
       |> assign(:applications_by_status, applications_by_status)
@@ -226,6 +233,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
           socket
           |> put_flash(:info, "Job application deleted successfully.")
           |> stream_delete(key, application)
+          |> maybe_play_sound("swoosh")
 
         {:noreply, socket}
 
@@ -283,6 +291,28 @@ defmodule AccomplishWeb.JobApplicationsLive do
       to: "##{modal_id}",
       attr: "phx-remove"
     })
+  end
+
+  defp assign_sounds(socket) do
+    json =
+      JSON.encode!(%{
+        swoosh: ~p"/audio/swoosh.mp3"
+      })
+
+    assign(socket, :sounds, json)
+  end
+
+  defp assign_play_sounds(socket, play_sounds) do
+    assign(socket, play_sounds: play_sounds)
+  end
+
+  defp maybe_play_sound(socket, sound) do
+    %{play_sounds: play_sounds} = socket.assigns
+
+    case play_sounds do
+      true -> push_event(socket, "play-sound", %{name: sound})
+      _ -> socket
+    end
   end
 
   defp options_for_application_status do

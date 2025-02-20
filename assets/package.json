@@ -71,6 +71,7 @@
     "@tiptap/extension-typography": "^2.11.5",
     "@tiptap/pm": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
+    "@types/howler": "^2.2.12",
     "howler": "^2.2.4",
     "live_svelte": "file:../deps/live_svelte",
     "phoenix": "file:../deps/phoenix",
