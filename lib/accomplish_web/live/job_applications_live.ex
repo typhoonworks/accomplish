@@ -217,6 +217,23 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket}
   end
 
+  def handle_event("delete_application", %{"id" => id}, socket) do
+    case JobApplications.delete_application(id) do
+      {:ok, application} ->
+        key = stream_key(application.status)
+
+        socket =
+          socket
+          |> put_flash(:info, "Job application deleted successfully.")
+          |> stream_delete(key, application)
+
+        {:noreply, socket}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to delete job application.")}
+    end
+  end
+
   def handle_info({JobApplications, event}, socket) do
     handle_event(event, socket)
   end
