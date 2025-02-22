@@ -246,7 +246,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  def handle_info(%{id: id, date: date, form: _form}, socket) do
+  def handle_info(%{id: _id, date: date, form: _form}, socket) do
     updated_changeset =
       socket.assigns.form.source
       |> Ecto.Changeset.put_change(:applied_at, date)
