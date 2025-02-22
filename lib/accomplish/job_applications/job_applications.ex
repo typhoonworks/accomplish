@@ -45,6 +45,19 @@ defmodule Accomplish.JobApplications do
     end
   end
 
+  def update_application(%Application{} = application, attrs) do
+    changeset = Application.update_changeset(application, attrs)
+
+    case Repo.update(changeset) do
+      {:ok, updated_application} ->
+        broadcast_application_updated(updated_application)
+        {:ok, updated_application}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
   def delete_application(application_id) do
     with %Application{} = application <- Repo.get(Application, application_id),
          {:ok, _} <-
@@ -79,6 +92,17 @@ defmodule Accomplish.JobApplications do
       name: "job_application:created",
       application: job_application,
       company: company
+    })
+  end
+
+  defp broadcast_application_updated(application) do
+    application_with_company =
+      Repo.preload(application, :company)
+
+    broadcast!(%Events.JobApplicationUpdated{
+      name: "job_application:updated",
+      application: application_with_company,
+      company: application_with_company.company
     })
   end
 

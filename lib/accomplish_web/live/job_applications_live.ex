@@ -35,7 +35,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       </:page_header>
 
       <div class="mt-8 w-full">
-        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
           <div
             id="applications"
             class="inline-block min-w-full py-2 align-middle"
@@ -88,24 +88,22 @@ defmodule AccomplishWeb.JobApplicationsLive do
               />
             </div>
 
-            <div class="flex justify-start items-center gap-2 mb-2">
+            <div class="flex justify-start gap-2 mb-2">
               <.shadow_select_input
                 id="application-status-select"
                 field={@form[:status]}
                 prompt="Change application status"
                 value={@form[:status].value}
                 options={options_for_application_status()}
-                on_select="update_application_status"
-              />
-
-              <.shadow_date_picker
-                label="Applied date"
-                id={"#{@form.id}-date_picker"}
-                form={@form}
-                start_date_field={@form[:applied_at]}
-                required={true}
+                on_select="update_application_form_status"
               />
             </div>
+
+            <input
+              type="hidden"
+              name="application[applied_at]"
+              value={DateTime.utc_now() |> DateTime.to_iso8601()}
+            />
 
             <.separator />
 
@@ -131,9 +129,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
             >
               Cancel
             </.shadow_button>
-            <.shadow_button type="submit" variant="primary" disabled={!@form.source.valid?}>
-              Create application
-            </.shadow_button>
+            <.shadow_button type="submit" variant="primary">Create application</.shadow_button>
           </div>
         </.dialog_footer>
       </.shadow_form>
@@ -189,8 +185,22 @@ defmodule AccomplishWeb.JobApplicationsLive do
      })}
   end
 
-  def handle_event("update_application_status", %{"value" => value}, socket) do
+  def handle_event("update_application_form_status", %{"value" => value}, socket) do
     {:noreply, socket |> assign_application_form_status(value)}
+  end
+
+  def handle_event("update_application", %{"id" => id} = params, socket) do
+    with %Application{} = application <- Repo.get(Application, id),
+         {:ok, _updated_application} <- JobApplications.update_application(application, params) do
+      # No need to manually update state, PubSub handles it
+      {:noreply, socket}
+    else
+      nil ->
+        {:noreply, put_flash(socket, :error, "Application not found.")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to update application.")}
+    end
   end
 
   def handle_event("validate_application", %{"application_form" => application_params}, socket) do
@@ -246,20 +256,16 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  def handle_info(%{id: _id, date: date, form: _form}, socket) do
-    updated_changeset =
-      socket.assigns.form.source
-      |> Ecto.Changeset.put_change(:applied_at, date)
-
-    {:noreply, assign(socket, form: to_form(updated_changeset))}
-  end
-
   def handle_info({JobApplications, event}, socket) do
     handle_event(event, socket)
   end
 
   defp handle_event(%{name: "job_application:created"} = event, socket) do
     {:noreply, insert_new_application(socket, event.application, event.company)}
+  end
+
+  defp handle_event(%{name: "job_application:updated"} = event, socket) do
+    {:noreply, replace_application(socket, event.application, event.company)}
   end
 
   defp handle_event(_, socket), do: {:noreply, socket}
@@ -272,6 +278,16 @@ defmodule AccomplishWeb.JobApplicationsLive do
     application = %Application{application | company: company}
     key = stream_key(application.status)
     stream_insert(socket, key, application, at: 0)
+  end
+
+  defp replace_application(socket, application, company) do
+    application = %Application{application | company: company}
+    old_key = stream_key(application.status)
+    new_key = stream_key(application.status)
+
+    socket
+    |> stream_delete(old_key, application)
+    |> stream_insert(new_key, application, at: 0)
   end
 
   defp assign_new_form(socket) do

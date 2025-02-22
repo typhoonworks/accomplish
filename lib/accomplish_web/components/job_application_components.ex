@@ -4,9 +4,12 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   use Phoenix.Component
 
   import AccomplishWeb.CoreComponents
+  import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.TimeHelpers
+
+  alias Phoenix.LiveView.JS
 
   def application_group(assigns) do
     ~H"""
@@ -35,11 +38,16 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
           phx-hook="ContextMenu"
         >
           <.list_item clickable={true} href="#">
-            <p class="text-[13px] text-zinc-300 leading-tight">
-              {application.company.name}
-              <span class="text-zinc-400">• {application.role}</span>
-            </p>
+            <div class="flex items-center gap-2">
+              <.application_status_select application={application} />
+              <p class="text-[13px] text-zinc-300 leading-tight">
+                {application.company.name}
+                <span class="text-zinc-400">• {application.role}</span>
+              </p>
+            </div>
+
             <p class="text-[13px] text-zinc-400 leading-tight"></p>
+
             <p class="text-[13px] text-zinc-400 leading-tight text-right">
               {formatted_relative_time(application.applied_at)}
             </p>
@@ -64,6 +72,62 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
     """
   end
 
+  def application_status_select(assigns) do
+    ~H"""
+    <.dropdown_menu class="z-90">
+      <.dropdown_menu_trigger class="group">
+        <div
+          class={"h-3 w-3 rounded-full #{status_color(@application.status)} hover:scale-110 hover:shadow transition"}
+          role="button"
+          aria-haspopup="true"
+          aria-expanded="false"
+          tabindex="0"
+        >
+        </div>
+      </.dropdown_menu_trigger>
+
+      <.dropdown_menu_content side="right">
+        <.menu class="w-56 text-zinc-300 bg-zinc-800">
+          <.menu_group>
+            <.menu_item class="pointer-events-none">
+              <span class="text-zinc-400 font-extralight tracking-tighter">
+                Change application status
+              </span>
+            </.menu_item>
+          </.menu_group>
+
+          <.menu_separator />
+
+          <.menu_group>
+            <%= for option <- options_for_application_status() do %>
+              <.menu_item
+                phx-click="update_application"
+                phx-value-id={@application.id}
+                phx-value-value={option.value}
+              >
+                <div class="w-full flex items-center gap-2">
+                  <%= if Map.has_key?(option, :icon) do %>
+                    <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
+                  <% end %>
+                  <span>{option.label}</span>
+                  <.menu_shortcut>
+                    <div class="w-full flex items-center gap-2 justify-between">
+                      <%= if option.value == @application.status do %>
+                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                      <% end %>
+                      <span>{option.shortcut}</span>
+                    </div>
+                  </.menu_shortcut>
+                </div>
+              </.menu_item>
+            <% end %>
+          </.menu_group>
+        </.menu>
+      </.dropdown_menu_content>
+    </.dropdown_menu>
+    """
+  end
+
   defp format_status(:applied), do: "Applied"
   defp format_status(:interviewing), do: "Interviewing"
   defp format_status(:offer), do: "Offer"
@@ -73,4 +137,37 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   defp status_color(:interviewing), do: "bg-yellow-600"
   defp status_color(:offer), do: "bg-blue-500"
   defp status_color(:rejected), do: "bg-red-600"
+
+  defp options_for_application_status do
+    [
+      %{
+        label: "Applied",
+        value: "applied",
+        icon: "hero-paper-airplane",
+        color: "text-green-600",
+        shortcut: "1"
+      },
+      %{
+        label: "Interviewing",
+        value: "interviewing",
+        icon: "hero-envelope-open",
+        color: "text-yellow-600",
+        shortcut: "2"
+      },
+      %{
+        label: "Offer",
+        value: "offer",
+        icon: "hero-hand-thumb-up",
+        color: "text-blue-600",
+        shortcut: "3"
+      },
+      %{
+        label: "Rejected",
+        value: "rejected",
+        icon: "hero-hand-thumb-down",
+        color: "text-red-600",
+        shortcut: "4"
+      }
+    ]
+  end
 end
