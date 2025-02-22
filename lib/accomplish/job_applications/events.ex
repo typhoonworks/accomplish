@@ -10,7 +10,7 @@ defmodule Accomplish.JobApplications.Events do
   defmodule JobApplicationUpdated do
     @moduledoc false
 
-    defstruct name: nil, application: nil, company: nil
+    defstruct name: nil, application: nil, company: nil, diff: %{}
   end
 
   defmodule JobApplicationDeleted do

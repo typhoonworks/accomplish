@@ -97,13 +97,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 options={options_for_application_status()}
                 on_select="update_application_form_status"
               />
-            </div>
 
-            <input
-              type="hidden"
-              name="application[applied_at]"
-              value={DateTime.utc_now() |> DateTime.to_iso8601()}
-            />
+              <.shadow_date_picker
+                label="Applied date"
+                id={"#{@form.id}-date_picker"}
+                form={@form}
+                start_date_field={@form[:applied_at]}
+                required={true}
+              />
+            </div>
 
             <.separator />
 
@@ -129,7 +131,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
             >
               Cancel
             </.shadow_button>
-            <.shadow_button type="submit" variant="primary">Create application</.shadow_button>
+            <.shadow_button type="submit" variant="primary" disabled={!@form.source.valid?}>
+              Create application
+            </.shadow_button>
           </div>
         </.dialog_footer>
       </.shadow_form>
@@ -189,10 +193,10 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket |> assign_application_form_status(value)}
   end
 
-  def handle_event("update_application", %{"id" => id} = params, socket) do
-    with %Application{} = application <- Repo.get(Application, id),
-         {:ok, _updated_application} <- JobApplications.update_application(application, params) do
-      # No need to manually update state, PubSub handles it
+  def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
+    with %Application{} = application <- JobApplications.get_application!(id, :company),
+         {:ok, _updated_application} <-
+           JobApplications.update_application(application, %{status: status}) do
       {:noreply, socket}
     else
       nil ->
@@ -246,7 +250,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
         socket =
           socket
           |> put_flash(:info, "Job application deleted successfully.")
-          |> stream_delete(key, application)
+          |> maybe_stream_delete(key, application)
           |> maybe_play_sound("swoosh")
 
         {:noreply, socket}
@@ -254,6 +258,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
       {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Failed to delete job application.")}
     end
+  end
+
+  def handle_info(%{id: _id, date: date, form: _form}, socket) do
+    updated_changeset =
+      socket.assigns.form.source
+      |> Ecto.Changeset.put_change(:applied_at, date)
+
+    {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
 
   def handle_info({JobApplications, event}, socket) do
@@ -265,7 +277,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp handle_event(%{name: "job_application:updated"} = event, socket) do
-    {:noreply, replace_application(socket, event.application, event.company)}
+    {:noreply, replace_application(socket, event.application, event.company, event.diff)}
   end
 
   defp handle_event(_, socket), do: {:noreply, socket}
@@ -280,14 +292,22 @@ defmodule AccomplishWeb.JobApplicationsLive do
     stream_insert(socket, key, application, at: 0)
   end
 
-  defp replace_application(socket, application, company) do
+  defp replace_application(socket, application, company, diff) do
     application = %Application{application | company: company}
-    old_key = stream_key(application.status)
+
+    old_status =
+      if Map.has_key?(diff, :status) do
+        diff[:status][:old]
+      else
+        application.status
+      end
+
+    old_key = stream_key(old_status)
     new_key = stream_key(application.status)
 
     socket
-    |> stream_delete(old_key, application)
-    |> stream_insert(new_key, application, at: 0)
+    |> maybe_stream_delete(old_key, application)
+    |> maybe_stream_insert(new_key, application)
   end
 
   defp assign_new_form(socket) do
@@ -311,7 +331,23 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end)
   end
 
-  def stream_key(status), do: String.to_atom("applications_#{status}")
+  defp maybe_stream_delete(socket, key, application) do
+    if Map.has_key?(socket.assigns.streams, key) do
+      stream_delete(socket, key, application)
+    else
+      socket
+    end
+  end
+
+  defp maybe_stream_insert(socket, key, application) do
+    if Map.has_key?(socket.assigns.streams, key) do
+      stream_insert(socket, key, application, at: 0)
+    else
+      stream(socket, key, [application])
+    end
+  end
+
+  defp stream_key(status), do: String.to_atom("applications_#{status}")
 
   defp close_modal(socket, modal_id) do
     socket

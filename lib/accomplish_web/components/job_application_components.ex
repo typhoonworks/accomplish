@@ -9,8 +9,6 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.TimeHelpers
 
-  alias Phoenix.LiveView.JS
-
   def application_group(assigns) do
     ~H"""
     <.list_header>
@@ -101,9 +99,9 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
           <.menu_group>
             <%= for option <- options_for_application_status() do %>
               <.menu_item
-                phx-click="update_application"
+                phx-click="update_application_status"
                 phx-value-id={@application.id}
-                phx-value-value={option.value}
+                phx-value-status={option.value}
               >
                 <div class="w-full flex items-center gap-2">
                   <%= if Map.has_key?(option, :icon) do %>
