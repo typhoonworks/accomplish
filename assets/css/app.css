@@ -6,6 +6,3 @@
 @import "./config";
 @import "./components";
 
-#accepted-group:has(#accepted-container:empty) {
-  display: none;
-}

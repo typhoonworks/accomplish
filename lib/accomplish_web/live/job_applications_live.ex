@@ -47,6 +47,27 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 <.application_group status={status} applications={@streams[stream_key(status)]} />
               <% end %>
             </.stacked_list>
+            <%= if !@has_applications do %>
+              <div class="mt-36 flex flex-col items-start justify-center gap-4 px-6 py-10 bg-zinc-900 max-w-sm mx-auto text-left">
+                <div class="flex items-center justify-center">
+                  <.icon name="hero-envelope-solid" class="size-12 text-zinc-300/50 icon-reflection" />
+                </div>
+
+                <div class="space-y-4">
+                  <h2 class="text-md font-light text-zinc-100">Job Applications</h2>
+                  <p class="text-sm font-light  text-zinc-400 leading-relaxed">
+                    Track and manage your job applications. Keep everything organized in one place for easy access and progress tracking.
+                  </p>
+                  <.shadow_button
+                    phx-click="prepare_new_application"
+                    phx-value-status="applied"
+                    phx-value-modal_id="new-job-application"
+                  >
+                    Add your first application
+                  </.shadow_button>
+                </div>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
@@ -164,6 +185,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> assign_new_form()
       |> assign(:applications_by_status, applications_by_status)
       |> assign(:statuses, statuses)
+      |> assign(:has_applications, applications != [])
       |> stream_applications(applications_by_status)
 
     {:ok, socket}
@@ -238,13 +260,16 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def handle_event("delete_application", %{"id" => id}, socket) do
+    user = socket.assigns.current_user
+
     case JobApplications.delete_application(id) do
       {:ok, application} ->
         key = stream_key(application.status)
+        has_applications = JobApplications.count_user_applications(user) > 0
 
         socket =
           socket
-          |> put_flash(:info, "Job application deleted successfully.")
+          |> assign(:has_applications, has_applications)
           |> maybe_stream_delete(key, application)
           |> maybe_play_sound("swoosh")
 
@@ -267,7 +292,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp handle_event(%{name: "job_application:created"} = event, socket) do
-    {:noreply, insert_new_application(socket, event.application, event.company)}
+    socket =
+      socket
+      |> assign(:has_applications, true)
+      |> insert_new_application(event.application, event.company)
+
+    {:noreply, socket}
   end
 
   defp handle_event(%{name: "job_application:updated"} = event, socket) do

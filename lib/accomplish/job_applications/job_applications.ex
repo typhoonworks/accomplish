@@ -11,6 +11,7 @@ defmodule Accomplish.JobApplications do
 
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
+  @active_statuses ~w(applied interviewing offer)a
 
   def get_application!(id, preloads \\ []),
     do: Application |> Repo.get!(id) |> Repo.preload(preloads)
@@ -24,8 +25,7 @@ defmodule Accomplish.JobApplications do
     query =
       case filter do
         "active" ->
-          active_statuses = [:applied, :interviewing, :offer]
-          from a in query, where: a.status in ^active_statuses
+          from a in query, where: a.status in ^@active_statuses
 
         _ ->
           query
@@ -34,6 +34,23 @@ defmodule Accomplish.JobApplications do
     query = from a in query, order_by: [desc: a.applied_at]
 
     Repo.all(query)
+  end
+
+  def count_user_applications(user, filter \\ "all") do
+    query =
+      from a in Application,
+        where: a.applicant_id == ^user.id
+
+    query =
+      case filter do
+        "active" ->
+          from a in query, where: a.status in ^@active_statuses
+
+        _ ->
+          query
+      end
+
+    Repo.aggregate(query, :count, :id)
   end
 
   def create_application(applicant, attrs) do
