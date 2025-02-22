@@ -39,6 +39,7 @@ defmodule Accomplish.JobApplications.Application do
     belongs_to :applicant, User, foreign_key: :applicant_id
 
     has_many :stages, Stage
+    belongs_to :current_stage, Stage, foreign_key: :current_stage_id
 
     timestamps(type: :utc_datetime)
   end
