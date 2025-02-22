@@ -6,6 +6,7 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.ApplicationForm
   alias Accomplish.JobApplications.Companies
+  alias Accomplish.JobApplications.Stage
   alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
 
@@ -106,6 +107,10 @@ defmodule Accomplish.JobApplications do
 
   def change_application_form(attrs \\ %{}) do
     ApplicationForm.changeset(attrs)
+  end
+
+  def change_stage_form(attrs \\ %{}) do
+    %Stage{} |> Stage.changeset(attrs)
   end
 
   def broadcast_application_created(job_application, company) do

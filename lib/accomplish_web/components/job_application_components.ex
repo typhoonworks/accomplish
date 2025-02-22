@@ -9,6 +9,8 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.TimeHelpers
 
+  alias Accomplish.JobApplications.Stages
+
   def application_group(assigns) do
     ~H"""
     <div
@@ -60,31 +62,10 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
                 class="hidden w-56 text-zinc-300 bg-zinc-800"
               >
                 <.menu_group>
-                  <.menu_item>
-                    <div class="w-full flex items-center gap-2">
-                      <.icon name="hero-envelope-open" class="size-4" />
-                      <span>Status</span>
-                      <.menu_shortcut>
-                        <div class="flex gap-4">
-                          <span>S</span>
-                          <span class="text-[8px]">▶</span>
-                        </div>
-                      </.menu_shortcut>
-                    </div>
-                  </.menu_item>
+                  {status_menu_item(%{application: application})}
+
                   <.menu_separator />
-                  <.menu_item>
-                    <div class="w-full flex items-center gap-2">
-                      <.icon name="hero-arrow-down-on-square" class="size-4" />
-                      <span>Add stage</span>
-                      <.menu_shortcut>
-                        <div class="flex gap-1">
-                          <span>Ctrl</span>
-                          <span>S</span>
-                        </div>
-                      </.menu_shortcut>
-                    </div>
-                  </.menu_item>
+                  {add_stage_menu_item(%{application: application})}
                   <.menu_item>
                     <div class="w-full flex items-center gap-2">
                       <.icon name="hero-square-3-stack-3d" class="size-4" />
@@ -176,6 +157,102 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
     """
   end
 
+  defp status_menu_item(assigns) do
+    ~H"""
+    <div class="relative group">
+      <.menu_item class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <.icon name="hero-envelope-open" class="size-4" />
+          <span>Status</span>
+        </div>
+        <.menu_shortcut>
+          <div class="flex gap-4">
+            <span>S</span>
+            <span class="text-[8px]">▶</span>
+          </div>
+        </.menu_shortcut>
+      </.menu_item>
+      
+    <!-- Submenu positioned absolutely -->
+      <div class="absolute left-full top-0 hidden group-hover:block w-48 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-50">
+        <.menu class="w-full">
+          <.menu_group>
+            <%= for option <- options_for_application_status() do %>
+              <.menu_item
+                phx-click="update_application_status"
+                phx-value-id={@application.id}
+                phx-value-status={option.value}
+              >
+                <div class="w-full flex items-center gap-2">
+                  <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
+                  <span>{option.label}</span>
+                  <.menu_shortcut>
+                    <div class="w-full flex items-center gap-2 justify-between">
+                      <%= if option.value  == @application.status do %>
+                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                      <% end %>
+                    </div>
+                  </.menu_shortcut>
+                </div>
+              </.menu_item>
+            <% end %>
+          </.menu_group>
+        </.menu>
+      </div>
+    </div>
+    """
+  end
+
+  defp add_stage_menu_item(assigns) do
+    ~H"""
+    <div class="relative group">
+      <.menu_item class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <.icon name="hero-arrow-down-on-square" class="size-4" />
+          <span>Add stage</span>
+        </div>
+        <.menu_shortcut>
+          <div class="flex gap-4">
+            <div class="flex gap-1">
+              <span>Ctrl</span>
+              <span>S</span>
+            </div>
+            <span class="text-[8px]">▶</span>
+          </div>
+        </.menu_shortcut>
+      </.menu_item>
+      
+    <!-- Submenu positioned absolutely -->
+      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-50">
+        <.menu class="w-full">
+          <.menu_group>
+            <%= for stage <- Stages.predefined_stages() do %>
+              <.menu_item
+                phx-click="prepare_predefined_stage"
+                phx-value-application-id={@application.id}
+                phx-value-title={stage.title}
+                phx-value-type={Atom.to_string(stage.type)}
+              >
+                <div class="w-full flex items-center gap-2">
+                  <.icon name={stage_icon(stage.type)} class="size-4 text-zinc-300" />
+                  <span>{stage.title}</span>
+                </div>
+              </.menu_item>
+            <% end %>
+            <.menu_separator />
+            <.menu_item phx-click="prepare_new_stage" phx-value-application-id={@application.id}>
+              <div class="w-full flex items-center gap-2">
+                <.icon name="hero-pencil-square" class="size-4" />
+                <span>Custom stage</span>
+              </div>
+            </.menu_item>
+          </.menu_group>
+        </.menu>
+      </div>
+    </div>
+    """
+  end
+
   defp format_status(:applied), do: "Applied"
   defp format_status(:interviewing), do: "Interviewing"
   defp format_status(:offer), do: "Offer"
@@ -192,39 +269,44 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
     [
       %{
         label: "Applied",
-        value: "applied",
+        value: :applied,
         icon: "hero-paper-airplane",
         color: "text-green-600",
         shortcut: "1"
       },
       %{
         label: "Interviewing",
-        value: "interviewing",
+        value: :interviewing,
         icon: "hero-envelope-open",
         color: "text-yellow-600",
         shortcut: "2"
       },
       %{
         label: "Offer",
-        value: "offer",
+        value: :offer,
         icon: "hero-hand-thumb-up",
         color: "text-blue-600",
         shortcut: "3"
       },
       %{
         label: "Rejected",
-        value: "rejected",
+        value: :rejected,
         icon: "hero-hand-thumb-down",
         color: "text-red-600",
         shortcut: "4"
       },
       %{
         label: "Accepted",
-        value: "accepted",
+        value: :accepted,
         icon: "hero-star",
         color: "text-purple-600",
         shortcut: "5"
       }
     ]
   end
+
+  defp stage_icon(:screening), do: "hero-phone"
+  defp stage_icon(:interview), do: "hero-user-group"
+  defp stage_icon(:assessment), do: "hero-document-text"
+  defp stage_icon(_), do: "hero-light-bulb"
 end

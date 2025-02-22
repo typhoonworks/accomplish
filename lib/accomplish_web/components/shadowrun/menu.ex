@@ -11,7 +11,7 @@ defmodule AccomplishWeb.Shadowrun.Menu do
     ~H"""
     <div
       class={[
-        "min-w-[8rem] overflow-hidden rounded-md ring-1 ring-zinc-700 bg-popover p-1 text-popover-foreground shadow-md",
+        "min-w-[8rem] rounded-md ring-1 ring-zinc-700 bg-popover p-1 text-popover-foreground shadow-md",
         @class
       ]}
       {@rest}
