@@ -88,7 +88,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
               />
             </div>
 
-            <div class="flex justify-start gap-2 mb-2">
+            <div class="flex justify-start items-center gap-2 mb-2">
               <.shadow_select_input
                 id="application-status-select"
                 field={@form[:status]}
@@ -97,13 +97,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 options={options_for_application_status()}
                 on_select="update_application_status"
               />
-            </div>
 
-            <input
-              type="hidden"
-              name="application[applied_at]"
-              value={DateTime.utc_now() |> DateTime.to_iso8601()}
-            />
+              <.shadow_date_picker
+                label="Applied date"
+                id={"#{@form.id}-date_picker"}
+                form={@form}
+                start_date_field={@form[:applied_at]}
+                required={true}
+              />
+            </div>
 
             <.separator />
 
@@ -129,7 +131,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
             >
               Cancel
             </.shadow_button>
-            <.shadow_button type="submit" variant="primary">Create application</.shadow_button>
+            <.shadow_button type="submit" variant="primary" disabled={!@form.source.valid?}>
+              Create application
+            </.shadow_button>
           </div>
         </.dialog_footer>
       </.shadow_form>
@@ -240,6 +244,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
       {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Failed to delete job application.")}
     end
+  end
+
+  def handle_info(%{id: _id, date: date, form: _form}, socket) do
+    updated_changeset =
+      socket.assigns.form.source
+      |> Ecto.Changeset.put_change(:applied_at, date)
+
+    {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
 
   def handle_info({JobApplications, event}, socket) do
