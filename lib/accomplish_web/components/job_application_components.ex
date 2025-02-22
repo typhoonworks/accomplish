@@ -57,15 +57,56 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
 
               <.menu
                 id={"context-menu-#{application.id}"}
-                class="hidden w-56 text-zinc-300 bg-zinc-900"
+                class="hidden w-56 text-zinc-300 bg-zinc-800"
               >
                 <.menu_group>
+                  <.menu_item>
+                    <div class="w-full flex items-center gap-2">
+                      <.icon name="hero-envelope-open" class="size-4" />
+                      <span>Status</span>
+                      <.menu_shortcut>
+                        <div class="flex gap-4">
+                          <span>S</span>
+                          <span class="text-[8px]">▶</span>
+                        </div>
+                      </.menu_shortcut>
+                    </div>
+                  </.menu_item>
+                  <.menu_separator />
+                  <.menu_item>
+                    <div class="w-full flex items-center gap-2">
+                      <.icon name="hero-arrow-down-on-square" class="size-4" />
+                      <span>Add stage</span>
+                      <.menu_shortcut>
+                        <div class="flex gap-1">
+                          <span>Ctrl</span>
+                          <span>S</span>
+                        </div>
+                      </.menu_shortcut>
+                    </div>
+                  </.menu_item>
+                  <.menu_item>
+                    <div class="w-full flex items-center gap-2">
+                      <.icon name="hero-square-3-stack-3d" class="size-4" />
+                      <span>Current stage</span>
+                      <.menu_shortcut>
+                        <div class="flex gap-1">
+                          <span>C</span>
+                          <span class="text-[8px]">▶</span>
+                        </div>
+                      </.menu_shortcut>
+                    </div>
+                  </.menu_item>
+                  <.menu_separator />
                   <.menu_item phx-click="delete_application" phx-value-id={application.id}>
                     <div class="w-full flex items-center gap-2">
                       <.icon name="hero-trash" class="size-4" />
                       <span>Delete</span>
                       <.menu_shortcut>
-                        <span>⌘⌫</span>
+                        <div class="flex gap-1">
+                          <span>⌘</span>
+                          <span>⌫</span>
+                        </div>
                       </.menu_shortcut>
                     </div>
                   </.menu_item>

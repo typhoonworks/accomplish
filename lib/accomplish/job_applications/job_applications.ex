@@ -6,7 +6,7 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.ApplicationForm
   alias Accomplish.JobApplications.Companies
-  alias Accomplish.JobApplications.Stage
+  alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
 
   @pubsub Accomplish.PubSub
@@ -116,12 +116,7 @@ defmodule Accomplish.JobApplications do
   end
 
   def add_stage(application, attrs) do
-    Stage.create_changeset(application, attrs)
-    |> Repo.insert()
-  end
-
-  defp broadcast!(msg) do
-    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
+    Stages.create(application, attrs)
   end
 
   defp update_diff(original, changeset) do
@@ -129,5 +124,9 @@ defmodule Accomplish.JobApplications do
       old_value = Map.get(original, field)
       Map.put(acc, field, %{old: old_value, new: new_value})
     end)
+  end
+
+  defp broadcast!(msg) do
+    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
   end
 end

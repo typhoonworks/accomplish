@@ -267,7 +267,7 @@ defmodule AccomplishWeb.Layout do
                   </button>
                 </.dropdown_menu_trigger>
                 <.dropdown_menu_content>
-                  <.menu class="w-56 text-zinc-300 bg-zinc-900">
+                  <.menu class="w-56 text-zinc-300 bg-zinc-800">
                     <.menu_group>
                       <.menu_item class="text-[13px]">
                         <span>Profile</span>

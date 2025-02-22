@@ -5,6 +5,7 @@ defmodule Accomplish.JobApplications.Application do
 
   alias Accomplish.Accounts.User
   alias Accomplish.JobApplications.Company
+  alias Accomplish.JobApplications.Stage
 
   @permitted ~w(role status applied_at last_updated_at source notes)a
   @required ~w(role status applied_at)a
@@ -32,9 +33,12 @@ defmodule Accomplish.JobApplications.Application do
     field :last_updated_at, :utc_datetime
     field :source, :string
     field :notes, :string
+    field :stages_count, :integer, default: 0
 
     belongs_to :company, Company
     belongs_to :applicant, User, foreign_key: :applicant_id
+
+    has_many :stages, Stage
 
     timestamps(type: :utc_datetime)
   end
