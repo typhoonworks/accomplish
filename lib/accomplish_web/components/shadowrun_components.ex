@@ -111,7 +111,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
   attr :type, :string,
     default: "text",
-    values: ~w(checkbox color date datetime-local email file month number password
+    values: ~w(checkbox color date datetime-local email file hidden month number password
                range search select tel text textarea time url week)
 
   attr :field, Phoenix.HTML.FormField,
@@ -314,6 +314,38 @@ defmodule AccomplishWeb.ShadowrunComponents do
     <p class="flex gap-2 text-xs leading-6 text-red-700">
       {render_slot(@inner_block)}
     </p>
+    """
+  end
+
+  @min_date Date.utc_today() |> Date.add(-365)
+
+  attr :id, :string, required: true
+  attr :label, :string, required: true
+
+  attr :start_date_field, :any,
+    doc: "a %Phoenix.HTML.Form{}/field name tuple, for example: @form[:start_date]"
+
+  attr :min, :any, default: @min_date, doc: "the earliest date that can be set"
+  attr :max, :any, default: Date.utc_today(), doc: "the latest date that can be set"
+
+  attr :errors, :list, default: []
+
+  attr :rest, :global, include: ~w(disabled form placeholder readonly required)
+
+  def shadow_date_picker(assigns) do
+    ~H"""
+    <.live_component
+      module={AccomplishWeb.Shadowrun.DatePicker}
+      label={@label}
+      id={@id}
+      form={@rest[:form]}
+      start_date_field={@start_date_field}
+      required={@rest[:required]}
+      readonly={@rest[:readonly]}
+      placeholder={@rest[:placeholder] || "Select date"}
+      min={@min}
+      max={@max}
+    />
     """
   end
 end
