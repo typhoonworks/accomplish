@@ -22,20 +22,20 @@ defmodule AccomplishWeb.JobApplicationsLive do
               icon="hero-rectangle-stack"
               text="All"
               href={~p"/job_applications?filter=all"}
-              active={@active_filter == "all"}
+              active={@filter == "all"}
             />
             <.nav_button
               icon="hero-play"
               text="Active"
               href={~p"/job_applications?filter=active"}
-              active={@active_filter == "active"}
+              active={@filter == "active"}
             />
           </:actions>
         </.page_header>
       </:page_header>
 
       <div class="mt-8 w-full">
-        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
           <div
             id="applications"
             class="inline-block min-w-full py-2 align-middle"
@@ -88,14 +88,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
               />
             </div>
 
-            <div class="flex justify-start items-center gap-2 mb-2">
+            <div class="flex justify-start gap-2 mb-2">
               <.shadow_select_input
                 id="application-status-select"
                 field={@form[:status]}
                 prompt="Change application status"
                 value={@form[:status].value}
                 options={options_for_application_status()}
-                on_select="update_application_status"
+                on_select="update_application_form_status"
               />
 
               <.shadow_date_picker
@@ -144,31 +144,26 @@ defmodule AccomplishWeb.JobApplicationsLive do
   def mount(params, _session, socket) do
     if connected?(socket), do: subscribe_to_notifications_topic()
 
-    active_filter = params["filter"] || "active"
+    filter = params["filter"] || "active"
     user = socket.assigns.current_user
-    applications = JobApplications.list_user_applications(user, active_filter)
+    applications = JobApplications.list_user_applications(user, filter)
 
-    status_priority = %{
-      offer: 1,
-      interviewing: 2,
-      applied: 3,
-      rejected: 4
-    }
+    statuses = visible_statuses(filter)
 
     applications_by_status =
-      applications
-      |> Enum.group_by(& &1.status)
-      |> Enum.sort_by(fn {status, _} -> Map.get(status_priority, status, 999) end)
+      for status <- statuses, into: %{} do
+        {status, Enum.filter(applications, &(&1.status == status))}
+      end
 
     socket =
       socket
       |> assign(:page_title, "Job Applications")
       |> assign_sounds()
       |> assign_play_sounds(true)
-      |> assign(:active_filter, active_filter)
+      |> assign(:filter, filter)
       |> assign_new_form()
       |> assign(:applications_by_status, applications_by_status)
-      |> assign(:statuses, Enum.map(applications_by_status, &elem(&1, 0)))
+      |> assign(:statuses, statuses)
       |> stream_applications(applications_by_status)
 
     {:ok, socket}
@@ -189,8 +184,22 @@ defmodule AccomplishWeb.JobApplicationsLive do
      })}
   end
 
-  def handle_event("update_application_status", %{"value" => value}, socket) do
+  def handle_event("update_application_form_status", %{"value" => value}, socket) do
     {:noreply, socket |> assign_application_form_status(value)}
+  end
+
+  def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
+    with %Application{} = application <- JobApplications.get_application!(id, :company),
+         {:ok, _updated_application} <-
+           JobApplications.update_application(application, %{status: status}) do
+      {:noreply, socket}
+    else
+      nil ->
+        {:noreply, put_flash(socket, :error, "Application not found.")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to update application.")}
+    end
   end
 
   def handle_event("validate_application", %{"application_form" => application_params}, socket) do
@@ -236,7 +245,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
         socket =
           socket
           |> put_flash(:info, "Job application deleted successfully.")
-          |> stream_delete(key, application)
+          |> maybe_stream_delete(key, application)
           |> maybe_play_sound("swoosh")
 
         {:noreply, socket}
@@ -246,10 +255,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  def handle_info(%{id: _id, date: date, form: _form}, socket) do
-    updated_changeset =
-      socket.assigns.form.source
-      |> Ecto.Changeset.put_change(:applied_at, date)
+  def handle_info(%{id: _id, date: date, form: form}, socket) do
+    params = Map.put(form.params || %{}, "applied_at", date)
+    updated_changeset = Accomplish.JobApplications.change_application_form(params)
 
     {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
@@ -262,6 +270,10 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, insert_new_application(socket, event.application, event.company)}
   end
 
+  defp handle_event(%{name: "job_application:updated"} = event, socket) do
+    {:noreply, replace_application(socket, event.application, event.company, event.diff)}
+  end
+
   defp handle_event(_, socket), do: {:noreply, socket}
 
   defp subscribe_to_notifications_topic do
@@ -272,6 +284,24 @@ defmodule AccomplishWeb.JobApplicationsLive do
     application = %Application{application | company: company}
     key = stream_key(application.status)
     stream_insert(socket, key, application, at: 0)
+  end
+
+  defp replace_application(socket, application, company, diff) do
+    application = %Application{application | company: company}
+
+    old_status =
+      if Map.has_key?(diff, :status) do
+        diff[:status][:old]
+      else
+        application.status
+      end
+
+    old_key = stream_key(old_status)
+    new_key = stream_key(application.status)
+
+    socket
+    |> maybe_stream_delete(old_key, application)
+    |> maybe_stream_insert(new_key, application)
   end
 
   defp assign_new_form(socket) do
@@ -295,7 +325,23 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end)
   end
 
-  def stream_key(status), do: String.to_atom("applications_#{status}")
+  defp maybe_stream_delete(socket, key, application) do
+    if Map.has_key?(socket.assigns.streams, key) do
+      stream_delete(socket, key, application)
+    else
+      socket
+    end
+  end
+
+  defp maybe_stream_insert(socket, key, application) do
+    if application.status in socket.assigns.statuses do
+      stream_insert(socket, key, application, at: 0)
+    else
+      socket
+    end
+  end
+
+  defp stream_key(status), do: String.to_atom("applications_#{status}")
 
   defp close_modal(socket, modal_id) do
     socket
@@ -356,7 +402,22 @@ defmodule AccomplishWeb.JobApplicationsLive do
         icon: "hero-hand-thumb-down",
         color: "text-red-600",
         shortcut: "4"
+      },
+      %{
+        label: "Accepted",
+        value: "accepted",
+        icon: "hero-star",
+        color: "text-purple-600",
+        shortcut: "5"
       }
     ]
+  end
+
+  defp visible_statuses("all") do
+    ~w(accepted offer interviewing applied rejected)a
+  end
+
+  defp visible_statuses("active") do
+    ~w(offer interviewing applied)a
   end
 end

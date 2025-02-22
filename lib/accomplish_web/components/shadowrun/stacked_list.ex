@@ -10,7 +10,7 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
 
   def stacked_list(assigns) do
     ~H"""
-    <div id={@id} class={["overflow-hidden shadow ring-1 ring-zinc-700", @class]} {@rest}>
+    <div id={@id} class={["overflow-visible shadow ring-1 ring-zinc-700", @class]} {@rest}>
       {render_slot(@inner_block)}
     </div>
     """

@@ -12,6 +12,9 @@ defmodule Accomplish.JobApplications do
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
 
+  def get_application!(id, preloads \\ []),
+    do: Application |> Repo.get!(id) |> Repo.preload(preloads)
+
   def list_user_applications(user, filter \\ "all") do
     query =
       from a in Application,
@@ -42,6 +45,20 @@ defmodule Accomplish.JobApplications do
       {:ok, job_application}
     else
       {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  def update_application(%Application{} = application, attrs) do
+    changeset = Application.update_changeset(application, attrs)
+
+    case Repo.update(changeset) do
+      {:ok, updated_application} ->
+        diff = update_diff(application, changeset)
+        broadcast_application_updated(updated_application, application.company, diff)
+        {:ok, updated_application}
+
+      {:error, changeset} ->
+        {:error, changeset}
     end
   end
 
@@ -82,6 +99,15 @@ defmodule Accomplish.JobApplications do
     })
   end
 
+  defp broadcast_application_updated(job_application, company, diff) do
+    broadcast!(%Events.JobApplicationUpdated{
+      name: "job_application:updated",
+      application: job_application,
+      company: company,
+      diff: diff
+    })
+  end
+
   defp broadcast_application_deleted(application) do
     broadcast!(%Events.JobApplicationDeleted{
       name: "job_application:deleted",
@@ -96,5 +122,12 @@ defmodule Accomplish.JobApplications do
 
   defp broadcast!(msg) do
     Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
+  end
+
+  defp update_diff(original, changeset) do
+    Enum.reduce(changeset.changes, %{}, fn {field, new_value}, acc ->
+      old_value = Map.get(original, field)
+      Map.put(acc, field, %{old: old_value, new: new_value})
+    end)
   end
 end

@@ -3,6 +3,28 @@ defmodule Accomplish.JobApplicationsTest do
 
   alias Accomplish.JobApplications
 
+  describe "get_application!/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+      %{applicant: applicant, application: application}
+    end
+
+    test "returns the application with preloaded associations", %{application: application} do
+      fetched_application = JobApplications.get_application!(application.id, [:company])
+      assert fetched_application.id == application.id
+      assert fetched_application.company != nil
+    end
+
+    test "raises error when the application is not found" do
+      non_existent_id = UUIDv7.generate()
+
+      assert_raise Ecto.NoResultsError, fn ->
+        JobApplications.get_application!(non_existent_id)
+      end
+    end
+  end
+
   describe "list_user_applications/1" do
     setup do
       applicant = user_fixture()
@@ -90,6 +112,32 @@ defmodule Accomplish.JobApplicationsTest do
       assert changeset.valid? == false
       assert "can't be blank" in errors_on(changeset).role
       assert "can't be blank" in errors_on(changeset).applied_at
+    end
+  end
+
+  describe "update_application/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+      %{applicant: applicant, application: application}
+    end
+
+    test "successfully updates an application and broadcasts the diff", %{
+      application: application
+    } do
+      update_attrs = %{role: "Senior Software Engineer", status: :interviewing}
+
+      {:ok, updated_application} = JobApplications.update_application(application, update_attrs)
+
+      assert updated_application.role == "Senior Software Engineer"
+      assert updated_application.status == :interviewing
+    end
+
+    test "returns an error when given invalid attributes", %{application: application} do
+      update_attrs = %{role: nil}
+      {:error, changeset} = JobApplications.update_application(application, update_attrs)
+      refute changeset.valid?
+      assert "can't be blank" in errors_on(changeset).role
     end
   end
 
