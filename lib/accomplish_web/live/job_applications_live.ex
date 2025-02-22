@@ -255,10 +255,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  def handle_info(%{id: _id, date: date, form: _form}, socket) do
-    updated_changeset =
-      socket.assigns.form.source
-      |> Ecto.Changeset.put_change(:applied_at, date)
+  def handle_info(%{id: _id, date: date, form: form}, socket) do
+    params = Map.put(form.params || %{}, "applied_at", date)
+    updated_changeset = Accomplish.JobApplications.change_application_form(params)
 
     {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
