@@ -15,8 +15,13 @@ defmodule Accomplish.JobApplications do
   @notifications_topic "notifications:events"
   @active_statuses ~w(applied interviewing offer)a
 
-  def get_application!(id, preloads \\ []),
-    do: Application |> Repo.get!(id) |> Repo.preload(preloads)
+  def get_application!(applicant, id, preloads \\ []) do
+    from(a in Application,
+      where: a.id == ^id and a.applicant_id == ^applicant.id,
+      preload: ^preloads
+    )
+    |> Repo.one!()
+  end
 
   def get_application_by_slug(applicant, slug, preloads \\ []) do
     query =
@@ -30,10 +35,10 @@ defmodule Accomplish.JobApplications do
     end
   end
 
-  def list_user_applications(user, filter \\ "all", preloads \\ []) do
+  def list_applications(applicant, filter \\ "all", preloads \\ []) do
     query =
       from a in Application,
-        where: a.applicant_id == ^user.id,
+        where: a.applicant_id == ^applicant.id,
         preload: ^([:company] ++ preloads)
 
     query =
@@ -50,7 +55,7 @@ defmodule Accomplish.JobApplications do
     Repo.all(query)
   end
 
-  def count_user_applications(user, filter \\ "all") do
+  def count_applications(user, filter \\ "all") do
     query =
       from a in Application,
         where: a.applicant_id == ^user.id

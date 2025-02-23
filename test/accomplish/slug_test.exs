@@ -9,7 +9,7 @@ defmodule Accomplish.SlugTest do
     assert Slug.slugify("SomeString!!!") == "somestring"
   end
 
-  test "slugify/1 with a list of string returns their slugified contatenation" do
+  test "slugify/1 with a list of string returns their slugified concatenation" do
     list = ["Software Engineer", "Typhoon Works"]
     assert Slug.slugify(list) == "software-engineer--typhoon-works"
   end

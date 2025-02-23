@@ -3,29 +3,34 @@ defmodule Accomplish.JobApplicationsTest do
 
   alias Accomplish.JobApplications
 
-  describe "get_application!/2" do
+  describe "get_application!/3" do
     setup do
       applicant = user_fixture()
       application = job_application_fixture(applicant)
       %{applicant: applicant, application: application}
     end
 
-    test "returns the application with preloaded associations", %{application: application} do
-      fetched_application = JobApplications.get_application!(application.id, [:company])
+    test "returns the application with preloaded associations", %{
+      applicant: applicant,
+      application: application
+    } do
+      fetched_application =
+        JobApplications.get_application!(applicant, application.id, [:company])
+
       assert fetched_application.id == application.id
       assert fetched_application.company != nil
     end
 
-    test "raises error when the application is not found" do
+    test "raises error when the application is not found", %{applicant: applicant} do
       non_existent_id = UUIDv7.generate()
 
       assert_raise Ecto.NoResultsError, fn ->
-        JobApplications.get_application!(non_existent_id)
+        JobApplications.get_application!(applicant, non_existent_id)
       end
     end
   end
 
-  describe "list_user_applications/1" do
+  describe "list_applications/1" do
     setup do
       applicant = user_fixture()
 
@@ -58,7 +63,7 @@ defmodule Accomplish.JobApplicationsTest do
     end
 
     test "returns all job applications for the given user", %{applicant: applicant} do
-      job_apps = JobApplications.list_user_applications(applicant)
+      job_apps = JobApplications.list_applications(applicant)
 
       assert length(job_apps) == 3
       assert Enum.all?(job_apps, fn app -> app.applicant_id == applicant.id end)
@@ -67,7 +72,7 @@ defmodule Accomplish.JobApplicationsTest do
     test "returns an empty list when user has no applications" do
       another_user = user_fixture()
 
-      job_apps = JobApplications.list_user_applications(another_user)
+      job_apps = JobApplications.list_applications(another_user)
 
       assert job_apps == []
     end

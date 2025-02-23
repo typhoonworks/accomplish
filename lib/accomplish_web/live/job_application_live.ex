@@ -118,6 +118,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   def handle_event("save_field", %{"field" => field, "value" => value}, socket) do
+    user = socket.assigns.current_user
     application = socket.assigns.application
 
     case JobApplications.update_application(application, %{
@@ -125,7 +126,7 @@ defmodule AccomplishWeb.JobApplicationLive do
          }) do
       {:ok, _updated_application} ->
         updated_application =
-          JobApplications.get_application!(application.id, [
+          JobApplications.get_application!(user, application.id, [
             :company,
             :current_stage,
             :stages
