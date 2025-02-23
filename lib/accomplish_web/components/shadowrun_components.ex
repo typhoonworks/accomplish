@@ -52,7 +52,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
     do: "border-red-600 text-red-300 ring-red-700 hover:ring-red-600"
 
   attr :type, :string, default: "button"
-  attr :variant, :string, default: "primary", values: ["primary", "secondary"]
+  attr :variant, :string, default: "primary", values: ["primary", "secondary", "transparent"]
   attr :disabled, :boolean, default: false
   attr :class, :string, default: nil
   attr :rest, :global
@@ -84,6 +84,9 @@ defmodule AccomplishWeb.ShadowrunComponents do
   defp button_variant_class("secondary"),
     do:
       "bg-zinc-700 text-zinc-200 hover:bg-zinc-600 border border-solid border-zinc-600 shadow-md"
+
+  defp button_variant_class("transparent"),
+    do: "bg-transparent text-zinc-300 hover:bg-zinc-800 border-transparent"
 
   attr :active, :boolean, default: false
   attr :icon, :string, default: nil
@@ -271,12 +274,18 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
   attr :on_select, :any, default: nil, doc: "Event handler for selection"
+  attr :variant, :string, default: "secondary", values: ["primary", "secondary", "transparent"]
+
+  attr :phx_change_event, :string,
+    default: nil,
+    doc: "The event triggered when selecting an option"
 
   def shadow_select_input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
     assigns
     |> assign(field: nil, id: assigns.id || field.id)
     |> assign(:errors, Enum.map(field.errors, &translate_error/1))
     |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
+    |> assign_new(:field_name, fn -> field.field end)
     |> assign_new(:value, fn ->
       case field.value do
         value when is_atom(value) -> Atom.to_string(value)
@@ -300,7 +309,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
         <.dropdown_menu>
           <.dropdown_menu_trigger id={"#{@id}-select-dropdown-trigger"} class="group">
-            <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant="secondary">
+            <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant={@variant}>
               <%= if Map.has_key?(@selected, :icon) do %>
                 <.icon name={@selected.icon} class={Enum.join(["size-4", @selected.color], " ")} />
               <% end %>
@@ -322,7 +331,11 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
               <.menu_group>
                 <%= for option <- @options do %>
-                  <.menu_item phx-click={JS.push(@on_select)} phx-value-value={option.value}>
+                  <.menu_item
+                    phx-click={JS.push(@on_select)}
+                    phx-value-field={@field_name}
+                    phx-value-value={option.value}
+                  >
                     <div class="w-full flex items-center gap-2">
                       <%= if Map.has_key?(option, :icon) do %>
                         <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
@@ -369,6 +382,8 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :min, :any, default: @min_date, doc: "the earliest date that can be set"
   attr :max, :any, default: Date.utc_today(), doc: "the latest date that can be set"
 
+  attr :variant, :string, default: "default", values: ["default", "transparent"]
+
   attr :errors, :list, default: []
 
   attr :rest, :global, include: ~w(disabled form placeholder readonly required)
@@ -386,6 +401,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
       placeholder={@rest[:placeholder] || "Select date"}
       min={@min}
       max={@max}
+      variant={@variant}
     />
     """
   end

@@ -4,6 +4,8 @@ defmodule AccomplishWeb.JobApplicationLive do
   alias Accomplish.JobApplications
 
   import AccomplishWeb.Layout
+  import AccomplishWeb.JobApplicationHelpers
+  import AccomplishWeb.Shadowrun.Tooltip
 
   def render(assigns) do
     ~H"""
@@ -23,13 +25,13 @@ defmodule AccomplishWeb.JobApplicationLive do
             <.nav_button
               icon="hero-document-text"
               text="Overview"
-              href={~p"/job_applications/#{@application.slug}/overview"}
+              href={~p"/job_application/#{@application.slug}/overview"}
               active={@live_action == :overview}
             />
             <.nav_button
               icon="hero-square-3-stack-3d"
               text="Stages"
-              href={~p"/job_applications/#{@application.slug}/stages"}
+              href={~p"/job_application/#{@application.slug}/stages"}
               active={@live_action == :stages}
             />
           </:actions>
@@ -57,12 +59,43 @@ defmodule AccomplishWeb.JobApplicationLive do
         <.shadow_input
           field={@form[:role]}
           placeholder="Job role"
-          class="text-3xl tracking-tighter"
+          class="text-3xl tracking-tighter hover:cursor-text"
           phx-blur="save_field"
-          phx-value-field="role"
+          phx-value-field={@form[:role].field}
         />
 
         <p class="text-zinc-300">{@application.company.name}</p>
+      </div>
+
+      <div class="flex justify-start gap-2 my-2">
+        <.tooltip>
+          <.shadow_select_input
+            id="application-status-select"
+            field={@form[:status]}
+            prompt="Change application status"
+            value={@form[:status].value}
+            options={options_for_application_status()}
+            on_select="save_field"
+            variant="transparent"
+          />
+          <.tooltip_content side="bottom">
+            <p>Application status</p>
+          </.tooltip_content>
+        </.tooltip>
+
+        <.tooltip>
+          <.shadow_date_picker
+            label="Applied date"
+            id={"#{@form.id}-date_picker"}
+            form={@form}
+            start_date_field={@form[:applied_at]}
+            required={true}
+            variant="transparent"
+          />
+          <.tooltip_content side="bottom">
+            <p>Applied date</p>
+          </.tooltip_content>
+        </.tooltip>
       </div>
 
       <div class="mt-12 space-y-2">
@@ -71,10 +104,10 @@ defmodule AccomplishWeb.JobApplicationLive do
           field={@form[:notes]}
           type="textarea"
           placeholder="Write down key details, next moves, or important notes..."
-          class="text-base tracking-tighter w-full"
+          class="text-base tracking-tighter w-full hover:cursor-text"
           socket={@socket}
           phx-blur="save_field"
-          phx-value-field="notes"
+          phx-value-field={@form[:notes].field}
         />
       </div>
     </section>
@@ -117,22 +150,42 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  def handle_event("save_field", %{"field" => field, "value" => value}, socket) do
-    user = socket.assigns.current_user
+  def handle_event("save_field", %{"field" => field_name, "value" => value}, socket) do
+    form = socket.assigns.form
+
+    field_name =
+      case String.to_existing_atom(field_name) do
+        atom when is_atom(atom) -> atom
+        _ -> nil
+      end
+
+    case form[field_name] do
+      %Phoenix.HTML.FormField{field: actual_field} ->
+        update_field(socket, actual_field, value)
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_info(%{id: _id, field: field_name, date: date, form: _form}, socket) do
+    update_field(socket, field_name, date)
+    {:noreply, socket}
+  end
+
+  defp update_field(socket, field, value) do
     application = socket.assigns.application
 
-    case JobApplications.update_application(application, %{
-           String.to_existing_atom(field) => value
-         }) do
-      {:ok, _updated_application} ->
-        updated_application =
-          JobApplications.get_application!(user, application.id, [
-            :company,
-            :current_stage,
-            :stages
-          ])
+    case JobApplications.update_application(application, %{field => value}) do
+      {:ok, updated_application} ->
+        form = JobApplications.change_application_form(Map.from_struct(updated_application))
 
-        {:noreply, assign(socket, application: updated_application)}
+        socket =
+          socket
+          |> assign(application: updated_application)
+          |> assign(form: to_form(form))
+
+        {:noreply, socket}
 
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}

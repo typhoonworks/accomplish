@@ -48,7 +48,7 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
   def list_item(assigns) do
     ~H"""
     <div class="relative">
-      <a :if={@clickable} href={@href} class="absolute inset-0 -z-10" aria-hidden="true" tabindex="-1">
+      <a :if={@clickable} href={@href} class="absolute inset-0 z-0" aria-hidden="true" tabindex="-1">
       </a>
 
       <div class={[
