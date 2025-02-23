@@ -16,6 +16,7 @@ import ApplicationGroup from "./hooks/application_group";
 import AudioMp3 from "./hooks/audio_mp3";
 import CodeInput from "./hooks/code_input";
 import ContextMenu from "./hooks/context_menu";
+import DropdownMenu from "./hooks/dropdown_menu";
 
 sendTimezoneToServer();
 
@@ -24,6 +25,7 @@ const hooks = {
   AudioMp3,
   CodeInput,
   ContextMenu,
+  DropdownMenu,
   ...getHooks(Components),
 };
 

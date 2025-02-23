@@ -4,6 +4,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   use Phoenix.Component
 
   import AccomplishWeb.CoreComponents
+  import AccomplishWeb.ShadowrunComponents
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.StackedList
@@ -51,9 +52,13 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
                 </p>
               </div>
 
-              <p class="text-[13px] text-zinc-400 leading-tight"></p>
+              <p class="text-[13px] text-zinc-400 leading-tight text-right w-32 truncate">
+                <.shadow_pill :if={application.current_stage}>
+                  {application.current_stage.title}
+                </.shadow_pill>
+              </p>
 
-              <p class="text-[13px] text-zinc-400 leading-tight text-right">
+              <p class="text-[13px] text-zinc-400 leading-tight text-right w-24">
                 {formatted_relative_time(application.applied_at)}
               </p>
 
@@ -104,7 +109,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   def application_status_select(assigns) do
     ~H"""
     <.dropdown_menu class="z-90">
-      <.dropdown_menu_trigger class="group">
+      <.dropdown_menu_trigger id={"#{@application.id}-dropdown-trigger"} class="group">
         <div
           class={"h-3 w-3 rounded-full #{status_color(@application.status)} hover:scale-110 hover:shadow transition"}
           role="button"

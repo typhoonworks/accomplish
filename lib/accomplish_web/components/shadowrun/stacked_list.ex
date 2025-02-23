@@ -50,7 +50,7 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
     <%= if @clickable do %>
       <.link href={@href}>
         <div class={[
-          "grid grid-cols-[2fr_2fr_1fr] items-center px-4 py-3 sm:px-6 hover:bg-zinc-800/50",
+          "grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-3 sm:px-6 hover:bg-zinc-800/50",
           @class
         ]}>
           {render_slot(@inner_block)}
@@ -58,7 +58,7 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
       </.link>
     <% else %>
       <div class={[
-        "grid grid-cols-[2fr_2fr_1fr] items-center px-4 py-3 sm:px-6 hover:bg-zinc-800/50",
+        "grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-3 sm:px-6 hover:bg-zinc-800/50",
         @class
       ]}>
         {render_slot(@inner_block)}

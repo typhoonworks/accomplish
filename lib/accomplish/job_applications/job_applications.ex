@@ -7,7 +7,6 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.ApplicationForm
   alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
-  alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
 
   @pubsub Accomplish.PubSub
@@ -17,11 +16,11 @@ defmodule Accomplish.JobApplications do
   def get_application!(id, preloads \\ []),
     do: Application |> Repo.get!(id) |> Repo.preload(preloads)
 
-  def list_user_applications(user, filter \\ "all") do
+  def list_user_applications(user, filter \\ "all", preloads \\ []) do
     query =
       from a in Application,
         where: a.applicant_id == ^user.id,
-        preload: [:company]
+        preload: ^([:company] ++ preloads)
 
     query =
       case filter do
@@ -138,7 +137,46 @@ defmodule Accomplish.JobApplications do
   end
 
   def add_stage(application, attrs) do
-    Stages.create(application, attrs)
+    latest_position =
+      from(s in Stage,
+        where: s.application_id == ^application.id,
+        select: max(s.position)
+      )
+      |> Repo.one()
+      |> Kernel.||(0)
+
+    position = latest_position + 1
+    stage_changeset = Stage.create_changeset(application, Map.put(attrs, :position, position))
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:stage, stage_changeset)
+    |> Ecto.Multi.run(:update_application, fn repo, %{stage: stage} ->
+      actual_stage_count =
+        from(s in Stage,
+          where: s.application_id == ^application.id,
+          select: count()
+        )
+        |> repo.one()
+
+      application
+      |> Ecto.Changeset.change(stages_count: actual_stage_count)
+      |> maybe_set_current_stage(stage, actual_stage_count)
+      |> repo.update()
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{stage: stage}} -> {:ok, stage}
+      {:error, :stage, changeset, _} -> {:error, changeset}
+      {:error, :application, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  defp maybe_set_current_stage(changeset, stage, actual_stage_count) do
+    if actual_stage_count == 1 do
+      Ecto.Changeset.change(changeset, current_stage_id: stage.id)
+    else
+      changeset
+    end
   end
 
   defp update_diff(original, changeset) do

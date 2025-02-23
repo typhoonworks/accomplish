@@ -12,6 +12,45 @@ defmodule AccomplishWeb.ShadowrunComponents do
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
 
+  attr :variant, :string,
+    default: "default",
+    values: ["default", "info", "success", "warning", "error"]
+
+  attr :class, :string, default: nil
+  attr :rest, :global
+  slot :inner_block, required: true
+
+  def shadow_pill(assigns) do
+    ~H"""
+    <span
+      class={[
+        "inline-flex items-center px-3 py-1 rounded-full text-xs font-light",
+        "border border-solid border-zinc-200 transition-all",
+        pill_variant_class(@variant),
+        @class
+      ]}
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </span>
+    """
+  end
+
+  defp pill_variant_class("default"),
+    do: "border-zinc-600 text-zinc-300 ring-zinc-700 hover:ring-zinc-600"
+
+  defp pill_variant_class("info"),
+    do: "border-blue-600 text-blue-300 ring-blue-700 hover:ring-blue-600"
+
+  defp pill_variant_class("success"),
+    do: "border-green-600 text-green-300 ring-green-700 hover:ring-green-600"
+
+  defp pill_variant_class("warning"),
+    do: "border-yellow-600 text-yellow-300 ring-yellow-700 hover:ring-yellow-600"
+
+  defp pill_variant_class("error"),
+    do: "border-red-600 text-red-300 ring-red-700 hover:ring-red-600"
+
   attr :type, :string, default: "button"
   attr :variant, :string, default: "primary", values: ["primary", "secondary"]
   attr :disabled, :boolean, default: false
@@ -258,7 +297,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         <input type="hidden" name={@name} id={"#{@id}-hidden"} value={@value} />
 
         <.dropdown_menu>
-          <.dropdown_menu_trigger class="group">
+          <.dropdown_menu_trigger id={"#{@id}-select-dropdown-trigger"} class="group">
             <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant="secondary">
               <%= if Map.has_key?(@selected, :icon) do %>
                 <.icon name={@selected.icon} class={Enum.join(["size-4", @selected.color], " ")} />

@@ -182,6 +182,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
         phx-change="validate_stage"
         phx-submit="save_stage"
       >
+        <input type="hidden" name="stage[application_id]" value={@stage_form[:application_id].value} />
+
         <.dialog_content id="new-stage-content">
           <div class="flex flex-col gap-2">
             <div class="space-y-3 mb-2">
@@ -200,6 +202,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 value={@stage_form[:type].value}
                 options={options_for_stage_type()}
                 on_select="update_stage_form_type"
+              />
+
+              <.shadow_date_picker
+                label="Date"
+                id={"#{@stage_form.id}-date_picker"}
+                form={@stage_form}
+                start_date_field={@stage_form[:date]}
+                max={Date.utc_today() |> Date.add(365)}
+                required={false}
               />
             </div>
 
@@ -242,7 +253,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
     filter = params["filter"] || "active"
     user = socket.assigns.current_user
-    applications = JobApplications.list_user_applications(user, filter)
+
+    applications =
+      JobApplications.list_user_applications(user, filter, [:current_stage]) |> IO.inspect()
 
     statuses = visible_statuses(filter)
 
@@ -413,11 +426,27 @@ defmodule AccomplishWeb.JobApplicationsLive do
         {:noreply,
          socket
          |> put_flash(:info, "Stage added successfully.")
+         |> push_event("js-exec", %{
+           to: "#new-stage-modal",
+           attr: "phx-remove"
+         })
          |> close_modal("new-stage-modal")}
 
-      {:error, _reason} ->
+      {:error, reason} ->
+        IO.inspect(reason)
         {:noreply, put_flash(socket, :error, "Failed to add stage.")}
     end
+  end
+
+  def handle_event("reset_stage_form", %{"id" => modal_id}, socket) do
+    changeset = JobApplications.change_stage_form(%{})
+
+    socket =
+      socket
+      |> assign(:stage_form, to_form(changeset))
+      |> close_modal(modal_id)
+
+    {:noreply, socket}
   end
 
   def handle_info(%{id: _id, date: date, form: form}, socket) do
