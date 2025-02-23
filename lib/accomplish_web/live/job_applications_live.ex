@@ -432,7 +432,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
          })
          |> close_modal("new-stage-modal")}
 
-      {:error, reason} ->
+      {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Failed to add stage.")}
     end
   end
