@@ -95,6 +95,19 @@ defmodule Accomplish.JobApplicationsTest do
       assert job_application.applicant_id == applicant.id
     end
 
+    test "generates a slug when an application is created", %{applicant: applicant} do
+      valid_attrs = %{
+        role: "Software Engineer",
+        status: :applied,
+        applied_at: DateTime.utc_now(),
+        company_name: "Tech Corp"
+      }
+
+      {:ok, job_application} = JobApplications.create_application(applicant, valid_attrs)
+      assert job_application.slug != nil
+      assert job_application.slug =~ "software-engineer--tech-corp"
+    end
+
     test "returns an error when company_name is missing", %{applicant: applicant} do
       invalid_attrs = %{}
 

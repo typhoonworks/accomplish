@@ -9,6 +9,7 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.Stage
   alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
+  alias Accomplish.Slug
 
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
@@ -56,13 +57,30 @@ defmodule Accomplish.JobApplications do
 
   def create_application(applicant, attrs) do
     with {:ok, form_changeset} <- validate_application_form(attrs),
-         {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name),
-         changeset <- Application.create_changeset(company, applicant, form_changeset.changes),
-         {:ok, application} <- Repo.insert(changeset) do
-      broadcast_application_created(application, company)
-      {:ok, application}
-    else
-      {:error, changeset} -> {:error, changeset}
+         {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name) do
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert(
+        :application,
+        Application.create_changeset(company, applicant, form_changeset.changes)
+      )
+      |> Ecto.Multi.run(:update_slug, fn repo, %{application: application} ->
+        updated_application = repo.get!(Application, application.id) |> repo.preload(:company)
+        slug = generate_slug(updated_application)
+
+        repo.update(Ecto.Changeset.change(updated_application, slug: slug))
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{application: _application, update_slug: updated_application}} ->
+          broadcast_application_created(updated_application, company)
+          {:ok, updated_application}
+
+        {:error, :application, changeset, _} ->
+          {:error, changeset}
+
+        {:error, :update_slug, changeset, _} ->
+          {:error, changeset}
+      end
     end
   end
 
@@ -179,6 +197,13 @@ defmodule Accomplish.JobApplications do
     else
       changeset
     end
+  end
+
+  defp generate_slug(application) do
+    human_readable_slug = Slug.slugify([application.role, application.company.name])
+    id_suffix = application.id |> String.split("-") |> List.last()
+
+    "#{human_readable_slug}-#{id_suffix}"
   end
 
   defp update_diff(original, changeset) do

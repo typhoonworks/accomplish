@@ -15,6 +15,7 @@ defmodule Accomplish.JobApplications.Application do
   @derive {JSON.Encoder,
            only: [
              :id,
+             :slug,
              :role,
              :status,
              :applied_at,
@@ -27,6 +28,7 @@ defmodule Accomplish.JobApplications.Application do
            ]}
 
   schema "job_applications" do
+    field :slug, :string
     field :role, :string
     field :status, Ecto.Enum, values: @status_types, default: :applied
     field :applied_at, :utc_datetime
