@@ -45,6 +45,7 @@ const ContextMenu: Hook = {
       menu.style.top = `${top}px`;
       menu.style.position = "fixed";
       menu.classList.add("context-menu");
+      menu.style.zIndex = "9999";
 
       // Ensure the menu closes when clicking elsewhere
       document.addEventListener("click", hideContextMenu);

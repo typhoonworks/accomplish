@@ -47,23 +47,17 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
 
   def list_item(assigns) do
     ~H"""
-    <%= if @clickable do %>
-      <.link href={@href}>
-        <div class={[
-          "grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-3 sm:px-6 hover:bg-zinc-800/50",
-          @class
-        ]}>
-          {render_slot(@inner_block)}
-        </div>
-      </.link>
-    <% else %>
+    <div class="relative">
+      <a :if={@clickable} href={@href} class="absolute inset-0 -z-10" aria-hidden="true" tabindex="-1">
+      </a>
+
       <div class={[
         "grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-3 sm:px-6 hover:bg-zinc-800/50",
         @class
       ]}>
         {render_slot(@inner_block)}
       </div>
-    <% end %>
+    </div>
     """
   end
 end

@@ -9,6 +9,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.Components.JobApplicationComponents
 
+  import AccomplishWeb.JobApplicationHelpers
+
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
 
@@ -463,7 +465,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
     case JobApplications.set_current_stage(application, stage_id) do
       {:ok, _} ->
-        {:noreply, insert_application(user, socket, application)}
+        {:noreply, insert_application(socket, user, application)}
 
       {:error, :stage_not_found} ->
         {:noreply, put_flash(socket, :error, "Stage not found")}
@@ -602,72 +604,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
       true -> push_event(socket, "play-sound", %{name: sound})
       _ -> socket
     end
-  end
-
-  defp options_for_application_status do
-    [
-      %{
-        label: "Applied",
-        value: "applied",
-        icon: "hero-paper-airplane",
-        color: "text-green-600",
-        shortcut: "1"
-      },
-      %{
-        label: "Interviewing",
-        value: "interviewing",
-        icon: "hero-envelope-open",
-        color: "text-yellow-600",
-        shortcut: "2"
-      },
-      %{
-        label: "Offer",
-        value: "offer",
-        icon: "hero-hand-thumb-up",
-        color: "text-blue-600",
-        shortcut: "3"
-      },
-      %{
-        label: "Rejected",
-        value: "rejected",
-        icon: "hero-hand-thumb-down",
-        color: "text-red-600",
-        shortcut: "4"
-      },
-      %{
-        label: "Accepted",
-        value: "accepted",
-        icon: "hero-star",
-        color: "text-purple-600",
-        shortcut: "5"
-      }
-    ]
-  end
-
-  defp options_for_stage_type do
-    [
-      %{
-        label: "Screening",
-        value: "screening",
-        icon: "hero-phone",
-        color: "text-zinc-400",
-        shortcut: "1"
-      },
-      %{
-        label: "Interview",
-        value: "interview",
-        icon: "hero-user-group",
-        color: "text-zinc-400",
-        shortcut: "2"
-      },
-      %{
-        label: "Assessment",
-        value: "assessment",
-        icon: "hero-document-text",
-        color: "text-zinc-400",
-        shortcut: "3"
-      }
-    ]
   end
 
   defp visible_statuses("all") do

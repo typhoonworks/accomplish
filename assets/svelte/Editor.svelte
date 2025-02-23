@@ -21,6 +21,10 @@
   import Code from "@tiptap/extension-code";
   import Strike from "@tiptap/extension-strike";
 
+  export let live;
+  export let field;
+  export let blurEvent;
+
   export let content;
   export let placeholder = null;
   export let inputId;
@@ -54,8 +58,15 @@
 
   function updateHiddenInput() {
     const markdownOutput = editor.storage.markdown.getMarkdown();
-    if (hiddenInput && editor) {
+    if (hiddenInput) {
       hiddenInput.value = markdownOutput;
+    }
+  }
+
+  function pushUpdate() {
+    const markdownOutput = editor.storage.markdown.getMarkdown();
+    if (live && blurEvent && field) {
+      live.pushEvent(blurEvent, { field: field, value: markdownOutput });
     }
   }
 
@@ -93,6 +104,7 @@
         editor = editor;
         updateHiddenInput();
       },
+      onBlur: pushUpdate,
     });
 
     hiddenInput = document.getElementById(inputId);

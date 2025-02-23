@@ -13,6 +13,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.TimeHelpers
+  import AccomplishWeb.JobApplicationHelpers
 
   alias Accomplish.JobApplications.Stages
 
@@ -47,7 +48,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
             data-menu={"context-menu-#{application.id}"}
             phx-hook="ContextMenu"
           >
-            <.list_item clickable={true} href={~p"/job_applications/#{application.slug}/overview"}>
+            <.list_item clickable={true} href={~p"/job_application/#{application.slug}/overview"}>
               <div class="flex items-center gap-2">
                 <.application_status_select application={application} />
                 <p class="text-[13px] text-zinc-300 leading-tight">
@@ -105,7 +106,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
     <.dropdown_menu class="z-90">
       <.dropdown_menu_trigger id={"#{@application.id}-dropdown-trigger"} class="group">
         <div
-          class={"h-3 w-3 rounded-full #{status_color(@application.status)} hover:scale-110 hover:shadow transition"}
+          class={"h-3 w-3 rounded-full #{status_color(@application.status)} hover:scale-110 hover:shadow transition hover:cursor-default"}
           role="button"
           aria-haspopup="true"
           aria-expanded="false"
@@ -173,7 +174,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
       </.menu_item>
       
     <!-- Submenu positioned absolutely -->
-      <div class="absolute left-full top-0 hidden group-hover:block w-48 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-50">
+      <div class="absolute left-full top-0 hidden group-hover:block w-48 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
         <.menu class="w-full">
           <.menu_group>
             <%= for option <- options_for_application_status() do %>
@@ -222,7 +223,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
       </.menu_item>
       
     <!-- Submenu positioned absolutely -->
-      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-50">
+      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
         <.menu class="w-full">
           <.menu_group>
             <%= for stage <- Stages.predefined_stages() do %>
@@ -269,7 +270,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
       </.menu_item>
       
     <!-- Submenu positioned absolutely -->
-      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-50">
+      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
         <.menu class="w-full">
           <.menu_group>
             <%= for stage <- @application.stages do %>
@@ -297,61 +298,4 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
     </div>
     """
   end
-
-  defp format_status(:applied), do: "Applied"
-  defp format_status(:interviewing), do: "Interviewing"
-  defp format_status(:offer), do: "Offer"
-  defp format_status(:rejected), do: "Rejected"
-  defp format_status(:accepted), do: "Accepted"
-
-  defp status_color(:applied), do: "bg-green-600"
-  defp status_color(:interviewing), do: "bg-yellow-600"
-  defp status_color(:offer), do: "bg-blue-600"
-  defp status_color(:rejected), do: "bg-red-600"
-  defp status_color(:accepted), do: "bg-purple-600"
-
-  defp options_for_application_status do
-    [
-      %{
-        label: "Applied",
-        value: :applied,
-        icon: "hero-paper-airplane",
-        color: "text-green-600",
-        shortcut: "1"
-      },
-      %{
-        label: "Interviewing",
-        value: :interviewing,
-        icon: "hero-envelope-open",
-        color: "text-yellow-600",
-        shortcut: "2"
-      },
-      %{
-        label: "Offer",
-        value: :offer,
-        icon: "hero-hand-thumb-up",
-        color: "text-blue-600",
-        shortcut: "3"
-      },
-      %{
-        label: "Rejected",
-        value: :rejected,
-        icon: "hero-hand-thumb-down",
-        color: "text-red-600",
-        shortcut: "4"
-      },
-      %{
-        label: "Accepted",
-        value: :accepted,
-        icon: "hero-star",
-        color: "text-purple-600",
-        shortcut: "5"
-      }
-    ]
-  end
-
-  defp stage_icon(:screening), do: "hero-phone"
-  defp stage_icon(:interview), do: "hero-user-group"
-  defp stage_icon(:assessment), do: "hero-document-text"
-  defp stage_icon(_), do: "hero-light-bulb"
 end

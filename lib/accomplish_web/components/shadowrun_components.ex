@@ -233,6 +233,8 @@ defmodule AccomplishWeb.ShadowrunComponents do
         placeholder={@rest[:placeholder]}
         inputId={@id}
         socket={@socket}
+        field={@rest[:"phx-value-field"] || @rest[:"phx-value-field"] || nil}
+        blurEvent={@rest[:"phx-blur"] || @rest[:"phx-blur"] || nil}
       />
       <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
