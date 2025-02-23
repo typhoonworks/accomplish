@@ -11,21 +11,21 @@ defmodule Accomplish.JobApplications do
 
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
+  @active_statuses ~w(applied interviewing offer)a
 
   def get_application!(id, preloads \\ []),
     do: Application |> Repo.get!(id) |> Repo.preload(preloads)
 
-  def list_user_applications(user, filter \\ "all") do
+  def list_user_applications(user, filter \\ "all", preloads \\ []) do
     query =
       from a in Application,
         where: a.applicant_id == ^user.id,
-        preload: [:company]
+        preload: ^([:company] ++ preloads)
 
     query =
       case filter do
         "active" ->
-          active_statuses = [:applied, :interviewing, :offer]
-          from a in query, where: a.status in ^active_statuses
+          from a in query, where: a.status in ^@active_statuses
 
         _ ->
           query
@@ -34,6 +34,23 @@ defmodule Accomplish.JobApplications do
     query = from a in query, order_by: [desc: a.applied_at]
 
     Repo.all(query)
+  end
+
+  def count_user_applications(user, filter \\ "all") do
+    query =
+      from a in Application,
+        where: a.applicant_id == ^user.id
+
+    query =
+      case filter do
+        "active" ->
+          from a in query, where: a.status in ^@active_statuses
+
+        _ ->
+          query
+      end
+
+    Repo.aggregate(query, :count, :id)
   end
 
   def create_application(applicant, attrs) do
@@ -91,6 +108,10 @@ defmodule Accomplish.JobApplications do
     ApplicationForm.changeset(attrs)
   end
 
+  def change_stage_form(attrs \\ %{}) do
+    %Stage{} |> Stage.changeset(attrs)
+  end
+
   def broadcast_application_created(job_application, company) do
     broadcast!(%Events.NewJobApplication{
       name: "job_application:created",
@@ -116,12 +137,46 @@ defmodule Accomplish.JobApplications do
   end
 
   def add_stage(application, attrs) do
-    Stage.create_changeset(application, attrs)
-    |> Repo.insert()
+    latest_position =
+      from(s in Stage,
+        where: s.application_id == ^application.id,
+        select: max(s.position)
+      )
+      |> Repo.one()
+      |> Kernel.||(0)
+
+    position = latest_position + 1
+    stage_changeset = Stage.create_changeset(application, Map.put(attrs, :position, position))
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:stage, stage_changeset)
+    |> Ecto.Multi.run(:update_application, fn repo, %{stage: stage} ->
+      actual_stage_count =
+        from(s in Stage,
+          where: s.application_id == ^application.id,
+          select: count()
+        )
+        |> repo.one()
+
+      application
+      |> Ecto.Changeset.change(stages_count: actual_stage_count)
+      |> maybe_set_current_stage(stage, actual_stage_count)
+      |> repo.update()
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{stage: stage}} -> {:ok, stage}
+      {:error, :stage, changeset, _} -> {:error, changeset}
+      {:error, :application, changeset, _} -> {:error, changeset}
+    end
   end
 
-  defp broadcast!(msg) do
-    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
+  defp maybe_set_current_stage(changeset, stage, actual_stage_count) do
+    if actual_stage_count == 1 do
+      Ecto.Changeset.change(changeset, current_stage_id: stage.id)
+    else
+      changeset
+    end
   end
 
   defp update_diff(original, changeset) do
@@ -129,5 +184,9 @@ defmodule Accomplish.JobApplications do
       old_value = Map.get(original, field)
       Map.put(acc, field, %{old: old_value, new: new_value})
     end)
+  end
+
+  defp broadcast!(msg) do
+    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
   end
 end

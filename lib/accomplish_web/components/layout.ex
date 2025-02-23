@@ -81,7 +81,7 @@ defmodule AccomplishWeb.Layout do
       <div class="flex grow flex-col gap-y-2 overflow-y-auto bg-zinc-950 px-6 pb-4">
         <div class="flex h-14 shrink-0 items-center">
           <.dropdown_menu>
-            <.dropdown_menu_trigger class="group">
+            <.dropdown_menu_trigger id="sidebar-user-dropdown-trigger" class="group">
               <button
                 type="button"
                 class="-m-2 flex items-center p-2 rounded-md bg-zinc-950 hover:bg-zinc-800 group-[&[data-state=open]]:bg-zinc-800 transition-colors"
@@ -248,7 +248,7 @@ defmodule AccomplishWeb.Layout do
           <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-zinc-950 px-6 pb-4 ring-1 ring-white/10">
             <div class="flex h-16 shrink-0 items-center">
               <.dropdown_menu>
-                <.dropdown_menu_trigger class="group">
+                <.dropdown_menu_trigger id="mobile-sidebar-user-dropdown-trigger" class="group">
                   <button
                     type="button"
                     class="-m-2 flex items-center p-2 rounded-md bg-zinc-950 hover:bg-zinc-800 group-[&[data-state=open]]:bg-zinc-800 transition-colors"
@@ -267,7 +267,7 @@ defmodule AccomplishWeb.Layout do
                   </button>
                 </.dropdown_menu_trigger>
                 <.dropdown_menu_content>
-                  <.menu class="w-56 text-zinc-300 bg-zinc-900">
+                  <.menu class="w-56 text-zinc-300 bg-zinc-800">
                     <.menu_group>
                       <.menu_item class="text-[13px]">
                         <span>Profile</span>

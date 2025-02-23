@@ -29,6 +29,7 @@ defmodule AccomplishWeb.Shadowrun.DropdownMenu do
       {@rest}
       phx-click={toggle()}
       phx-click-away={hide()}
+      phx-hook="DropdownMenu"
     >
       {render_slot(@inner_block)}
     </div>

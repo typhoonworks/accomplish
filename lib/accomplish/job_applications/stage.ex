@@ -6,7 +6,7 @@ defmodule Accomplish.JobApplications.Stage do
   alias Accomplish.JobApplications.Application
 
   @permitted ~w(title type position is_final_stage date location notes)a
-  @required ~w(title type position)a
+  @required ~w(title type)a
 
   @type_values [:screening, :assessment, :interview, :offer]
 
@@ -62,9 +62,9 @@ defmodule Accomplish.JobApplications.Stage do
     changeset
     |> validate_required(@required)
     |> validate_number(:position, greater_than_or_equal_to: 1)
-    |> unsafe_validate_unique(:position, Accomplish.Repo)
+    |> unsafe_validate_unique([:application_id, :position], Accomplish.Repo)
     |> unique_constraint(:position,
-      name: :job_application_stages_job_application_id_position_index
+      name: :job_application_stages_application_id_position_index
     )
     |> assoc_constraint(:application)
   end

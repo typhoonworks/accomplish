@@ -47,6 +47,27 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 <.application_group status={status} applications={@streams[stream_key(status)]} />
               <% end %>
             </.stacked_list>
+            <%= if !@has_applications do %>
+              <div class="mt-36 flex flex-col items-start justify-center gap-4 px-6 py-10 bg-zinc-900 max-w-sm mx-auto text-left">
+                <div class="flex items-center justify-center">
+                  <.icon name="hero-envelope-solid" class="size-12 text-zinc-300/50 icon-reflection" />
+                </div>
+
+                <div class="space-y-4">
+                  <h2 class="text-md font-light text-zinc-100">Job Applications</h2>
+                  <p class="text-sm font-light  text-zinc-400 leading-relaxed">
+                    Track and manage your job applications. Keep everything organized in one place for easy access and progress tracking.
+                  </p>
+                  <.shadow_button
+                    phx-click="prepare_new_application"
+                    phx-value-status="applied"
+                    phx-value-modal_id="new-job-application"
+                  >
+                    Add your first application
+                  </.shadow_button>
+                </div>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
@@ -138,6 +159,92 @@ defmodule AccomplishWeb.JobApplicationsLive do
         </.dialog_footer>
       </.shadow_form>
     </.dialog>
+
+    <.dialog
+      id="new-stage-modal"
+      position={:upper_third}
+      on_cancel={hide_modal("new-stage-modal")}
+      class="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+    >
+      <.dialog_header>
+        <.dialog_title class="text-sm text-zinc-200 font-light">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-envelope-open" class="size-4" />
+            <p>New Job Application Stage</p>
+          </div>
+        </.dialog_title>
+      </.dialog_header>
+
+      <.shadow_form
+        for={@stage_form}
+        id="stage_form"
+        as="stage"
+        phx-change="validate_stage"
+        phx-submit="save_stage"
+      >
+        <input type="hidden" name="stage[application_id]" value={@stage_form[:application_id].value} />
+
+        <.dialog_content id="new-stage-content">
+          <div class="flex flex-col gap-2">
+            <div class="space-y-3 mb-2">
+              <.shadow_input
+                field={@stage_form[:title]}
+                placeholder="Stage title (e.g., 'Technical Interview', 'Final Round')"
+                class="text-xl tracking-tighter"
+              />
+            </div>
+
+            <div class="flex justify-start gap-2 mb-2">
+              <.shadow_select_input
+                id="stage-type-select"
+                field={@stage_form[:type]}
+                prompt="Select stage type"
+                value={@stage_form[:type].value}
+                options={options_for_stage_type()}
+                on_select="update_stage_form_type"
+              />
+
+              <.shadow_date_picker
+                label="Date"
+                id={"#{@stage_form.id}-date_picker"}
+                form={@stage_form}
+                start_date_field={@stage_form[:date]}
+                max={Date.utc_today() |> Date.add(365)}
+                required={false}
+              />
+            </div>
+
+            <.separator />
+
+            <div class="space-y-3 mt-4">
+              <.shadow_input
+                field={@stage_form[:notes]}
+                type="textarea"
+                placeholder="Key details, next steps, or important notes for this stage..."
+                class="text-base tracking-tighter"
+                socket={@socket}
+              />
+            </div>
+          </div>
+        </.dialog_content>
+
+        <.dialog_footer>
+          <div class="flex justify-end gap-2">
+            <.shadow_button
+              type="button"
+              variant="secondary"
+              phx-click="reset_stage_form"
+              phx-value-id="new-stage-modal"
+            >
+              Cancel
+            </.shadow_button>
+            <.shadow_button type="submit" variant="primary">
+              Add Stage
+            </.shadow_button>
+          </div>
+        </.dialog_footer>
+      </.shadow_form>
+    </.dialog>
     """
   end
 
@@ -146,7 +253,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
     filter = params["filter"] || "active"
     user = socket.assigns.current_user
-    applications = JobApplications.list_user_applications(user, filter)
+
+    applications =
+      JobApplications.list_user_applications(user, filter, [:current_stage])
 
     statuses = visible_statuses(filter)
 
@@ -162,8 +271,10 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> assign_play_sounds(true)
       |> assign(:filter, filter)
       |> assign_new_form()
+      |> assign(:stage_form, to_form(JobApplications.change_stage_form()))
       |> assign(:applications_by_status, applications_by_status)
       |> assign(:statuses, statuses)
+      |> assign(:has_applications, applications != [])
       |> stream_applications(applications_by_status)
 
     {:ok, socket}
@@ -238,13 +349,16 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def handle_event("delete_application", %{"id" => id}, socket) do
+    user = socket.assigns.current_user
+
     case JobApplications.delete_application(id) do
       {:ok, application} ->
         key = stream_key(application.status)
+        has_applications = JobApplications.count_user_applications(user) > 0
 
         socket =
           socket
-          |> put_flash(:info, "Job application deleted successfully.")
+          |> assign(:has_applications, has_applications)
           |> maybe_stream_delete(key, application)
           |> maybe_play_sound("swoosh")
 
@@ -253,6 +367,85 @@ defmodule AccomplishWeb.JobApplicationsLive do
       {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Failed to delete job application.")}
     end
+  end
+
+  def handle_event("prepare_new_stage", %{"application-id" => application_id}, socket) do
+    changeset = JobApplications.change_stage_form(%{application_id: application_id})
+
+    {:noreply,
+     socket
+     |> assign(:stage_form, to_form(changeset))
+     |> push_event("js-exec", %{
+       to: "#new-stage-modal",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event(
+        "prepare_predefined_stage",
+        %{"application-id" => application_id, "title" => title, "type" => type},
+        socket
+      ) do
+    form_params = %{
+      title: title,
+      type: type,
+      application_id: application_id
+    }
+
+    changeset = JobApplications.change_stage_form(form_params)
+
+    {:noreply,
+     socket
+     |> assign(:stage_form, to_form(changeset))
+     |> push_event("js-exec", %{
+       to: "#new-stage-modal",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event("update_stage_form_type", %{"value" => value}, socket) do
+    form = socket.assigns.stage_form
+
+    changeset =
+      Ecto.Changeset.put_change(form.source, :type, value)
+
+    {:noreply, assign(socket, :stage_form, to_form(changeset))}
+  end
+
+  def handle_event("validate_stage", %{"stage" => stage_params}, socket) do
+    changeset = JobApplications.change_stage_form(stage_params)
+
+    {:noreply, assign(socket, :stage_form, to_form(changeset))}
+  end
+
+  def handle_event("save_stage", %{"stage" => stage_params}, socket) do
+    application = JobApplications.get_application!(stage_params["application_id"])
+
+    case Accomplish.JobApplications.add_stage(application, stage_params) do
+      {:ok, _stage} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Stage added successfully.")
+         |> push_event("js-exec", %{
+           to: "#new-stage-modal",
+           attr: "phx-remove"
+         })
+         |> close_modal("new-stage-modal")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to add stage.")}
+    end
+  end
+
+  def handle_event("reset_stage_form", %{"id" => modal_id}, socket) do
+    changeset = JobApplications.change_stage_form(%{})
+
+    socket =
+      socket
+      |> assign(:stage_form, to_form(changeset))
+      |> close_modal(modal_id)
+
+    {:noreply, socket}
   end
 
   def handle_info(%{id: _id, date: date, form: form}, socket) do
@@ -267,7 +460,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp handle_event(%{name: "job_application:created"} = event, socket) do
-    {:noreply, insert_new_application(socket, event.application, event.company)}
+    socket =
+      socket
+      |> assign(:has_applications, true)
+      |> insert_new_application(event.application, event.company)
+
+    {:noreply, socket}
   end
 
   defp handle_event(%{name: "job_application:updated"} = event, socket) do
@@ -409,6 +607,32 @@ defmodule AccomplishWeb.JobApplicationsLive do
         icon: "hero-star",
         color: "text-purple-600",
         shortcut: "5"
+      }
+    ]
+  end
+
+  defp options_for_stage_type do
+    [
+      %{
+        label: "Screening",
+        value: "screening",
+        icon: "hero-phone",
+        color: "text-zinc-400",
+        shortcut: "1"
+      },
+      %{
+        label: "Interview",
+        value: "interview",
+        icon: "hero-user-group",
+        color: "text-zinc-400",
+        shortcut: "2"
+      },
+      %{
+        label: "Assessment",
+        value: "assessment",
+        icon: "hero-document-text",
+        color: "text-zinc-400",
+        shortcut: "3"
       }
     ]
   end
