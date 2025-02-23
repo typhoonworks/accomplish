@@ -255,7 +255,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     user = socket.assigns.current_user
 
     applications =
-      JobApplications.list_user_applications(user, filter, [:current_stage]) |> IO.inspect()
+      JobApplications.list_user_applications(user, filter, [:current_stage])
 
     statuses = visible_statuses(filter)
 
@@ -433,7 +433,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
          |> close_modal("new-stage-modal")}
 
       {:error, reason} ->
-        IO.inspect(reason)
         {:noreply, put_flash(socket, :error, "Failed to add stage.")}
     end
   end
