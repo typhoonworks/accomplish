@@ -255,7 +255,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     user = socket.assigns.current_user
 
     applications =
-      JobApplications.list_user_applications(user, filter, [:current_stage])
+      JobApplications.list_user_applications(user, filter, [:current_stage, :stages])
 
     statuses = visible_statuses(filter)
 
@@ -422,7 +422,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     application = JobApplications.get_application!(stage_params["application_id"])
 
     case Accomplish.JobApplications.add_stage(application, stage_params) do
-      {:ok, _stage} ->
+      {:ok, _stage, _application} ->
         {:noreply,
          socket
          |> put_flash(:info, "Stage added successfully.")

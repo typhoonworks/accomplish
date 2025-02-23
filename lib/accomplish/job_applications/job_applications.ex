@@ -7,6 +7,7 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.ApplicationForm
   alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
+  alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
 
   @pubsub Accomplish.PubSub
@@ -112,31 +113,9 @@ defmodule Accomplish.JobApplications do
     %Stage{} |> Stage.changeset(attrs)
   end
 
-  def broadcast_application_created(job_application, company) do
-    broadcast!(%Events.NewJobApplication{
-      name: "job_application:created",
-      application: job_application,
-      company: company
-    })
-  end
-
-  defp broadcast_application_updated(job_application, company, diff) do
-    broadcast!(%Events.JobApplicationUpdated{
-      name: "job_application:updated",
-      application: job_application,
-      company: company,
-      diff: diff
-    })
-  end
-
-  defp broadcast_application_deleted(application) do
-    broadcast!(%Events.JobApplicationDeleted{
-      name: "job_application:deleted",
-      application: application
-    })
-  end
-
   def add_stage(application, attrs) do
+    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
+
     latest_position =
       from(s in Stage,
         where: s.application_id == ^application.id,
@@ -165,9 +144,32 @@ defmodule Accomplish.JobApplications do
     end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{stage: stage}} -> {:ok, stage}
-      {:error, :stage, changeset, _} -> {:error, changeset}
-      {:error, :application, changeset, _} -> {:error, changeset}
+      {:ok, %{stage: stage}} ->
+        updated_application = Repo.get!(Application, application.id)
+        {:ok, stage, updated_application}
+
+      {:error, :stage, changeset, _} ->
+        {:error, changeset}
+
+      {:error, :application, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  def set_current_stage(application, stage_id) do
+    with old_stage <-
+           if(application.current_stage_id,
+             do: Stages.get(application.current_stage_id, application.id),
+             else: nil
+           ),
+         %Stage{} = new_stage <- Stages.get(stage_id, application.id),
+         {:ok, updated_application} <-
+           Repo.update(Ecto.Changeset.change(application, current_stage_id: new_stage.id)) do
+      broadcast_current_stage_updated(updated_application, old_stage, new_stage)
+      {:ok, updated_application}
+    else
+      nil -> {:error, :stage_not_found}
+      {:error, changeset} -> {:error, changeset}
     end
   end
 
@@ -184,6 +186,36 @@ defmodule Accomplish.JobApplications do
       old_value = Map.get(original, field)
       Map.put(acc, field, %{old: old_value, new: new_value})
     end)
+  end
+
+  defp broadcast_application_created(job_application, company) do
+    broadcast!(%Events.NewJobApplication{
+      name: "job_application:created",
+      application: job_application,
+      company: company
+    })
+  end
+
+  defp broadcast_application_updated(job_application, company, diff) do
+    broadcast!(%Events.JobApplicationUpdated{
+      application: job_application,
+      company: company,
+      diff: diff
+    })
+  end
+
+  defp broadcast_application_deleted(application) do
+    broadcast!(%Events.JobApplicationDeleted{
+      application: application
+    })
+  end
+
+  defp broadcast_current_stage_updated(application, old_stage, new_stage) do
+    broadcast!(%Events.CurrentJobApplicationStageUpdated{
+      application: application,
+      from: old_stage,
+      to: new_stage
+    })
   end
 
   defp broadcast!(msg) do
