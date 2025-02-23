@@ -2,7 +2,6 @@ defmodule Accomplish.JobApplicationsTest do
   use Accomplish.DataCase
 
   alias Accomplish.JobApplications
-  alias Accomplish.JobApplications.Application
 
   describe "get_application!/2" do
     setup do
@@ -175,7 +174,7 @@ defmodule Accomplish.JobApplicationsTest do
         type: :interview
       }
 
-      {:ok, stage} = JobApplications.add_stage(application, stage_attrs)
+      {:ok, stage, _updated_application} = JobApplications.add_stage(application, stage_attrs)
 
       assert stage.title == "Technical Interview"
       assert stage.type == :interview
@@ -185,11 +184,10 @@ defmodule Accomplish.JobApplicationsTest do
     test "increments stages_count when a stage is added", %{application: application} do
       assert application.stages_count == 0
 
-      {:ok, _stage} =
+      {:ok, _stage, updated_application} =
         JobApplications.add_stage(application, %{title: "Screening", type: :interview})
 
-      application = Repo.get!(Application, application.id)
-      assert application.stages_count == 1
+      assert updated_application.stages_count == 1
     end
 
     test "increments stages_count and assigns sequential positions when multiple stages are added",
@@ -198,47 +196,46 @@ defmodule Accomplish.JobApplicationsTest do
          } do
       assert application.stages_count == 0
 
-      {:ok, stage1} =
+      {:ok, stage1, updated_application} =
         JobApplications.add_stage(application, %{title: "Screening", type: :interview})
 
+      assert updated_application.stages_count == 1
       assert stage1.position == 1
 
-      {:ok, stage2} =
+      {:ok, stage2, updated_application} =
         JobApplications.add_stage(application, %{title: "Technical Interview", type: :interview})
 
+      assert updated_application.stages_count == 2
       assert stage2.position == 2
 
-      {:ok, stage3} =
+      {:ok, stage3, updated_application} =
         JobApplications.add_stage(application, %{title: "Final Interview", type: :interview})
 
-      application = Repo.get!(Application, application.id)
-      assert application.stages_count == 3
+      assert updated_application.stages_count == 3
       assert stage3.position == 3
     end
 
     test "sets current_stage_id when first stage is added", %{application: application} do
       assert application.current_stage_id == nil
 
-      {:ok, stage} =
+      {:ok, stage, updated_application} =
         JobApplications.add_stage(application, %{title: "Recruiter Screen", type: :screening})
 
-      application = Repo.get!(Application, application.id)
-      assert application.current_stage_id == stage.id
+      assert updated_application.current_stage_id == stage.id
     end
 
     test "does not overwrite current_stage_id when adding more stages", %{
       application: application
     } do
-      {:ok, stage1} =
+      {:ok, stage1, _updated_application} =
         JobApplications.add_stage(application, %{title: "First Stage", type: :screening})
 
       initial_stage_id = stage1.id
 
-      {:ok, _stage2} =
+      {:ok, _stage2, updated_application} =
         JobApplications.add_stage(application, %{title: "Second Stage", type: :interview})
 
-      application = Repo.get!(Application, application.id)
-      assert application.current_stage_id == initial_stage_id
+      assert updated_application.current_stage_id == initial_stage_id
     end
 
     test "returns an error when required fields are missing", %{application: application} do
@@ -249,6 +246,62 @@ defmodule Accomplish.JobApplicationsTest do
       assert changeset.valid? == false
       assert "can't be blank" in errors_on(changeset).title
       assert "can't be blank" in errors_on(changeset).type
+    end
+  end
+
+  describe "set_current_stage/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+
+      {:ok, stage1, application} =
+        JobApplications.add_stage(application, %{title: "Recruiter Screen", type: :screening})
+
+      {:ok, stage2, application} =
+        JobApplications.add_stage(application, %{title: "Technical Interview", type: :interview})
+
+      %{applicant: applicant, application: application, stage1: stage1, stage2: stage2}
+    end
+
+    test "successfully changes the current stage", %{
+      application: application,
+      stage1: stage1,
+      stage2: stage2
+    } do
+      assert application.current_stage_id == stage1.id
+
+      {:ok, updated_application} = JobApplications.set_current_stage(application, stage2.id)
+
+      assert updated_application.current_stage_id == stage2.id
+    end
+
+    test "does nothing if setting the same stage again", %{
+      application: application,
+      stage1: stage1
+    } do
+      assert application.current_stage_id == stage1.id
+
+      {:ok, updated_application} = JobApplications.set_current_stage(application, stage1.id)
+
+      assert updated_application.current_stage_id == stage1.id
+    end
+
+    test "returns an error when setting a non-existent stage", %{application: application} do
+      non_existent_stage_id = UUIDv7.generate()
+
+      assert {:error, :stage_not_found} =
+               JobApplications.set_current_stage(application, non_existent_stage_id)
+    end
+
+    test "handles cases where there was no previous stage", %{application: application} do
+      application = Repo.update!(Ecto.Changeset.change(application, current_stage_id: nil))
+
+      {:ok, stage1, application} =
+        JobApplications.add_stage(application, %{title: "Recruiter Screen", type: :screening})
+
+      {:ok, updated_application} = JobApplications.set_current_stage(application, stage1.id)
+
+      assert updated_application.current_stage_id == stage1.id
     end
   end
 end

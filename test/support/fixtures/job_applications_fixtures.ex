@@ -50,7 +50,7 @@ defmodule Accomplish.JobApplicationsFixtures do
         is_final_stage: false
       })
 
-    {:ok, stage} = JobApplications.add_stage(application, attrs)
+    {:ok, stage, _application} = JobApplications.add_stage(application, attrs)
 
     stage
   end

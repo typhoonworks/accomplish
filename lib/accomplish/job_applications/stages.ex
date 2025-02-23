@@ -3,6 +3,8 @@ defmodule Accomplish.JobApplications.Stages do
 
   use Accomplish.Context
 
+  alias Accomplish.JobApplications.Stage
+
   @stages [
     %{title: "Recruiter Screen", type: :screening, is_final_stage: false},
     %{title: "Technical Interview", type: :interview, is_final_stage: false},
@@ -13,4 +15,10 @@ defmodule Accomplish.JobApplications.Stages do
   ]
 
   def predefined_stages, do: @stages
+
+  def get(id, application_id, preloads \\ []) do
+    Stage
+    |> Repo.get_by(id: id, application_id: application_id)
+    |> Repo.preload(preloads)
+  end
 end

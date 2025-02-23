@@ -249,13 +249,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def mount(params, _session, socket) do
-    if connected?(socket), do: subscribe_to_notifications_topic()
-
-    filter = params["filter"] || "active"
     user = socket.assigns.current_user
 
+    if connected?(socket), do: subscribe_to_notifications_topic(user.id)
+
+    filter = params["filter"] || "active"
+
     applications =
-      JobApplications.list_user_applications(user, filter, [:current_stage])
+      JobApplications.list_user_applications(user, filter, [:current_stage, :stages])
 
     statuses = visible_statuses(filter)
 
@@ -422,9 +423,10 @@ defmodule AccomplishWeb.JobApplicationsLive do
     application = JobApplications.get_application!(stage_params["application_id"])
 
     case Accomplish.JobApplications.add_stage(application, stage_params) do
-      {:ok, _stage} ->
+      {:ok, _stage, _application} ->
         {:noreply,
          socket
+         |> insert_application(application)
          |> put_flash(:info, "Stage added successfully.")
          |> push_event("js-exec", %{
            to: "#new-stage-modal",
@@ -446,6 +448,25 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> close_modal(modal_id)
 
     {:noreply, socket}
+  end
+
+  def handle_event(
+        "set_current_stage",
+        %{"application-id" => application_id, "stage-id" => stage_id},
+        socket
+      ) do
+    application = JobApplications.get_application!(application_id)
+
+    case JobApplications.set_current_stage(application, stage_id) do
+      {:ok, _} ->
+        {:noreply, insert_application(socket, application)}
+
+      {:error, :stage_not_found} ->
+        {:noreply, put_flash(socket, :error, "Stage not found")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not update stage")}
+    end
   end
 
   def handle_info(%{id: _id, date: date, form: form}, socket) do
@@ -474,8 +495,16 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   defp handle_event(_, socket), do: {:noreply, socket}
 
-  defp subscribe_to_notifications_topic do
-    Phoenix.PubSub.subscribe(@pubsub, @notifications_topic)
+  defp subscribe_to_notifications_topic(user_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
+  end
+
+  defp insert_application(socket, application) do
+    updated_application =
+      JobApplications.get_application!(application.id, [:company, :current_stage, :stages])
+
+    key = stream_key(updated_application.status)
+    stream_insert(socket, key, updated_application)
   end
 
   defp insert_new_application(socket, application, company) do

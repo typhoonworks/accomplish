@@ -52,7 +52,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
                 </p>
               </div>
 
-              <p class="text-[13px] text-zinc-400 leading-tight text-right w-32 truncate">
+              <p class="hidden lg:block text-[13px] text-zinc-400 leading-tight text-right truncate">
                 <.shadow_pill :if={application.current_stage}>
                   {application.current_stage.title}
                 </.shadow_pill>
@@ -71,18 +71,8 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
 
                   <.menu_separator />
                   {add_stage_menu_item(%{application: application})}
-                  <.menu_item>
-                    <div class="w-full flex items-center gap-2">
-                      <.icon name="hero-square-3-stack-3d" class="size-4" />
-                      <span>Current stage</span>
-                      <.menu_shortcut>
-                        <div class="flex gap-1">
-                          <span>C</span>
-                          <span class="text-[8px]">▶</span>
-                        </div>
-                      </.menu_shortcut>
-                    </div>
-                  </.menu_item>
+                  {current_stage_menu_item(%{application: application})}
+
                   <.menu_separator />
                   <.menu_item phx-click="delete_application" phx-value-id={application.id}>
                     <div class="w-full flex items-center gap-2">
@@ -251,6 +241,52 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
                 <span>Custom stage</span>
               </div>
             </.menu_item>
+          </.menu_group>
+        </.menu>
+      </div>
+    </div>
+    """
+  end
+
+  def current_stage_menu_item(assigns) do
+    ~H"""
+    <div class="relative group">
+      <.menu_item disabled={Enum.empty?(@application.stages)}>
+        <div class="w-full flex items-center gap-2">
+          <.icon name="hero-square-3-stack-3d" class="size-4" />
+          <span>Current stage</span>
+          <.menu_shortcut>
+            <div class="flex gap-1">
+              <span>C</span>
+              <span class="text-[8px]">▶</span>
+            </div>
+          </.menu_shortcut>
+        </div>
+      </.menu_item>
+      
+    <!-- Submenu positioned absolutely -->
+      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-50">
+        <.menu class="w-full">
+          <.menu_group>
+            <%= for stage <- @application.stages do %>
+              <.menu_item
+                phx-click="set_current_stage"
+                phx-value-application-id={@application.id}
+                phx-value-stage-id={stage.id}
+              >
+                <div class="w-full flex items-center gap-2">
+                  <.icon name={stage_icon(stage.type)} class="size-4 text-zinc-300" />
+                  <span>{stage.title}</span>
+                  <.menu_shortcut>
+                    <div class="w-full flex items-center gap-2 justify-between">
+                      <%= if stage.id == @application.current_stage_id do %>
+                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                      <% end %>
+                    </div>
+                  </.menu_shortcut>
+                </div>
+              </.menu_item>
+            <% end %>
           </.menu_group>
         </.menu>
       </div>
