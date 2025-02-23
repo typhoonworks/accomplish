@@ -3,6 +3,10 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
 
   use Phoenix.Component
 
+  @endpoint AccomplishWeb.Endpoint
+  @router AccomplishWeb.Router
+
+  import Phoenix.VerifiedRoutes
   import AccomplishWeb.CoreComponents
   import AccomplishWeb.ShadowrunComponents
   import AccomplishWeb.Shadowrun.DropdownMenu
@@ -43,7 +47,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
             data-menu={"context-menu-#{application.id}"}
             phx-hook="ContextMenu"
           >
-            <.list_item clickable={true} href="#">
+            <.list_item clickable={true} href={~p"/job_applications/#{application.slug}/overview"}>
               <div class="flex items-center gap-2">
                 <.application_status_select application={application} />
                 <p class="text-[13px] text-zinc-300 leading-tight">

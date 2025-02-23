@@ -18,6 +18,18 @@ defmodule Accomplish.JobApplications do
   def get_application!(id, preloads \\ []),
     do: Application |> Repo.get!(id) |> Repo.preload(preloads)
 
+  def get_application_by_slug(applicant, slug, preloads \\ []) do
+    query =
+      from a in Application,
+        where: a.slug == ^slug and a.applicant_id == ^applicant.id,
+        preload: ^preloads
+
+    case Repo.one(query) do
+      nil -> :error
+      application -> {:ok, application}
+    end
+  end
+
   def list_user_applications(user, filter \\ "all", preloads \\ []) do
     query =
       from a in Application,
