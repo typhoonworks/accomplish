@@ -249,10 +249,11 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def mount(params, _session, socket) do
-    if connected?(socket), do: subscribe_to_notifications_topic()
+    user = socket.assigns.current_user
+
+    if connected?(socket), do: subscribe_to_notifications_topic(user.id)
 
     filter = params["filter"] || "active"
-    user = socket.assigns.current_user
 
     applications =
       JobApplications.list_user_applications(user, filter, [:current_stage, :stages])
@@ -448,6 +449,25 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket}
   end
 
+  def handle_event(
+        "set_current_stage",
+        %{"application-id" => application_id, "stage-id" => stage_id},
+        socket
+      ) do
+    application = JobApplications.get_application!(application_id)
+
+    case JobApplications.set_current_stage(application, stage_id) do
+      {:ok, _updated_application} ->
+        {:noreply, socket}
+
+      {:error, :stage_not_found} ->
+        {:noreply, put_flash(socket, :error, "Stage not found")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not update stage")}
+    end
+  end
+
   def handle_info(%{id: _id, date: date, form: form}, socket) do
     params = Map.put(form.params || %{}, "applied_at", date)
     updated_changeset = Accomplish.JobApplications.change_application_form(params)
@@ -474,8 +494,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   defp handle_event(_, socket), do: {:noreply, socket}
 
-  defp subscribe_to_notifications_topic do
-    Phoenix.PubSub.subscribe(@pubsub, @notifications_topic)
+  defp subscribe_to_notifications_topic(user_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
   end
 
   defp insert_new_application(socket, application, company) do

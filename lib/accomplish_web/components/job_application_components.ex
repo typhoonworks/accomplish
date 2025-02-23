@@ -269,7 +269,11 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
         <.menu class="w-full">
           <.menu_group>
             <%= for stage <- @application.stages do %>
-              <.menu_item phx-value-application-id={@application.id} phx-value-stage-id={stage.id}>
+              <.menu_item
+                phx-click="set_current_stage"
+                phx-value-application-id={@application.id}
+                phx-value-stage-id={stage.id}
+              >
                 <div class="w-full flex items-center gap-2">
                   <.icon name={stage_icon(stage.type)} class="size-4 text-zinc-300" />
                   <span>{stage.title}</span>

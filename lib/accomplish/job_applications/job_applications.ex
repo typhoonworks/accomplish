@@ -58,9 +58,9 @@ defmodule Accomplish.JobApplications do
     with {:ok, form_changeset} <- validate_application_form(attrs),
          {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name),
          changeset <- Application.create_changeset(company, applicant, form_changeset.changes),
-         {:ok, job_application} <- Repo.insert(changeset) do
-      broadcast_application_created(job_application, company)
-      {:ok, job_application}
+         {:ok, application} <- Repo.insert(changeset) do
+      broadcast_application_created(application, company)
+      {:ok, application}
     else
       {:error, changeset} -> {:error, changeset}
     end
@@ -188,37 +188,48 @@ defmodule Accomplish.JobApplications do
     end)
   end
 
-  defp broadcast_application_created(job_application, company) do
-    broadcast!(%Events.NewJobApplication{
-      name: "job_application:created",
-      application: job_application,
-      company: company
-    })
+  defp broadcast_application_created(application, company) do
+    broadcast!(
+      %Events.NewJobApplication{
+        application: application,
+        company: company
+      },
+      application.applicant_id
+    )
   end
 
-  defp broadcast_application_updated(job_application, company, diff) do
-    broadcast!(%Events.JobApplicationUpdated{
-      application: job_application,
-      company: company,
-      diff: diff
-    })
+  defp broadcast_application_updated(application, company, diff) do
+    broadcast!(
+      %Events.JobApplicationUpdated{
+        application: application,
+        company: company,
+        diff: diff
+      },
+      application.applicant_id
+    )
   end
 
   defp broadcast_application_deleted(application) do
-    broadcast!(%Events.JobApplicationDeleted{
-      application: application
-    })
+    broadcast!(
+      %Events.JobApplicationDeleted{
+        application: application
+      },
+      application.applicant_id
+    )
   end
 
   defp broadcast_current_stage_updated(application, old_stage, new_stage) do
-    broadcast!(%Events.CurrentJobApplicationStageUpdated{
-      application: application,
-      from: old_stage,
-      to: new_stage
-    })
+    broadcast!(
+      %Events.CurrentJobApplicationStageUpdated{
+        application: application,
+        from: old_stage,
+        to: new_stage
+      },
+      application.applicant_id
+    )
   end
 
-  defp broadcast!(msg) do
-    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic, {__MODULE__, msg})
+  defp broadcast!(msg, user_id) do
+    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic <> ":#{user_id}", {__MODULE__, msg})
   end
 end
