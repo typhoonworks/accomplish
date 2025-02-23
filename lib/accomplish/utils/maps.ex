@@ -1,4 +1,6 @@
 defmodule Accomplish.Utils.Maps do
+  @moduledoc false
+
   @doc """
   Converts map keys from strings to atoms, ensuring existing atoms are used.
   """
