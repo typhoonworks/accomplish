@@ -37,11 +37,12 @@ defmodule AccomplishWeb.Layout do
   end
 
   attr :page_title, :string, default: nil
+  slot :title
   slot :actions
 
   def page_header(assigns) do
     ~H"""
-    <div class="sticky top- z-40 flex h-10 shrink-0 items-center gap-x-2 bg-zinc-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
+    <div class="sticky top-0 z-40 flex h-10 shrink-0 items-center gap-x-2 bg-zinc-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
       <button
         type="button"
         id="show-mobile-sidebar"
@@ -57,7 +58,7 @@ defmodule AccomplishWeb.Layout do
       <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <div class="flex flex-1 items-center gap-x-2">
           <h2 class="text-[13px] text-zinc-50">
-            {@page_title}
+            {@page_title || render_slot(@title)}
           </h2>
 
           {render_slot(@actions)}

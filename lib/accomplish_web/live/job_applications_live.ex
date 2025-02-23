@@ -9,6 +9,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.Components.JobApplicationComponents
 
+  import AccomplishWeb.JobApplicationHelpers
+
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
 
@@ -256,7 +258,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     filter = params["filter"] || "active"
 
     applications =
-      JobApplications.list_user_applications(user, filter, [:current_stage, :stages])
+      JobApplications.list_applications(user, filter, [:current_stage, :stages])
 
     statuses = visible_statuses(filter)
 
@@ -301,7 +303,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
-    with %Application{} = application <- JobApplications.get_application!(id, :company),
+    user = socket.assigns.current_user
+
+    with %Application{} = application <- JobApplications.get_application!(user, id, :company),
          {:ok, _updated_application} <-
            JobApplications.update_application(application, %{status: status}) do
       {:noreply, socket}
@@ -355,7 +359,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     case JobApplications.delete_application(id) do
       {:ok, application} ->
         key = stream_key(application.status)
-        has_applications = JobApplications.count_user_applications(user) > 0
+        has_applications = JobApplications.count_applications(user) > 0
 
         socket =
           socket
@@ -420,13 +424,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def handle_event("save_stage", %{"stage" => stage_params}, socket) do
-    application = JobApplications.get_application!(stage_params["application_id"])
+    user = socket.assigns.current_user
+    application = JobApplications.get_application!(user, stage_params["application_id"])
 
     case Accomplish.JobApplications.add_stage(application, stage_params) do
       {:ok, _stage, _application} ->
         {:noreply,
          socket
-         |> insert_application(application)
+         |> insert_application(user, application)
          |> put_flash(:info, "Stage added successfully.")
          |> push_event("js-exec", %{
            to: "#new-stage-modal",
@@ -455,11 +460,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
         %{"application-id" => application_id, "stage-id" => stage_id},
         socket
       ) do
-    application = JobApplications.get_application!(application_id)
+    user = socket.assigns.current_user
+    application = JobApplications.get_application!(user, application_id)
 
     case JobApplications.set_current_stage(application, stage_id) do
       {:ok, _} ->
-        {:noreply, insert_application(socket, application)}
+        {:noreply, insert_application(socket, user, application)}
 
       {:error, :stage_not_found} ->
         {:noreply, put_flash(socket, :error, "Stage not found")}
@@ -499,9 +505,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
     Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
   end
 
-  defp insert_application(socket, application) do
+  defp insert_application(socket, user, application) do
     updated_application =
-      JobApplications.get_application!(application.id, [:company, :current_stage, :stages])
+      JobApplications.get_application!(user, application.id, [:company, :current_stage, :stages])
 
     key = stream_key(updated_application.status)
     stream_insert(socket, key, updated_application)
@@ -598,72 +604,6 @@ defmodule AccomplishWeb.JobApplicationsLive do
       true -> push_event(socket, "play-sound", %{name: sound})
       _ -> socket
     end
-  end
-
-  defp options_for_application_status do
-    [
-      %{
-        label: "Applied",
-        value: "applied",
-        icon: "hero-paper-airplane",
-        color: "text-green-600",
-        shortcut: "1"
-      },
-      %{
-        label: "Interviewing",
-        value: "interviewing",
-        icon: "hero-envelope-open",
-        color: "text-yellow-600",
-        shortcut: "2"
-      },
-      %{
-        label: "Offer",
-        value: "offer",
-        icon: "hero-hand-thumb-up",
-        color: "text-blue-600",
-        shortcut: "3"
-      },
-      %{
-        label: "Rejected",
-        value: "rejected",
-        icon: "hero-hand-thumb-down",
-        color: "text-red-600",
-        shortcut: "4"
-      },
-      %{
-        label: "Accepted",
-        value: "accepted",
-        icon: "hero-star",
-        color: "text-purple-600",
-        shortcut: "5"
-      }
-    ]
-  end
-
-  defp options_for_stage_type do
-    [
-      %{
-        label: "Screening",
-        value: "screening",
-        icon: "hero-phone",
-        color: "text-zinc-400",
-        shortcut: "1"
-      },
-      %{
-        label: "Interview",
-        value: "interview",
-        icon: "hero-user-group",
-        color: "text-zinc-400",
-        shortcut: "2"
-      },
-      %{
-        label: "Assessment",
-        value: "assessment",
-        icon: "hero-document-text",
-        color: "text-zinc-400",
-        shortcut: "3"
-      }
-    ]
   end
 
   defp visible_statuses("all") do

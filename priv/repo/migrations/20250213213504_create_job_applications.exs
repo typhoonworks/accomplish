@@ -7,6 +7,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
   def up do
     create table(:job_applications, primary_key: false) do
       add :id, :uuid, primary_key: true
+      add :slug, :string
       add :role, :string, null: false
       add :status, :string, null: false
       add :applied_at, :utc_datetime, null: false

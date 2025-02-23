@@ -9,13 +9,6 @@ defmodule AccomplishWeb.MissionControlLive do
       <:page_header>
         <.page_header page_title="Mission Control" />
       </:page_header>
-
-      <.Editor
-        id="notes-editor"
-        placeholder="Write down key details, next moves, or important notes..."
-        classList="text-zinc-300 text-md font-semibold"
-        socket={@socket}
-      />
     </.layout>
     """
   end

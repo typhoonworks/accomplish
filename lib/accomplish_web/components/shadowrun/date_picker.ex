@@ -21,10 +21,12 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
         type="button"
         id={"#{@id}_open_button"}
         class={[
-          "px-2.5 py-1 rounded-md text-xs font-light leading-normal transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex items-center justify-center gap-2",
-          "bg-zinc-700 text-zinc-200 hover:bg-zinc-600 shadow-md",
-          "border border-solid",
-          if(@start_date_field.errors != [], do: "border-red-700", else: "border-zinc-600")
+          "px-2.5 py-1 rounded-md text-xs font-light leading-normal transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex items-center justify-center gap-2 border border-solid",
+          case @variant do
+            "default" -> "bg-zinc-700 text-zinc-200 hover:bg-zinc-600 shadow-md border-zinc-600"
+            "transparent" -> "bg-transparent text-zinc-300 hover:bg-zinc-800 border-transparent"
+          end,
+          if(@start_date_field.errors != [], do: "border-red-700", else: "")
         ]}
         aria-expanded="false"
         aria-haspopup="true"
@@ -134,7 +136,7 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
                 (before_min_date?(day, @min) or after_max_date?(day, @max)) &&
                   "text-zinc-400/10 cursor-not-allowed",
                 (!before_min_date?(day, @min) and not after_max_date?(day, @max)) &&
-                  "hover:bg-purple-700 rounded-full",
+                  "hover:bg-purple-700 rounded-full text-zinc-50",
                 other_month?(day, @current.date) && "text-zinc-500",
                 selected_date?(day, @selected_date) &&
                   "hover:bg-purple-700 bg-purple-700 text-zinc-50"
@@ -245,6 +247,7 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
 
       send(self(), %{
         id: socket.assigns.id,
+        field: socket.assigns.start_date_field.field,
         date: socket.assigns.selected_date,
         form: socket.assigns.form
       })
