@@ -52,7 +52,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
                 </p>
               </div>
 
-              <p class="text-[13px] text-zinc-400 leading-tight text-right w-32 truncate">
+              <p class="hidden lg:block text-[13px] text-zinc-400 leading-tight text-right truncate">
                 <.shadow_pill :if={application.current_stage}>
                   {application.current_stage.title}
                 </.shadow_pill>

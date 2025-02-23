@@ -426,6 +426,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       {:ok, _stage, _application} ->
         {:noreply,
          socket
+         |> insert_application(application)
          |> put_flash(:info, "Stage added successfully.")
          |> push_event("js-exec", %{
            to: "#new-stage-modal",
@@ -457,8 +458,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
     application = JobApplications.get_application!(application_id)
 
     case JobApplications.set_current_stage(application, stage_id) do
-      {:ok, _updated_application} ->
-        {:noreply, socket}
+      {:ok, _} ->
+        {:noreply, insert_application(socket, application)}
 
       {:error, :stage_not_found} ->
         {:noreply, put_flash(socket, :error, "Stage not found")}
@@ -496,6 +497,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   defp subscribe_to_notifications_topic(user_id) do
     Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
+  end
+
+  defp insert_application(socket, application) do
+    updated_application =
+      JobApplications.get_application!(application.id, [:company, :current_stage, :stages])
+
+    key = stream_key(updated_application.status)
+    stream_insert(socket, key, updated_application)
   end
 
   defp insert_new_application(socket, application, company) do
