@@ -11,7 +11,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     ~H"""
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
-        <.page_header>
+        <.page_header page_drawer?={true} drawer_open={true}>
           <:title>
             <div class="flex lg:items-center lg:gap-1">
               <.link href={~p"/job_applications/"} class="hidden lg:inline">Job Applications</.link>
@@ -38,6 +38,51 @@ defmodule AccomplishWeb.JobApplicationLive do
         </.page_header>
       </:page_header>
 
+      <:page_drawer>
+        <.page_drawer drawer_open={true}>
+          <:drawer_content>
+            <div class="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm items-center">
+              <div class="text-zinc-400 text-xs flex self-end py-1">Status</div>
+
+              <div class="flex items-center gap-2 h-8">
+                <.tooltip>
+                  <.shadow_select_input
+                    id="application-status-select-drawer"
+                    field={@form[:status]}
+                    prompt="Change application status"
+                    value={@form[:status].value}
+                    options={options_for_application_status()}
+                    on_select="save_field"
+                    variant="transparent"
+                  />
+                  <.tooltip_content side="bottom">
+                    <p>Change application status</p>
+                  </.tooltip_content>
+                </.tooltip>
+              </div>
+
+              <div class="text-zinc-400 text-xs flex self-end py-1">Applied date</div>
+              <div class="flex items-center gap-2 h-8">
+                <.tooltip>
+                  <.shadow_date_picker
+                    label="Applied date"
+                    id={"#{@form.id}-date_picker-drawer"}
+                    form={@form}
+                    start_date_field={@form[:applied_at]}
+                    required={true}
+                    variant="transparent"
+                    position="left"
+                  />
+                  <.tooltip_content side="bottom">
+                    <p>Applied date</p>
+                  </.tooltip_content>
+                </.tooltip>
+              </div>
+            </div>
+          </:drawer_content>
+        </.page_drawer>
+      </:page_drawer>
+
       <div class="mt-8 w-full">
         <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
           <%= case @live_action do %>
@@ -54,7 +99,7 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp render_overview(assigns) do
     ~H"""
-    <section class="max-w-3xl mx-auto px-6 lg:px-8 mt-24 ">
+    <section class="max-w-3xl mx-auto px-6 lg:px-8 mt-24">
       <div class="space-y-4">
         <.shadow_input
           field={@form[:role]}
@@ -79,7 +124,7 @@ defmodule AccomplishWeb.JobApplicationLive do
             variant="transparent"
           />
           <.tooltip_content side="bottom">
-            <p>Application status</p>
+            <p>Change application status</p>
           </.tooltip_content>
         </.tooltip>
 
@@ -104,7 +149,7 @@ defmodule AccomplishWeb.JobApplicationLive do
           field={@form[:notes]}
           type="textarea"
           placeholder="Write down key details, next moves, or important notes..."
-          class="text-base tracking-tighter w-full hover:cursor-text"
+          class="text-[14px] font-light hover:cursor-text"
           socket={@socket}
           phx-blur="save_field"
           phx-value-field={@form[:notes].field}

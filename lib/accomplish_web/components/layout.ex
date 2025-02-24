@@ -21,19 +21,17 @@ defmodule AccomplishWeb.Layout do
       <.mobile_sidebar current_path={@current_path} current_user={@current_user} />
       <.sidebar current_path={@current_path} current_user={@current_user} />
 
-      <div class="lg:pl-72 h-screen lg:p-2 flex flex-col">
-        <div class="relative lg:z-50 flex-1 flex flex-col lg:ring-1 lg:ring-zinc-700 lg:rounded-lg overflow-auto">
+      <div class="lg:pl-72 h-screen lg:p-2 flex flex-col min-h-0">
+        <div class="relative lg:z-50 flex-1 flex flex-col min-h-0 lg:border lg:border-zinc-700 lg:rounded-lg">
           {render_slot(@page_header, has_drawer?: true)}
-
-          <.separator />
-
-          <main class="bg-neutral-900 flex-1 flex relative h-full">
-            <div class="px-4 sm:px-6 lg:px-8 flex-1">
-              {render_slot(@inner_block)}
-            </div>
-
+          <div class="flex h-full">
+            <main class="bg-neutral-900 flex-1 flex relative min-h-full overflow-y-auto">
+              <div class="px-4 sm:px-6 lg:px-8 flex-1">
+                {render_slot(@inner_block)}
+              </div>
+            </main>
             {render_slot(@page_drawer)}
-          </main>
+          </div>
         </div>
       </div>
     </div>
@@ -48,7 +46,7 @@ defmodule AccomplishWeb.Layout do
 
   def page_header(assigns) do
     ~H"""
-    <div class="sticky top-0 z-40 flex h-10 shrink-0 items-center gap-x-2 bg-neutral-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
+    <div class="sticky top-0 z-40 flex h-10 shrink-0 items-center gap-x-2 bg-neutral-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8 border-b border-zinc-700">
       <button
         type="button"
         id="show-mobile-sidebar"
@@ -82,7 +80,7 @@ defmodule AccomplishWeb.Layout do
               type="button"
               class="text-zinc-400 hover:text-zinc-500 group"
               phx-click={
-                JS.exec("data-toggle", to: "#page-drawer")
+                JS.exec("data-toggle", to: "#page-drawer-container")
                 |> JS.toggle_attribute({"data-state", "open", "closed"}, to: "#page-drawer-toggle")
               }
               data-state={if @drawer_open, do: "open", else: "closed"}

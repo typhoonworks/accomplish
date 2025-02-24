@@ -12,6 +12,10 @@ defmodule AccomplishWeb.ShadowrunComponents do
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
 
+  defp classes(input) do
+    TwMerge.merge(input)
+  end
+
   attr :variant, :string,
     default: "default",
     values: ["default", "info", "success", "warning", "error"]
@@ -262,7 +266,10 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
   def shadow_input(%{type: "textarea"} = assigns) do
     ~H"""
-    <div class="w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0 min-h-[6rem] resize-none">
+    <div class={[
+      "w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0 min-h-[6rem] resize-none",
+      @class
+    ]}>
       <input id={@id} type="hidden" name={@name} value={@value} {@rest} />
       <.Editor
         :if={!@rest[:disabled]}
@@ -286,10 +293,12 @@ defmodule AccomplishWeb.ShadowrunComponents do
         name={@name}
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-        class={[
-          "w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0",
-          @class
-        ]}
+        class={
+          classes([
+            "w-full p-0 bg-transparent text-zinc-200 text-[13px] placeholder:text-zinc-500 focus:outline-none border-none focus:ring-0",
+            @class
+          ])
+        }
         {@rest}
       />
       <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
@@ -409,6 +418,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
   attr :id, :string, required: true
   attr :label, :string, required: true
+  attr :position, :string, default: "bottom", values: ~w(bottom left right top)
 
   attr :start_date_field, :any,
     doc: "a %Phoenix.HTML.Form{}/field name tuple, for example: @form[:start_date]"
@@ -436,6 +446,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
       min={@min}
       max={@max}
       variant={@variant}
+      position={@position}
     />
     """
   end

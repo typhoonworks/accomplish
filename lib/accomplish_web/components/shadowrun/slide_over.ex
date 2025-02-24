@@ -14,24 +14,19 @@ defmodule AccomplishWeb.Shadownrun.SlideOver do
     ~H"""
     <div
       id={"#{@id}-container"}
-      class="hidden absolute inset-y-0 right-0 z-[99] w-[400px] h-full"
+      class={"z-[99] h-full #{if @show, do: "w-[400px]", else: "w-0"} transition-all duration-500 ease-in-out overflow-visible"}
       aria-labelledby={@id}
       role="dialog"
       aria-modal="true"
+      phx-mounted={@show && show_slide_over(@id)}
+      data-toggle={toggle_slide_over(@id)}
+      data-open={show_slide_over(@id)}
+      data-close={hide_slide_over(@id)}
     >
-      <div class="pointer-events-none flex h-full w-full">
-        <div
-          id={@id}
-          phx-mounted={@show && show_slide_over(@id)}
-          data-toggle={toggle_slide_over(@id)}
-          data-open={show_slide_over(@id)}
-          data-close={hide_slide_over(@id)}
-          class="pointer-events-auto h-full w-full max-w-md bg-zinc-900 shadow-xl transition-transform duration-500 ease-in-out translate-x-full flex flex-col border-l border-zinc-700"
-        >
-          <div class="flex h-full flex-col overflow-y-auto py-6">
-            <div class="relative flex-1 px-4 sm:px-6">
-              {render_slot(@inner_block, id: @id)}
-            </div>
+      <div class="pointer-events-auto h-full w-full bg-zinc-900 shadow-xl flex flex-col border-l border-zinc-700">
+        <div class="flex h-full flex-col overflow-visible py-6">
+          <div class="relative flex-1 px-4 sm:px-6">
+            {render_slot(@inner_block, id: @id)}
           </div>
         </div>
       </div>
@@ -41,38 +36,24 @@ defmodule AccomplishWeb.Shadownrun.SlideOver do
 
   def show_slide_over(js \\ %JS{}, id) do
     js
-    |> JS.show(
-      to: "##{id}",
-      transition:
-        {"transform transition ease-in-out duration-500 sm:duration-700", "translate-x-full",
-         "translate-x-0"}
-    )
-    |> JS.show(to: "##{id}-container")
+    |> JS.remove_class("w-0", to: "##{id}-container")
+    |> JS.add_class("w-[400px]", to: "##{id}-container")
     |> JS.set_attribute({"aria-expanded", "true"}, to: "##{id}")
     |> JS.add_class("overflow-hidden", to: "body")
-    |> JS.focus_first(to: "##{id}-content")
   end
 
   def hide_slide_over(js \\ %JS{}, id) do
     js
-    |> JS.hide(
-      to: "##{id}",
-      transition:
-        {"transform transition ease-in-out duration-500 sm:duration-700", "translate-x-0",
-         "translate-x-full"}
-    )
-    |> JS.hide(to: "##{id}-container", time: 700)
+    |> JS.remove_class("w-[400px]", to: "##{id}-container")
+    |> JS.add_class("w-0", to: "##{id}-container")
     |> JS.remove_attribute("aria-expanded", to: "##{id}")
     |> JS.remove_class("overflow-hidden", to: "body")
-    |> JS.pop_focus()
   end
 
   def toggle_slide_over(js \\ %JS{}, id) do
     js
-    |> JS.toggle_class("translate-x-0", to: "##{id}")
-    |> JS.toggle_class("translate-x-full", to: "##{id}")
-    |> JS.toggle_class("hidden", to: "##{id}-container", time: 500)
-    |> JS.toggle_class("overflow-hidden", to: "body")
+    |> JS.toggle_class("w-0", to: "##{id}-container")
+    |> JS.toggle_class("w-[400px]", to: "##{id}-container")
     |> JS.toggle_attribute({"aria-expanded", "true", "false"}, to: "##{id}")
   end
 end
