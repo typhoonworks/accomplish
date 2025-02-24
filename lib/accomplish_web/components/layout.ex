@@ -42,6 +42,7 @@ defmodule AccomplishWeb.Layout do
 
   attr :page_title, :string, default: nil
   attr :page_drawer?, :boolean, default: false
+  attr :drawer_open, :boolean, default: true
   slot :title
   slot :actions
 
@@ -84,7 +85,7 @@ defmodule AccomplishWeb.Layout do
                 JS.exec("data-toggle", to: "#page-drawer")
                 |> JS.toggle_attribute({"data-state", "open", "closed"}, to: "#page-drawer-toggle")
               }
-              data-state="open"
+              data-state={if @drawer_open, do: "open", else: "closed"}
             >
               <span class="sr-only">Open/close drawer</span>
               <.icon
