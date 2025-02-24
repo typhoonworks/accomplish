@@ -114,13 +114,47 @@ defmodule AccomplishWeb.ShadowrunComponents do
     """
   end
 
-  attr :id, :any, default: nil
+  attr :id, :string, default: nil
+  attr :variant, :string, default: "horizontal", values: ["horizontal", "vertical"]
+  attr :size, :integer, default: 100
+  attr :full, :boolean, default: nil
 
   def separator(assigns) do
+    assigns = assign_new(assigns, :full, fn -> assigns.size == 100 end)
+
     ~H"""
-    <div role="separator" id={@id} class="relative -mx-1 h-px bg-zinc-700"></div>
+    <div
+      role="separator"
+      id={@id}
+      class={[
+        "relative bg-zinc-700",
+        if @variant == "horizontal" do
+          if @full, do: "w-full h-px -mx-1", else: "#{width_class(@size)} h-px"
+        else
+          if @full, do: "h-full w-px -my-1", else: "#{height_class(@size)} w-px"
+        end
+      ]}
+    >
+    </div>
     """
   end
+
+  defp width_class(size), do: map_size_to_class(size, "w")
+  defp height_class(size), do: map_size_to_class(size, "h")
+
+  defp map_size_to_class(size, prefix) do
+    closest =
+      [100, 75, 50, 25]
+      |> Enum.min_by(fn n -> abs(n - size) end)
+
+    "#{prefix}-#{fractional_class(closest)}"
+  end
+
+  defp fractional_class(100), do: "full"
+  defp fractional_class(75), do: "3/4"
+  defp fractional_class(50), do: "1/2"
+  defp fractional_class(25), do: "1/4"
+  defp fractional_class(_), do: "full"
 
   attr :for, :any, required: true, doc: "the data structure for the form"
   attr :as, :any, default: nil, doc: "the server side parameter to collect all input under"

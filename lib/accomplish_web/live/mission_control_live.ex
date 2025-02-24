@@ -7,8 +7,18 @@ defmodule AccomplishWeb.MissionControlLive do
     ~H"""
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
-        <.page_header page_title="Mission Control" />
+        <.page_header page_title="Mission Control" page_drawer?={true} />
       </:page_header>
+
+      <:page_drawer>
+        <.page_drawer>
+          <:drawer_content>
+            <div class="text-sm text-zinc-50">
+              <p>This is the drawer content specific to Mission Control.</p>
+            </div>
+          </:drawer_content>
+        </.page_drawer>
+      </:page_drawer>
     </.layout>
     """
   end
