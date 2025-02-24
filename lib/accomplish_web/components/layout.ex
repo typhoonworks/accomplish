@@ -7,10 +7,12 @@ defmodule AccomplishWeb.Layout do
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.Sidebar
+  import AccomplishWeb.Shadownrun.SlideOver
 
   attr :current_user, :map, default: nil
   attr :current_path, :string, default: "/"
   slot :page_header
+  slot :page_drawer
   slot :inner_block, required: true
 
   def layout(assigns) do
@@ -21,14 +23,16 @@ defmodule AccomplishWeb.Layout do
 
       <div class="lg:pl-72 h-screen lg:p-2 flex flex-col">
         <div class="relative lg:z-50 flex-1 flex flex-col lg:ring-1 lg:ring-zinc-700 lg:rounded-lg overflow-auto">
-          {render_slot(@page_header)}
+          {render_slot(@page_header, has_drawer?: true)}
 
           <.separator />
 
-          <main class="bg-zinc-900 flex-1">
-            <div class="px-4 sm:px-6 lg:px-8">
+          <main class="bg-neutral-900 flex-1 flex relative h-full">
+            <div class="px-4 sm:px-6 lg:px-8 flex-1">
               {render_slot(@inner_block)}
             </div>
+
+            {render_slot(@page_drawer)}
           </main>
         </div>
       </div>
@@ -37,12 +41,14 @@ defmodule AccomplishWeb.Layout do
   end
 
   attr :page_title, :string, default: nil
+  attr :page_drawer?, :boolean, default: false
+  attr :drawer_open, :boolean, default: true
   slot :title
   slot :actions
 
   def page_header(assigns) do
     ~H"""
-    <div class="sticky top-0 z-40 flex h-10 shrink-0 items-center gap-x-2 bg-zinc-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
+    <div class="sticky top-0 z-40 flex h-10 shrink-0 items-center gap-x-2 bg-neutral-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
       <button
         type="button"
         id="show-mobile-sidebar"
@@ -64,15 +70,49 @@ defmodule AccomplishWeb.Layout do
           {render_slot(@actions)}
         </div>
 
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-4">
           <button type="button" class="-m-2.5 p-2.5 text-zinc-400 hover:text-zinc-500">
             <span class="sr-only">View notifications</span>
-            <.icon class="size-6" name="hero-bell" />
+            <.icon class="size-5" name="hero-bell" />
           </button>
+          <%= if @page_drawer? do %>
+            <.separator variant="vertical" size={60} />
+            <button
+              id="page-drawer-toggle"
+              type="button"
+              class="text-zinc-400 hover:text-zinc-500 group"
+              phx-click={
+                JS.exec("data-toggle", to: "#page-drawer")
+                |> JS.toggle_attribute({"data-state", "open", "closed"}, to: "#page-drawer-toggle")
+              }
+              data-state={if @drawer_open, do: "open", else: "closed"}
+            >
+              <span class="sr-only">Open/close drawer</span>
+              <.icon
+                class="size-5 hidden group-[&[data-state=open]]:block"
+                name="hero-view-columns-solid"
+              />
+              <.icon
+                class="size-5 hidden group-[&[data-state=closed]]:block"
+                name="hero-view-columns"
+              />
+            </button>
+          <% end %>
           <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-zinc-950/10" aria-hidden="true"></div>
         </div>
       </div>
     </div>
+    """
+  end
+
+  attr :drawer_open, :boolean, default: true
+  slot :drawer_content
+
+  def page_drawer(assigns) do
+    ~H"""
+    <.slide_over id="page-drawer" show={@drawer_open}>
+      {render_slot(@drawer_content)}
+    </.slide_over>
     """
   end
 
