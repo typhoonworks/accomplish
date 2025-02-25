@@ -19,6 +19,7 @@ defmodule Accomplish.DataCase do
   using do
     quote do
       use Accomplish.TestUtils
+      use Oban.Testing, repo: Accomplish.Repo
 
       alias Accomplish.Repo
 

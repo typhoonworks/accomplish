@@ -10,6 +10,7 @@ defmodule Accomplish.Application do
     children = [
       AccomplishWeb.Telemetry,
       Accomplish.Repo,
+      {Oban, Application.fetch_env!(:accomplish, Oban)},
       {DNSCluster, query: Application.get_env(:accomplish, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Accomplish.PubSub},
       # Start the Finch HTTP client for sending emails
@@ -20,6 +21,13 @@ defmodule Accomplish.Application do
       AccomplishWeb.Endpoint,
       TwMerge.Cache
     ]
+
+    children =
+      if Mix.env() != :test do
+        children ++ [Accomplish.Activities.EventHandler]
+      else
+        children
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

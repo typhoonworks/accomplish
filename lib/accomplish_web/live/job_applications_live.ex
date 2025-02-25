@@ -21,13 +21,13 @@ defmodule AccomplishWeb.JobApplicationsLive do
         <.page_header page_title="Job Applications">
           <:actions>
             <.nav_button
-              icon="hero-rectangle-stack"
+              icon="archive"
               text="All"
               href={~p"/job_applications?filter=all"}
               active={@filter == "all"}
             />
             <.nav_button
-              icon="hero-play"
+              icon="mail-check"
               text="Active"
               href={~p"/job_applications?filter=active"}
               active={@filter == "active"}

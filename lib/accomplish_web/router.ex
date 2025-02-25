@@ -1,6 +1,8 @@
 defmodule AccomplishWeb.Router do
   use AccomplishWeb, :router
 
+  import Oban.Web.Router
+
   import AccomplishWeb.Plugs.UserAuth
 
   pipeline :browser do
@@ -19,6 +21,8 @@ defmodule AccomplishWeb.Router do
 
   scope "/", AccomplishWeb do
     pipe_through :browser
+
+    oban_dashboard("/oban")
 
     get "/", PageController, :home
   end

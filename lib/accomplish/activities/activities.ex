@@ -5,6 +5,33 @@ defmodule Accomplish.Activities do
   alias Accomplish.Repo
   alias Accomplish.Activities.Activity
 
+  @target_modules %{
+    "JobApplications.Application" => Accomplish.JobApplications.Application,
+    "Accounts.User" => Accomplish.Accounts.User
+  }
+
+  @target_names %{
+    Accomplish.JobApplications.Application => "JobApplications.Application",
+    Accomplish.Accounts.User => "Accounts.User"
+  }
+
+  def fetch_target(target_id, target_type) do
+    case Map.get(@target_modules, target_type) do
+      nil ->
+        {:error, "Unknown target type: #{target_type}"}
+
+      module ->
+        case Repo.get(module, target_id) do
+          nil -> {:error, "Target not found (#{target_type}, ID: #{target_id})"}
+          target -> {:ok, target}
+        end
+    end
+  end
+
+  def get_target_type(target) do
+    Map.get(@target_names, target.__struct__, "Unknown")
+  end
+
   def log_activity(actor, action, target, metadata \\ %{}) do
     case get_actor_type(actor) do
       {:ok, actor_type} ->
@@ -26,14 +53,4 @@ defmodule Accomplish.Activities do
 
   defp get_actor_type(%Accomplish.Accounts.User{}), do: {:ok, "User"}
   defp get_actor_type(_), do: {:error, "Unrecognized actor type"}
-
-  defp get_target_type(target) do
-    target.__struct__
-    |> Module.split()
-    |> drop_accomplish_prefix()
-    |> Enum.join(".")
-  end
-
-  defp drop_accomplish_prefix(["Accomplish" | rest]), do: rest
-  defp drop_accomplish_prefix(modules), do: modules
 end
