@@ -52,6 +52,7 @@ defmodule Accomplish.MixProject do
        compile: false,
        depth: 1},
       {:live_svelte, "~> 0.15.0"},
+      {:lucide_live_view, "~> 0.1.0"},
       {:open_api_spex, "~> 3.21"},
       {:phoenix, "~> 1.7.18"},
       {:phoenix_ecto, "~> 4.5"},

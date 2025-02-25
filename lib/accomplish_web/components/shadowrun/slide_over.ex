@@ -24,11 +24,7 @@ defmodule AccomplishWeb.Shadownrun.SlideOver do
       data-close={hide_slide_over(@id)}
     >
       <div class="pointer-events-auto h-full w-full bg-zinc-900 shadow-xl flex flex-col border-l border-zinc-700">
-        <div class="flex h-full flex-col overflow-visible py-6">
-          <div class="relative flex-1 px-4 sm:px-6">
-            {render_slot(@inner_block, id: @id)}
-          </div>
-        </div>
+        {render_slot(@inner_block, id: @id)}
       </div>
     </aside>
     """

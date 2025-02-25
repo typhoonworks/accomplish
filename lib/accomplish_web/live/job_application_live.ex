@@ -23,17 +23,18 @@ defmodule AccomplishWeb.JobApplicationLive do
           </:title>
           <:actions>
             <.nav_button
-              icon="hero-document-text"
+              icon="file-text"
               text="Overview"
               href={~p"/job_application/#{@application.slug}/overview"}
               active={@live_action == :overview}
             />
             <.nav_button
-              icon="hero-square-3-stack-3d"
+              icon="layers"
               text="Stages"
               href={~p"/job_application/#{@application.slug}/stages"}
               active={@live_action == :stages}
             />
+            <.nav_button icon="files" text="Documents" href="#" active={@live_action == :documents} />
           </:actions>
         </.page_header>
       </:page_header>
@@ -41,44 +42,53 @@ defmodule AccomplishWeb.JobApplicationLive do
       <:page_drawer>
         <.page_drawer drawer_open={true}>
           <:drawer_content>
-            <div class="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm items-center">
-              <div class="text-zinc-400 text-xs flex self-end py-1">Status</div>
+            <div class="px-4 sm:px-6 py-6">
+              <h3 class="text-sm/6 font-semibold text-zinc-400">Details</h3>
 
-              <div class="flex items-center gap-2 h-8">
-                <.tooltip>
-                  <.shadow_select_input
-                    id={"status_select_#{@form.id}_drawer"}
-                    field={@form[:status]}
-                    prompt="Change application status"
-                    value={@form[:status].value}
-                    options={options_for_application_status()}
-                    on_select="save_field"
-                    variant="transparent"
-                  />
-                  <.tooltip_content side="bottom">
-                    <p>Change application status</p>
-                  </.tooltip_content>
-                </.tooltip>
+              <div class="mt-2 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm items-center">
+                <div class="text-zinc-400 text-xs flex self-end py-1">Status</div>
+
+                <div class="flex items-center gap-2 h-8">
+                  <.tooltip>
+                    <.shadow_select_input
+                      id={"status_select_#{@form.id}_drawer"}
+                      field={@form[:status]}
+                      prompt="Change application status"
+                      value={@form[:status].value}
+                      options={options_for_application_status()}
+                      on_select="save_field"
+                      variant="transparent"
+                    />
+                    <.tooltip_content side="bottom">
+                      <p>Change application status</p>
+                    </.tooltip_content>
+                  </.tooltip>
+                </div>
+
+                <div class="text-zinc-400 text-xs flex self-end py-1">Applied date</div>
+                <div class="flex items-center gap-2 h-8">
+                  <.tooltip>
+                    <.shadow_date_picker
+                      label="Applied date"
+                      id={"date_picker_#{@form.id}_drawer"}
+                      form={@form}
+                      start_date_field={@form[:applied_at]}
+                      required={true}
+                      variant="transparent"
+                      position="left"
+                    />
+
+                    <.tooltip_content side="bottom">
+                      <p>Applied date</p>
+                    </.tooltip_content>
+                  </.tooltip>
+                </div>
               </div>
+            </div>
 
-              <div class="text-zinc-400 text-xs flex self-end py-1">Applied date</div>
-              <div class="flex items-center gap-2 h-8">
-                <.tooltip>
-                  <.shadow_date_picker
-                    label="Applied date"
-                    id={"date_picker_#{@form.id}_drawer"}
-                    form={@form}
-                    start_date_field={@form[:applied_at]}
-                    required={true}
-                    variant="transparent"
-                    position="left"
-                  />
-
-                  <.tooltip_content side="bottom">
-                    <p>Applied date</p>
-                  </.tooltip_content>
-                </.tooltip>
-              </div>
+            <.separator />
+            <div class="px-4 sm:px-6 py-6">
+              <h3 class="text-sm/6 font-semibold text-zinc-400">Activity</h3>
             </div>
           </:drawer_content>
         </.page_drawer>
@@ -105,7 +115,7 @@ defmodule AccomplishWeb.JobApplicationLive do
         <.shadow_input
           field={@form[:role]}
           placeholder="Job role"
-          class="text-3xl tracking-tighter hover:cursor-text"
+          class="text-[25px] tracking-tighter hover:cursor-text"
           phx-blur="save_field"
           phx-value-field={@form[:role].field}
         />

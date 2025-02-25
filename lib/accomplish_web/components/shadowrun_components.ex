@@ -108,13 +108,23 @@ defmodule AccomplishWeb.ShadowrunComponents do
       ]}
     >
       <%= if @icon do %>
-        <.icon
+        <.lucide_icon
           name={@icon}
           class="size-4 shrink-0 group-hover:scale-110 group-hover:text-zinc-50 text-current"
         />
       <% end %>
       <span>{@text}</span>
     </.link>
+    """
+  end
+
+  attr :name, :string, required: true
+  attr :class, :string, required: false, default: "icon"
+  attr :rest, :global
+
+  def lucide_icon(assigns) do
+    ~H"""
+    <Lucide.render icon={@name} class={@class} {@rest} />
     """
   end
 
