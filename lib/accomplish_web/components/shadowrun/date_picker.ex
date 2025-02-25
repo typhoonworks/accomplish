@@ -13,7 +13,7 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
       <input
         type="hidden"
         name={@start_date_field.name}
-        id={@start_date_field.id}
+        id={"#{@id}_#{@start_date_field.id}"}
         value={@start_date_field.value}
       />
 

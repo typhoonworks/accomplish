@@ -12,9 +12,9 @@ defmodule AccomplishWeb.Shadownrun.SlideOver do
 
   def slide_over(assigns) do
     ~H"""
-    <div
+    <aside
       id={"#{@id}-container"}
-      class={"z-[99] h-full #{if @show, do: "w-[400px]", else: "w-0"} transition-all duration-500 ease-in-out overflow-visible"}
+      class={"z-[90] h-full #{if @show, do: "w-full lg:w-[400px]", else: "w-0"} transition-all duration-500 ease-in-out overflow-visible absolute top-0 right-0 lg:relative"}
       aria-labelledby={@id}
       role="dialog"
       aria-modal="true"
@@ -30,21 +30,21 @@ defmodule AccomplishWeb.Shadownrun.SlideOver do
           </div>
         </div>
       </div>
-    </div>
+    </aside>
     """
   end
 
   def show_slide_over(js \\ %JS{}, id) do
     js
     |> JS.remove_class("w-0", to: "##{id}-container")
-    |> JS.add_class("w-[400px]", to: "##{id}-container")
+    |> JS.add_class("w-full lg:w-[400px]", to: "##{id}-container")
     |> JS.set_attribute({"aria-expanded", "true"}, to: "##{id}")
     |> JS.add_class("overflow-hidden", to: "body")
   end
 
   def hide_slide_over(js \\ %JS{}, id) do
     js
-    |> JS.remove_class("w-[400px]", to: "##{id}-container")
+    |> JS.remove_class("w-full lg:w-[400px]", to: "##{id}-container")
     |> JS.add_class("w-0", to: "##{id}-container")
     |> JS.remove_attribute("aria-expanded", to: "##{id}")
     |> JS.remove_class("overflow-hidden", to: "body")
@@ -53,7 +53,7 @@ defmodule AccomplishWeb.Shadownrun.SlideOver do
   def toggle_slide_over(js \\ %JS{}, id) do
     js
     |> JS.toggle_class("w-0", to: "##{id}-container")
-    |> JS.toggle_class("w-[400px]", to: "##{id}-container")
+    |> JS.toggle_class("w-full lg:w-[400px]", to: "##{id}-container")
     |> JS.toggle_attribute({"aria-expanded", "true", "false"}, to: "##{id}")
   end
 end

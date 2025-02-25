@@ -47,7 +47,7 @@ defmodule AccomplishWeb.JobApplicationLive do
               <div class="flex items-center gap-2 h-8">
                 <.tooltip>
                   <.shadow_select_input
-                    id="application-status-select-drawer"
+                    id={"status_select_#{@form.id}_drawer"}
                     field={@form[:status]}
                     prompt="Change application status"
                     value={@form[:status].value}
@@ -66,13 +66,14 @@ defmodule AccomplishWeb.JobApplicationLive do
                 <.tooltip>
                   <.shadow_date_picker
                     label="Applied date"
-                    id={"#{@form.id}-date_picker-drawer"}
+                    id={"date_picker_#{@form.id}_drawer"}
                     form={@form}
                     start_date_field={@form[:applied_at]}
                     required={true}
                     variant="transparent"
                     position="left"
                   />
+
                   <.tooltip_content side="bottom">
                     <p>Applied date</p>
                   </.tooltip_content>
@@ -115,7 +116,7 @@ defmodule AccomplishWeb.JobApplicationLive do
       <div class="flex justify-start gap-2 my-2">
         <.tooltip>
           <.shadow_select_input
-            id="application-status-select"
+            id={"status_select_#{@form.id}_overview"}
             field={@form[:status]}
             prompt="Change application status"
             value={@form[:status].value}
@@ -131,12 +132,13 @@ defmodule AccomplishWeb.JobApplicationLive do
         <.tooltip>
           <.shadow_date_picker
             label="Applied date"
-            id={"#{@form.id}-date_picker"}
+            id={"date_picker_#{@form.id}_overview"}
             form={@form}
             start_date_field={@form[:applied_at]}
             required={true}
             variant="transparent"
           />
+
           <.tooltip_content side="bottom">
             <p>Applied date</p>
           </.tooltip_content>
