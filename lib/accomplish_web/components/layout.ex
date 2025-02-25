@@ -17,23 +17,20 @@ defmodule AccomplishWeb.Layout do
 
   def layout(assigns) do
     ~H"""
-    <div>
-      <.mobile_sidebar current_path={@current_path} current_user={@current_user} />
-      <.sidebar current_path={@current_path} current_user={@current_user} />
+    <.mobile_sidebar current_path={@current_path} current_user={@current_user} />
+    <.sidebar current_path={@current_path} current_user={@current_user} />
 
-      <div class="lg:pl-72 h-screen lg:p-2 flex flex-col">
-        <div class="relative lg:z-50 flex-1 flex flex-col lg:ring-1 lg:ring-zinc-700 lg:rounded-lg overflow-auto">
-          {render_slot(@page_header, has_drawer?: true)}
-
-          <.separator />
-
-          <main class="bg-neutral-900 flex-1 flex relative h-full">
-            <div class="px-4 sm:px-6 lg:px-8 flex-1">
-              {render_slot(@inner_block)}
-            </div>
-
-            {render_slot(@page_drawer)}
+    <div class="lg:pl-72 h-screen lg:p-2 flex flex-col overflow-hidden ">
+      <!-- Bordered box (centered) -->
+      <div class="relative bg-neutral-900 lg:z-50 flex-1 flex flex-col min-h-0 lg:border lg:border-zinc-700 lg:rounded-lg overflow-hidden">
+        {render_slot(@page_header, has_drawer?: true)}
+        <!-- Content area: split between main canvas and drawer -->
+        <div class="flex flex-1 overflow-hidden relative">
+          <!-- Main canvas: scrollable content area -->
+          <main class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-20">
+            {render_slot(@inner_block)}
           </main>
+          {render_slot(@page_drawer)}
         </div>
       </div>
     </div>
@@ -48,60 +45,69 @@ defmodule AccomplishWeb.Layout do
 
   def page_header(assigns) do
     ~H"""
-    <div class="sticky top-0 z-40 flex h-10 shrink-0 items-center gap-x-2 bg-neutral-900 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
-      <button
-        type="button"
-        id="show-mobile-sidebar"
-        class="p-2.5 text-zinc-700 lg:hidden"
-        phx-click={show_mobile_sidebar()}
-      >
-        <span class="sr-only">Open sidebar</span>
-        <.icon class="size-6" name="hero-bars-3-solid" />
-      </button>
-
-      <div class="h-6 w-px bg-zinc-950/10 lg:hidden" aria-hidden="true"></div>
-
-      <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-        <div class="flex flex-1 items-center gap-x-2">
-          <h2 class="text-[13px] text-zinc-50">
-            {@page_title || render_slot(@title)}
-          </h2>
-
+    <header class="sticky top-0 z-40 bg-neutral-900 border-b border-zinc-700">
+      <div class="flex flex-col">
+        <!-- Top row: always visible -->
+        <div class="flex items-center justify-between h-10 px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center gap-x-2">
+            <button
+              type="button"
+              id="show-mobile-sidebar"
+              class="p-2.5 text-zinc-700 lg:hidden"
+              phx-click={show_mobile_sidebar()}
+            >
+              <span class="sr-only">Open sidebar</span>
+              <.icon class="size-6" name="hero-bars-3-solid" />
+            </button>
+            <div class="h-6 w-px bg-zinc-950/10 lg:hidden" aria-hidden="true"></div>
+            <h2 class="text-[13px] text-zinc-50">
+              {@page_title || render_slot(@title)}
+            </h2>
+            <!-- Desktop actions: inline with title -->
+            <div class="hidden lg:flex lg:ml-4">
+              {render_slot(@actions)}
+            </div>
+          </div>
+          <!-- Right side controls: always in the top row -->
+          <div class="flex items-center gap-x-4">
+            <button
+              type="button"
+              class="-m-2.5 p-2.5 text-zinc-400 hover:text-zinc-500 hidden lg:block"
+            >
+              <span class="sr-only">View notifications</span>
+              <.icon class="size-5" name="hero-bell" />
+            </button>
+            <%= if @page_drawer? do %>
+              <.separator variant="vertical" size={60} />
+              <button
+                id="page-drawer-toggle"
+                type="button"
+                class="text-zinc-400 hover:text-zinc-500 group"
+                phx-click={
+                  JS.exec("data-toggle", to: "#page-drawer-container")
+                  |> JS.toggle_attribute({"data-state", "open", "closed"}, to: "#page-drawer-toggle")
+                }
+                data-state={if @drawer_open, do: "open", else: "closed"}
+              >
+                <span class="sr-only">Open/close drawer</span>
+                <.icon
+                  class="size-5 hidden group-[&[data-state=open]]:block"
+                  name="hero-view-columns-solid"
+                />
+                <.icon
+                  class="size-5 hidden group-[&[data-state=closed]]:block"
+                  name="hero-view-columns"
+                />
+              </button>
+            <% end %>
+          </div>
+        </div>
+        <!-- Mobile actions: show below top row -->
+        <div class="lg:hidden mt-2 flex flex-row border-t border-zinc-700 py-1 px-4 sm:px-6 lg:px-8">
           {render_slot(@actions)}
         </div>
-
-        <div class="flex items-center space-x-4">
-          <button type="button" class="-m-2.5 p-2.5 text-zinc-400 hover:text-zinc-500">
-            <span class="sr-only">View notifications</span>
-            <.icon class="size-5" name="hero-bell" />
-          </button>
-          <%= if @page_drawer? do %>
-            <.separator variant="vertical" size={60} />
-            <button
-              id="page-drawer-toggle"
-              type="button"
-              class="text-zinc-400 hover:text-zinc-500 group"
-              phx-click={
-                JS.exec("data-toggle", to: "#page-drawer")
-                |> JS.toggle_attribute({"data-state", "open", "closed"}, to: "#page-drawer-toggle")
-              }
-              data-state={if @drawer_open, do: "open", else: "closed"}
-            >
-              <span class="sr-only">Open/close drawer</span>
-              <.icon
-                class="size-5 hidden group-[&[data-state=open]]:block"
-                name="hero-view-columns-solid"
-              />
-              <.icon
-                class="size-5 hidden group-[&[data-state=closed]]:block"
-                name="hero-view-columns"
-              />
-            </button>
-          <% end %>
-          <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-zinc-950/10" aria-hidden="true"></div>
-        </div>
       </div>
-    </div>
+    </header>
     """
   end
 
@@ -266,7 +272,7 @@ defmodule AccomplishWeb.Layout do
     ~H"""
     <div
       id="mobile-sidebar-container"
-      class="relative z-50 lg:hidden"
+      class="relative z-[99] lg:hidden"
       role="dialog"
       aria-modal="true"
       style="display: none;"

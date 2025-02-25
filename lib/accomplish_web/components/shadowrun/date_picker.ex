@@ -13,7 +13,7 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
       <input
         type="hidden"
         name={@start_date_field.name}
-        id={@start_date_field.id}
+        id={"#{@id}_#{@start_date_field.id}"}
         value={@start_date_field.value}
       />
 
@@ -40,7 +40,14 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
       <div
         :if={@calendar?}
         id={"#{@id}_calendar"}
-        class="absolute z-50 w-72 shadow-md"
+        data-position={@position}
+        class={[
+          "absolute z-50 w-72 shadow-md transition-all",
+          "data-[position=bottom]:top-full data-[position=bottom]:mt-2",
+          "data-[position=top]:bottom-full data-[position=top]:mb-2",
+          "data-[position=left]:right-full data-[position=left]:mr-2",
+          "data-[position=right]:left-full data-[position=right]:ml-2"
+        ]}
         phx-click-away="close-calendar"
         phx-target={@myself}
       >

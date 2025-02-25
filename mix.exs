@@ -67,6 +67,7 @@ defmodule Accomplish.MixProject do
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:timex, "~> 3.7"},
+      {:tw_merge, "~> 0.1.0"},
       {:uuidv7, "~> 1.0"}
     ]
   end
