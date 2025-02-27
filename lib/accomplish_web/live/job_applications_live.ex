@@ -65,7 +65,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
                     phx-value-status="applied"
                     phx-value-modal_id="new-job-application"
                   >
-                    Add your first application
+                    Add a new application
                   </.shadow_button>
                 </div>
               </div>
