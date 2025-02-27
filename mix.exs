@@ -9,7 +9,13 @@ defmodule Accomplish.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.html": :test,
+        "coveralls.github": :test
+      ]
     ]
   end
 
@@ -38,8 +44,8 @@ defmodule Accomplish.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dns_cluster, "~> 0.1.1"},
       {:ecto_sql, "~> 3.10"},
-      # {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:excellent_migrations, "~> 0.1", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.18", only: :test, runtime: false},
       {:finch, "~> 0.13"},
       {:floki, ">= 0.30.0", only: :test},
       {:gettext, "~> 0.26"},
@@ -87,6 +93,7 @@ defmodule Accomplish.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "test.coverage": ["test --warnings-as-errors", "coveralls.html"],
       "assets.typecheck": ["cmd npm --prefix assets run typecheck"],
       "assets.lint": [
         "cmd --cd assets npx eslint .",
@@ -96,8 +103,6 @@ defmodule Accomplish.MixProject do
         "cmd --cd assets npx prettier --write .",
         "cmd --cd assets npx stylelint --fix '**/*.{css,scss,svelte}'"
       ],
-      # "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      # "assets.build": ["tailwind accomplish", "esbuild accomplish"],
       "assets.deploy": [
         "tailwind accomplish --minify",
         "cmd --cd assets node build.js --deploy",
