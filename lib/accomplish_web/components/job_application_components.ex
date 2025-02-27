@@ -48,7 +48,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
             data-menu={"context-menu-#{application.id}"}
             phx-hook="ContextMenu"
           >
-            <.list_item clickable={true} href={~p"/job_application/#{application.slug}/overview"}>
+            <.list_item href={~p"/job_application/#{application.slug}/overview"}>
               <div class="flex items-center gap-2">
                 <.application_status_select application={application} />
                 <p class="text-[13px] text-zinc-300 leading-tight">

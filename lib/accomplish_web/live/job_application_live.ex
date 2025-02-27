@@ -8,6 +8,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.Shadowrun.Tooltip
   import AccomplishWeb.Components.Activity
+  import AccomplishWeb.Shadowrun.Table
 
   @pubsub Accomplish.PubSub
   @activities_topic "activities"
@@ -180,14 +181,36 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp render_stages(assigns) do
     ~H"""
-    <div>
-      <h3 class="text-lg font-semibold">Stages</h3>
-      <ul>
+    <.shadow_table id="stages-table" class="w-full">
+      <:head>
+        <.shadow_table_row>
+          <.shadow_table_header>Title</.shadow_table_header>
+          <.shadow_table_header>Type</.shadow_table_header>
+          <.shadow_table_header>Date</.shadow_table_header>
+          <.shadow_table_header>Status</.shadow_table_header>
+        </.shadow_table_row>
+      </:head>
+      <:body>
         <%= for stage <- @application.stages do %>
-          <li class="border-b py-2">{stage.title}</li>
+          <.shadow_table_row>
+            <.shadow_table_cell>
+              <.link href={~p"/job_application/#{@application.slug}/stages/#{stage.slug}"}>
+                {stage.title}
+              </.link>
+            </.shadow_table_cell>
+            <.shadow_table_cell>
+              <.shadow_pill>{stage.type}</.shadow_pill>
+            </.shadow_table_cell>
+            <.shadow_table_cell>
+              {stage.date && formatted_human_date(stage.date)}
+            </.shadow_table_cell>
+            <.shadow_table_cell>
+              <.shadow_pill>{stage.status}</.shadow_pill>
+            </.shadow_table_cell>
+          </.shadow_table_row>
         <% end %>
-      </ul>
-    </div>
+      </:body>
+    </.shadow_table>
     """
   end
 

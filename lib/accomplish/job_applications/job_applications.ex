@@ -159,6 +159,10 @@ defmodule Accomplish.JobApplications do
     %Stage{} |> Stage.changeset(attrs)
   end
 
+  def get_stage_by_slug(application, slug, preloads \\ []) do
+    Stages.get_by_slug(application, slug, preloads)
+  end
+
   def add_stage(application, attrs) do
     attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
 
@@ -175,6 +179,11 @@ defmodule Accomplish.JobApplications do
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:stage, stage_changeset)
+    |> Ecto.Multi.run(:update_slug, fn repo, %{stage: stage} ->
+      slug = Stages.generate_slug(stage)
+
+      repo.update(Ecto.Changeset.change(stage, slug: slug))
+    end)
     |> Ecto.Multi.run(:update_application, fn repo, %{stage: stage} ->
       actual_stage_count =
         from(s in Stage,
@@ -190,7 +199,7 @@ defmodule Accomplish.JobApplications do
     end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{stage: stage}} ->
+      {:ok, %{update_slug: stage}} ->
         updated_application = Repo.get!(Application, application.id)
         broadcast_stage_added(updated_application, stage)
         {:ok, stage, updated_application}
@@ -199,6 +208,9 @@ defmodule Accomplish.JobApplications do
         {:error, changeset}
 
       {:error, :application, changeset, _} ->
+        {:error, changeset}
+
+      {:error, :update_slug, changeset, _} ->
         {:error, changeset}
     end
   end
@@ -229,10 +241,9 @@ defmodule Accomplish.JobApplications do
   end
 
   defp generate_slug(application) do
-    human_readable_slug = Slug.slugify([application.role, application.company.name])
-    id_suffix = application.id |> String.split("-") |> List.last()
-
-    "#{human_readable_slug}-#{id_suffix}"
+    [application.role, application.company.name]
+    |> Slug.slugify()
+    |> Slug.add_suffix(application.id)
   end
 
   defp update_diff(original, changeset) do

@@ -20,6 +20,17 @@ defmodule Accomplish.Slug do
 
   def slugify(_), do: nil
 
+  def add_suffix(slug, id) when is_binary(id) do
+    if Accomplish.UUIDv7Validator.valid_uuid?(id) do
+      id_suffix = id |> String.split("-") |> List.last()
+      "#{slug}-#{id_suffix}"
+    else
+      slug
+    end
+  end
+
+  def add_suffix(slug, _), do: slug
+
   def validate_slug_format(changeset, field_name) do
     validate_format(changeset, field_name, @slug_pattern,
       message: "is invalid. Only letters, numbers, and connecting hyphens are allowed."

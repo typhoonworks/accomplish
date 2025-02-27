@@ -7,6 +7,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
   def up do
     create table(:job_application_stages, primary_key: false) do
       add :id, :uuid, primary_key: true
+      add :slug, :string
       add :title, :string, null: false
       add :type, :string, null: false
       add :position, :integer, null: false
