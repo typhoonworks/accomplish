@@ -1,4 +1,6 @@
 defmodule Accomplish.Activities.Worker do
+  @moduledoc false
+
   use Oban.Worker, queue: :default
 
   alias Accomplish.Repo

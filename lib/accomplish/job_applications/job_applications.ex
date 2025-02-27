@@ -103,12 +103,22 @@ defmodule Accomplish.JobApplications do
   end
 
   def update_application(%Application{} = application, attrs) do
+    old_status = application.status
     changeset = Application.update_changeset(application, attrs)
 
     case Repo.update(changeset) do
       {:ok, updated_application} ->
         diff = update_diff(application, changeset)
         broadcast_application_updated(updated_application, application.company, diff)
+
+        if old_status != updated_application.status do
+          broadcast_application_status_updated(
+            updated_application,
+            old_status,
+            updated_application.status
+          )
+        end
+
         {:ok, updated_application}
 
       {:error, changeset} ->
@@ -182,6 +192,7 @@ defmodule Accomplish.JobApplications do
     |> case do
       {:ok, %{stage: stage}} ->
         updated_application = Repo.get!(Application, application.id)
+        broadcast_stage_added(updated_application, stage)
         {:ok, stage, updated_application}
 
       {:error, :stage, changeset, _} ->
@@ -252,6 +263,17 @@ defmodule Accomplish.JobApplications do
     )
   end
 
+  defp broadcast_application_status_updated(application, old_status, new_status) do
+    broadcast!(
+      %Events.JobApplicationStatusUpdated{
+        application: application,
+        from: old_status,
+        to: new_status
+      },
+      application.applicant_id
+    )
+  end
+
   defp broadcast_application_deleted(application) do
     broadcast!(
       %Events.JobApplicationDeleted{
@@ -261,9 +283,19 @@ defmodule Accomplish.JobApplications do
     )
   end
 
+  defp broadcast_stage_added(application, stage) do
+    broadcast!(
+      %Events.JobApplicationNewStage{
+        application: application,
+        stage: stage
+      },
+      application.applicant_id
+    )
+  end
+
   defp broadcast_current_stage_updated(application, old_stage, new_stage) do
     broadcast!(
-      %Events.CurrentJobApplicationStageUpdated{
+      %Events.JobApplicationCurrentStageUpdated{
         application: application,
         from: old_stage,
         to: new_stage

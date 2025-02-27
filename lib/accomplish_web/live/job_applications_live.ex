@@ -486,7 +486,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     handle_event(event, socket)
   end
 
-  defp handle_event(%{name: "job_application:created"} = event, socket) do
+  defp handle_event(%{name: "job_application.created"} = event, socket) do
     socket =
       socket
       |> assign(:has_applications, true)
@@ -495,7 +495,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket}
   end
 
-  defp handle_event(%{name: "job_application:updated"} = event, socket) do
+  defp handle_event(%{name: "job_application.updated"} = event, socket) do
     {:noreply, replace_application(socket, event.application, event.company, event.diff)}
   end
 

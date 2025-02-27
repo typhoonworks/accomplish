@@ -2,10 +2,15 @@ defmodule AccomplishWeb.JobApplicationLive do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
+  alias Accomplish.Activities
 
   import AccomplishWeb.Layout
   import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.Shadowrun.Tooltip
+  import AccomplishWeb.Components.Activity
+
+  @pubsub Accomplish.PubSub
+  @activities_topic "activities"
 
   def render(assigns) do
     ~H"""
@@ -88,7 +93,9 @@ defmodule AccomplishWeb.JobApplicationLive do
 
             <.separator />
             <div class="px-4 sm:px-6 py-6">
-              <h3 class="text-sm/6 font-semibold text-zinc-400">Activity</h3>
+              <h3 class="mb-6 text-sm/6 font-semibold text-zinc-400">Activity</h3>
+
+              <.activity_feed activities={@streams.activities} />
             </div>
           </:drawer_content>
         </.page_drawer>
@@ -184,6 +191,16 @@ defmodule AccomplishWeb.JobApplicationLive do
     """
   end
 
+  defp activity_feed(assigns) do
+    ~H"""
+    <div class="flow-root">
+      <ul role="list" class="-mb-8">
+        <.activity :for={{dom_id, activity} <- @activities} id={dom_id} activity={activity} />
+      </ul>
+    </div>
+    """
+  end
+
   def mount(%{"slug" => slug}, _session, socket) do
     applicant = socket.assigns.current_user
 
@@ -193,12 +210,16 @@ defmodule AccomplishWeb.JobApplicationLive do
            :stages
          ]) do
       {:ok, application} ->
+        if connected?(socket), do: subscribe_to_activities_topic(application.id)
+
         form = JobApplications.change_application_form(Map.from_struct(application))
+        activities = Activities.list_activities_for_target(application)
 
         socket =
           socket
           |> assign(application: application)
           |> assign(form: to_form(form))
+          |> stream(:activities, activities)
 
         {:ok, socket}
 
@@ -230,6 +251,10 @@ defmodule AccomplishWeb.JobApplicationLive do
     {:noreply, socket}
   end
 
+  def handle_info({:new_activity, activity}, socket) do
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
+  end
+
   defp update_field(socket, field, value) do
     application = socket.assigns.application
 
@@ -247,5 +272,9 @@ defmodule AccomplishWeb.JobApplicationLive do
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
+  end
+
+  defp subscribe_to_activities_topic(target_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":#{target_id}")
   end
 end

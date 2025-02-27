@@ -14,7 +14,7 @@ defmodule Accomplish.ActivitiesFixtures do
       Enum.into(attrs, %{
         actor_id: actor.id,
         actor_type: "User",
-        action: "job_application:created",
+        action: "job_application.created",
         metadata: %{},
         target_id: target.id,
         target_type: "JobApplications.Application"

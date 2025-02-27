@@ -27,12 +27,14 @@ defmodule AccomplishWeb.ShadowrunComponents do
   def shadow_pill(assigns) do
     ~H"""
     <span
-      class={[
-        "inline-flex items-center px-3 py-1 rounded-full text-xs font-light",
-        "border border-solid border-zinc-200 transition-all",
-        pill_variant_class(@variant),
-        @class
-      ]}
+      class={
+        classes([
+          "inline-flex items-center px-3 py-1 rounded-full text-xs font-light",
+          "border border-zinc-200 border-solid transition-all",
+          pill_variant_class(@variant),
+          @class
+        ])
+      }
       {@rest}
     >
       {render_slot(@inner_block)}

@@ -24,12 +24,20 @@ defmodule Accomplish.Activities.EventHandler do
     {:noreply, state}
   end
 
-  def handle_info({_, %Events.JobApplicationUpdated{} = event}, state) do
-    log_activity(event.application.applicant_id, event.name, event.application, event.diff)
+  def handle_info({_, %Events.JobApplicationStatusUpdated{} = event}, state) do
+    metadata = %{from: event.from, to: event.to}
+    log_activity(event.application.applicant_id, event.name, event.application, metadata)
     {:noreply, state}
   end
 
-  def handle_info({_, %Events.CurrentJobApplicationStageUpdated{} = event}, state) do
+  def handle_info({_, %Events.JobApplicationNewStage{} = event}, state) do
+    stage = event.stage
+    metadata = %{stage_title: stage.title, stage_type: stage.type}
+    log_activity(event.application.applicant_id, event.name, event.application, metadata)
+    {:noreply, state}
+  end
+
+  def handle_info({_, %Events.JobApplicationCurrentStageUpdated{} = event}, state) do
     metadata = %{from: event.from.title, to: event.to.title}
     log_activity(event.application.applicant_id, event.name, event.application, metadata)
     {:noreply, state}

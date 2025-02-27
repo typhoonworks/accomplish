@@ -15,6 +15,8 @@ defmodule Accomplish.Repo.Migrations.CreateActivities do
       add :target_id, :uuid, null: false
       add :target_type, :string, null: false
 
+      add :occurred_at, :utc_datetime, null: false
+
       timestamps(type: :utc_datetime)
     end
 

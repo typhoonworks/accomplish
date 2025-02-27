@@ -5,8 +5,8 @@ defmodule Accomplish.Activities.Activity do
 
   use Accomplish.Schema
 
-  @permitted ~w(actor_id actor_type action target_id target_type metadata)a
-  @required ~w(actor_id action target_id target_type)a
+  @permitted ~w(actor_id actor_type action target_id target_type metadata occurred_at)a
+  @required ~w(actor_id action target_id target_type occurred_at)a
 
   @derive {JSON.Encoder,
            only: [
@@ -17,6 +17,7 @@ defmodule Accomplish.Activities.Activity do
              :target_id,
              :target_type,
              :metadata,
+             :occurred_at,
              :inserted_at
            ]}
 
@@ -28,6 +29,11 @@ defmodule Accomplish.Activities.Activity do
 
     field :target_id, :binary_id
     field :target_type, :string
+
+    field :actor, :any, virtual: true
+    field :target, :any, virtual: true
+
+    field :occurred_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
