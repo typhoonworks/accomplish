@@ -64,8 +64,10 @@ jobs:
       - run: mix deps.get --only $MIX_ENV
       - run: mix compile --warnings-as-errors --all-warnings
       - run: mix do ecto.create, ecto.migrate
-      - run: mix test --include slow --include migrations --max-failures 1 --warnings-as-errors
+      - run: mix coveralls.github --include slow --include migrations --max-failures 1 --warnings-as-errors
         if: env.MIX_ENV == 'test'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   static:
     name: Static checks (format, credo)
