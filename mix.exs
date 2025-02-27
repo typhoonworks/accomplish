@@ -93,6 +93,7 @@ defmodule Accomplish.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "test.coverage": ["test --warnings-as-errors", "coveralls.html"],
       "assets.typecheck": ["cmd npm --prefix assets run typecheck"],
       "assets.lint": [
         "cmd --cd assets npx eslint .",
