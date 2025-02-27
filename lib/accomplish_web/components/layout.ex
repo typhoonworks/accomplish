@@ -27,7 +27,7 @@ defmodule AccomplishWeb.Layout do
         <!-- Content area: split between main canvas and drawer -->
         <div class="flex flex-1 overflow-hidden relative">
           <!-- Main canvas: scrollable content area -->
-          <main class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <main class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-20 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
             {render_slot(@inner_block)}
           </main>
           {render_slot(@page_drawer)}

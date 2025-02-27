@@ -21,13 +21,13 @@ defmodule AccomplishWeb.JobApplicationsLive do
         <.page_header page_title="Job Applications">
           <:actions>
             <.nav_button
-              icon="hero-rectangle-stack"
+              icon="archive"
               text="All"
               href={~p"/job_applications?filter=all"}
               active={@filter == "all"}
             />
             <.nav_button
-              icon="hero-play"
+              icon="mail-check"
               text="Active"
               href={~p"/job_applications?filter=active"}
               active={@filter == "active"}
@@ -65,7 +65,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
                     phx-value-status="applied"
                     phx-value-modal_id="new-job-application"
                   >
-                    Add your first application
+                    Add a new application
                   </.shadow_button>
                 </div>
               </div>
@@ -486,7 +486,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     handle_event(event, socket)
   end
 
-  defp handle_event(%{name: "job_application:created"} = event, socket) do
+  defp handle_event(%{name: "job_application.created"} = event, socket) do
     socket =
       socket
       |> assign(:has_applications, true)
@@ -495,7 +495,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket}
   end
 
-  defp handle_event(%{name: "job_application:updated"} = event, socket) do
+  defp handle_event(%{name: "job_application.updated"} = event, socket) do
     {:noreply, replace_application(socket, event.application, event.company, event.diff)}
   end
 

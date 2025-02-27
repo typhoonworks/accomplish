@@ -19,6 +19,7 @@ defmodule Accomplish.DataCase do
   using do
     quote do
       use Accomplish.TestUtils
+      use Oban.Testing, repo: Accomplish.Repo
 
       alias Accomplish.Repo
 
@@ -27,6 +28,7 @@ defmodule Accomplish.DataCase do
       import Ecto.Query
       import Accomplish.DataCase
       import Accomplish.AccountsFixtures
+      import Accomplish.ActivitiesFixtures
       import Accomplish.JobApplicationsFixtures
       import Accomplish.OAuthFixtures
       import Accomplish.RepositoriesFixtures

@@ -22,6 +22,7 @@ module.exports = {
     require("@tailwindcss/typography"),
     require("tailwindcss-animate"),
     require("@tailwindcss/forms"),
+    require("tailwind-scrollbar")({ nocompatible: true }),
     plugin(({ addVariant }) =>
       addVariant("phx-click-loading", [".phx-click-loading&", ".phx-click-loading &"]),
     ),

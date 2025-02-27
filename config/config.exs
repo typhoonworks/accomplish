@@ -80,6 +80,11 @@ config :accomplish, :assent_providers,
     redirect_uri: "http://localhost:4000/auth/github/callback"
   }
 
+config :accomplish, Oban,
+  engine: Oban.Engines.Basic,
+  repo: Accomplish.Repo,
+  queues: [default: 10]
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
