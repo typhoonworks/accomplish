@@ -29,8 +29,4 @@ defmodule AccomplishWeb.MissionControlLive do
 
     {:ok, socket}
   end
-
-  def handle_event("set_number", %{"number" => number}, socket) do
-    {:noreply, assign(socket, :number, number)}
-  end
 end

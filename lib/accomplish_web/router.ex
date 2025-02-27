@@ -93,6 +93,7 @@ defmodule AccomplishWeb.Router do
       live "/job_applications", JobApplicationsLive, :index
       live "/job_application/:slug/overview", JobApplicationLive, :overview
       live "/job_application/:slug/stages", JobApplicationLive, :stages
+      live "/job_application/:application_slug/stages/:slug", JobApplicationStageLive, :show
     end
   end
 

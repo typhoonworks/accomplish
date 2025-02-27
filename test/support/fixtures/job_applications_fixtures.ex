@@ -6,11 +6,13 @@ defmodule Accomplish.JobApplicationsFixtures do
 
   alias Accomplish.JobApplications
 
+  def unique_company_name, do: "company-#{System.unique_integer()}"
+
   @doc """
   Generates a company.
   """
   def company_fixture(attrs \\ %{}) do
-    attrs = Enum.into(attrs, %{name: "Acme Corp"})
+    attrs = Enum.into(attrs, %{name: unique_company_name()})
 
     {:ok, company} =
       Accomplish.JobApplications.Company.create_changeset(attrs)

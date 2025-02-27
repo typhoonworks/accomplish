@@ -5,10 +5,11 @@ defmodule Accomplish.JobApplications.Stage do
 
   alias Accomplish.JobApplications.Application
 
-  @permitted ~w(title type position is_final_stage date location notes)a
-  @required ~w(title type)a
+  @permitted ~w(title type status position is_final_stage date location notes)a
+  @required ~w(title type status)a
 
   @type_values [:screening, :assessment, :interview, :offer]
+  @status_values [:pending, :in_progress, :completed, :skipped]
 
   @derive {JSON.Encoder,
            only: [
@@ -26,8 +27,10 @@ defmodule Accomplish.JobApplications.Stage do
            ]}
 
   schema "job_application_stages" do
+    field :slug, :string
     field :title, :string
     field :type, Ecto.Enum, values: @type_values
+    field :status, Ecto.Enum, values: @status_values, default: :pending
     field :position, :integer
     field :is_final_stage, :boolean, default: false
     field :date, :utc_datetime

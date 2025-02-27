@@ -4,6 +4,7 @@ defmodule Accomplish.JobApplications.Stages do
   use Accomplish.Context
 
   alias Accomplish.JobApplications.Stage
+  alias Accomplish.Slug
 
   @stages [
     %{title: "Recruiter Screen", type: :screening, is_final_stage: false},
@@ -20,5 +21,21 @@ defmodule Accomplish.JobApplications.Stages do
     Stage
     |> Repo.get_by(id: id, application_id: application_id)
     |> Repo.preload(preloads)
+  end
+
+  def get_by_slug(application, slug, preloads \\ []) do
+    query =
+      from s in Stage,
+        where: s.slug == ^slug and s.application_id == ^application.id,
+        preload: ^preloads
+
+    case Repo.one(query) do
+      nil -> :error
+      stage -> {:ok, stage}
+    end
+  end
+
+  def generate_slug(stage) do
+    Slug.slugify(stage.title) |> Slug.add_suffix(stage.id)
   end
 end
