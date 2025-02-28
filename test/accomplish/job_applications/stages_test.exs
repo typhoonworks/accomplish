@@ -26,7 +26,7 @@ defmodule Accomplish.JobApplications.StagesTest do
     end
 
     test "returns :error when stage does not exist", %{job_application: job_application} do
-      assert :error = Stages.get_by_slug("non-existant", job_application.id)
+      assert :error = Stages.get_by_slug("non-existent", job_application.id)
     end
 
     test "does not return a stage from a different application", %{
