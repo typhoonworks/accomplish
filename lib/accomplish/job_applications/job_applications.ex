@@ -244,6 +244,31 @@ defmodule Accomplish.JobApplications do
     end
   end
 
+  def delete_stage(%Stage{} = stage, %Application{} = application) do
+    old_position = stage.position
+
+    Ecto.Multi.new()
+    |> lock_application(application.id)
+    |> Ecto.Multi.delete(:delete, stage)
+    |> multi_update_all(:dec_positions, fn _ ->
+      from(s in Stage,
+        where: s.application_id == ^application.id,
+        where: s.position > ^old_position,
+        update: [inc: [position: -1]]
+      )
+    end)
+    |> update_application_stages_count(application.id, -1)
+    |> Repo.transaction()
+    |> case do
+      {:ok, _} ->
+        broadcast_stage_deleted(application, stage)
+        :ok
+
+      other ->
+        other
+    end
+  end
+
   def set_current_stage(application, stage_id) do
     with old_stage <-
            if(application.current_stage_id,
@@ -269,6 +294,20 @@ defmodule Accomplish.JobApplications do
     end
   end
 
+  defp update_application_stages_count(multi, application_id, stages_count) do
+    Ecto.Multi.update_all(
+      multi,
+      "update_stages_count_application_#{application_id}",
+      fn _ ->
+        from(a in Application,
+          where: a.id == ^application_id,
+          update: [inc: [stages_count: ^stages_count]]
+        )
+      end,
+      []
+    )
+  end
+
   defp generate_slug(application) do
     [application.role, application.company.name]
     |> Slug.slugify()
@@ -280,6 +319,17 @@ defmodule Accomplish.JobApplications do
       old_value = Map.get(original, field)
       Map.put(acc, field, %{old: old_value, new: new_value})
     end)
+  end
+
+  defp lock_application(%Ecto.Multi{} = multi, application_id) do
+    Ecto.Multi.run(multi, :application_lock, fn repo, _changes ->
+      repo.get!(Application, application_id, lock: "FOR UPDATE NOWAIT")
+      {:ok, application_id}
+    end)
+  end
+
+  defp multi_update_all(multi, name, func, opts \\ []) do
+    Ecto.Multi.update_all(multi, name, func, opts)
   end
 
   defp broadcast_application_created(application, company) do
@@ -362,6 +412,16 @@ defmodule Accomplish.JobApplications do
         application: application,
         from: old_status,
         to: new_status
+      },
+      application.applicant_id
+    )
+  end
+
+  defp broadcast_stage_deleted(application, stage) do
+    broadcast!(
+      %Events.JobApplicationStageDeleted{
+        application: application,
+        stage: stage
       },
       application.applicant_id
     )

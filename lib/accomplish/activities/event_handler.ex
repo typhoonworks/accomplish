@@ -54,6 +54,12 @@ defmodule Accomplish.Activities.EventHandler do
     {:noreply, state}
   end
 
+  def handle_info({_, %Events.JobApplicationStageDeleted{} = event}, state) do
+    metadata = %{stage: %{id: event.stage.id, title: event.stage.title}}
+    log_activity(event.application.applicant_id, event.name, event.application, metadata)
+    {:noreply, state}
+  end
+
   def handle_info(_, state), do: {:noreply, state}
 
   defp log_activity(actor_id, action, target, metadata \\ %{}) do

@@ -88,15 +88,31 @@ defmodule AccomplishWeb.Components.Activity do
     """
   end
 
+  defp activity_message(%{action: "job_application.stage_deleted"} = assigns) do
+    assigns =
+      assigns
+      |> assign_new(:stage_title, fn -> assigns[:activity].metadata["stage"]["title"] end)
+
+    ~H"""
+    Removed stage <span class="text-zinc-50">{@stage_title}</span>
+    """
+  end
+
   defp activity_color("job_application.created"), do: "bg-green-600"
   defp activity_color("job_application.updated"), do: "bg-blue-600"
   defp activity_color("job_application.stage_updated"), do: "bg-zinc-600"
   defp activity_color(_), do: "bg-zinc-900"
 
-  defp activity_icon("job_application.created"), do: "hero-paper-airplane-solid"
-  defp activity_icon("job_application.stage_added"), do: "hero-square-3-stack-3d-solid"
-  defp activity_icon("job_application.stage_updated"), do: "hero-square-3-stack-3d-solid"
-  defp activity_icon(_), do: "hero-user-solid"
+  @activity_icons %{
+    "job_application.created" => "hero-paper-airplane-solid",
+    "job_application.stage_added" => "hero-square-3-stack-3d-solid",
+    "job_application.stage_updated" => "hero-square-3-stack-3d-solid",
+    "job_application.stage_deleted" => "hero-square-3-stack-3d-solid"
+  }
+
+  defp activity_icon(event) do
+    Map.get(@activity_icons, event, "hero-user-solid")
+  end
 
   def status_color("accepted"), do: "border-purple-600"
   def status_color("offer"), do: "border-blue-600"

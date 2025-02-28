@@ -7,7 +7,7 @@ defmodule Accomplish.Repo.Migrations.AddCurrentStageToJobApplications do
   def up do
     alter table(:job_applications) do
       add :current_stage_id,
-          references(:job_application_stages, type: :uuid, on_delete: :delete_all)
+          references(:job_application_stages, type: :uuid, on_delete: :nilify_all)
     end
 
     create index(:job_applications, [:current_stage_id], concurrently: true)

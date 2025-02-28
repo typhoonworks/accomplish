@@ -54,4 +54,10 @@ defmodule Accomplish.JobApplications.Events do
               company: nil,
               diff: %{}
   end
+
+  defmodule JobApplicationStageDeleted do
+    @moduledoc false
+
+    defstruct name: "job_application.stage_deleted", application: nil, stage: nil
+  end
 end

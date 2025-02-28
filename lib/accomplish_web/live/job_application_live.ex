@@ -14,6 +14,7 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   @pubsub Accomplish.PubSub
   @activities_topic "activities"
+  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
@@ -225,6 +226,7 @@ defmodule AccomplishWeb.JobApplicationLive do
         |> assign(application: application)
         |> assign_form(application)
         |> stream_activities(application)
+        |> subscribe_to_notifications_topic()
 
       {:ok, socket}
     end
@@ -237,12 +239,14 @@ defmodule AccomplishWeb.JobApplicationLive do
       socket =
         socket
         |> assign(application: application)
+        |> assign(stages_count: application.stages_count)
         |> assign_form(application)
         |> assign_statuses()
         |> assign_sounds()
         |> assign_play_sounds(true)
         |> stream_stages(application.stages)
         |> stream_activities(application)
+        |> subscribe_to_notifications_topic()
 
       {:ok, socket}
     end
@@ -282,6 +286,16 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
+  def handle_event("delete_stage", %{"id" => stage_id}, socket) do
+    with application <- socket.assigns.application,
+         stage <- JobApplications.get_stage!(application, stage_id),
+         :ok <- JobApplications.delete_stage(stage, application) do
+      {:noreply, socket}
+    else
+      _ -> {:noreply, put_flash(socket, :error, "Failed to delete job application stage.")}
+    end
+  end
+
   def handle_info(%{id: _id, field: field_name, date: date, form: _form}, socket) do
     update_field(socket, field_name, date)
     {:noreply, socket}
@@ -297,6 +311,19 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp handle_event(%{name: "job_application.stage_updated"} = event, socket) do
     {:noreply, replace_stage(socket, event.stage, event.diff)}
+  end
+
+  defp handle_event(%{name: "job_application.stage_deleted"} = event, socket) do
+    stage = event.stage
+    key = stream_key(stage.status)
+
+    socket =
+      socket
+      |> assign(:stages_count, socket.assigns.stages_count - 1)
+      |> maybe_stream_delete(key, stage)
+      |> maybe_play_sound("swoosh")
+
+    {:noreply, socket}
   end
 
   defp fetch_application(socket, slug, preloads) do
@@ -332,6 +359,15 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp assign_play_sounds(socket, play_sounds) do
     assign(socket, play_sounds: play_sounds)
+  end
+
+  defp maybe_play_sound(socket, sound) do
+    %{play_sounds: play_sounds} = socket.assigns
+
+    case play_sounds do
+      true -> push_event(socket, "play-sound", %{name: sound})
+      _ -> socket
+    end
   end
 
   defp stream_stages(socket, stages) do
@@ -402,6 +438,15 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp subscribe_to_activities_topic(target_id) do
     Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":#{target_id}")
+  end
+
+  defp subscribe_to_notifications_topic(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket),
+      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
+
+    socket
   end
 
   defp stream_key(status), do: String.to_atom("stages_#{status}")

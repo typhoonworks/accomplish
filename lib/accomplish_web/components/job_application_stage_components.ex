@@ -59,7 +59,11 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
               <.menu id={"context-menu-#{stage.id}"} class="hidden w-56 text-zinc-300 bg-zinc-800">
                 <.menu_group>
                   <.menu_separator />
-                  <.menu_item phx-click="delete_stage" phx-value-id={stage.id}>
+                  <.menu_item
+                    phx-click="delete_stage"
+                    phx-value-id={stage.id}
+                    phx-value-status={stage.status}
+                  >
                     <div class="w-full flex items-center gap-2">
                       <.icon name="hero-trash" class="size-4" />
                       <span>Delete</span>
