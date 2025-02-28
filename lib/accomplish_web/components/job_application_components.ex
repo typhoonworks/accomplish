@@ -22,7 +22,7 @@ defmodule AccomplishWeb.Components.JobApplicationComponents do
     <div
       id={"#{@status}-group"}
       class="hidden opacity-0 translate-y-2 transition-transform duration-300"
-      phx-hook="ApplicationGroup"
+      phx-hook="StackedList"
     >
       <.list_header>
         <div class="flex items-center gap-2">

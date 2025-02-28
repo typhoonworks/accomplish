@@ -8,6 +8,7 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
 
   import Phoenix.VerifiedRoutes
   import AccomplishWeb.CoreComponents
+  import AccomplishWeb.ShadowrunComponents
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.StackedList
@@ -19,7 +20,7 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
     <div
       id={"#{@status}-group"}
       class="hidden opacity-0 translate-y-2 transition-transform duration-300"
-      phx-hook="ApplicationGroup"
+      phx-hook="StackedList"
     >
       <.list_header>
         <div class="flex items-center gap-2">
@@ -28,14 +29,6 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
             {format_status(@status)}
           </h2>
         </div>
-        <button
-          class="text-zinc-400 hover:text-zinc-200"
-          phx-click="prepare_new_stage"
-          phx-value-status={@status}
-          phx-value-modal_id="new-job-application-stage"
-        >
-          <.icon class="text-current size-4" name="hero-plus" />
-        </button>
       </.list_header>
       <.list_content>
         <div id={"#{@status}-container"} phx-update="stream">
@@ -54,13 +47,13 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
               </div>
 
               <p class="hidden lg:block text-[13px] text-zinc-400 leading-tight text-right truncate">
-                <%!-- <.shadow_pill :if={application.current_stage}>
-                  {application.current_stage.title}
-                </.shadow_pill> --%>
+                <.shadow_pill :if={@application.current_stage_id == stage.id}>
+                  Current stage
+                </.shadow_pill>
               </p>
 
               <p class="text-[13px] text-zinc-400 leading-tight text-right w-24">
-                {formatted_relative_time(stage.date)}
+                {formatted_human_date(stage.date)}
               </p>
 
               <.menu id={"context-menu-#{stage.id}"} class="hidden w-56 text-zinc-300 bg-zinc-800">

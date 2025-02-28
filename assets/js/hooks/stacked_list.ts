@@ -1,6 +1,6 @@
 import type { Hook } from "phoenix_live_view";
 
-const ApplicationGroup: Hook = {
+const StackedList: Hook = {
   mounted() {
     const el = this.el as HTMLElement;
     const container = el.querySelector(`[id$="-container"]`) as HTMLElement | null;
@@ -38,4 +38,4 @@ const ApplicationGroup: Hook = {
   },
 };
 
-export default ApplicationGroup;
+export default StackedList;
