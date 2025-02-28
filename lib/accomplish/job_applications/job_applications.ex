@@ -159,8 +159,12 @@ defmodule Accomplish.JobApplications do
     %Stage{} |> Stage.changeset(attrs)
   end
 
+  def get_stage!(application, stage_id) do
+    Stages.get!(stage_id, application.id)
+  end
+
   def get_stage_by_slug(application, slug, preloads \\ []) do
-    Stages.get_by_slug(application, slug, preloads)
+    Stages.get_by_slug(slug, application.id, preloads)
   end
 
   def add_stage(application, attrs) do
@@ -211,6 +215,31 @@ defmodule Accomplish.JobApplications do
         {:error, changeset}
 
       {:error, :update_slug, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  def update_stage(%Stage{} = stage, application, attrs) do
+    old_status = stage.status
+    changeset = Stage.update_changeset(stage, attrs)
+
+    case Repo.update(changeset) do
+      {:ok, updated_stage} ->
+        diff = update_diff(stage, changeset)
+        broadcast_stage_updated(updated_stage, application, diff)
+
+        if old_status != updated_stage.status do
+          broadcast_stage_status_updated(
+            updated_stage,
+            application,
+            old_status,
+            updated_stage.status
+          )
+        end
+
+        {:ok, updated_stage}
+
+      {:error, changeset} ->
         {:error, changeset}
     end
   end
@@ -310,6 +339,29 @@ defmodule Accomplish.JobApplications do
         application: application,
         from: old_stage,
         to: new_stage
+      },
+      application.applicant_id
+    )
+  end
+
+  defp broadcast_stage_updated(stage, application, diff) do
+    broadcast!(
+      %Events.JobApplicationStageUpdated{
+        stage: stage,
+        application: application,
+        diff: diff
+      },
+      application.applicant_id
+    )
+  end
+
+  defp broadcast_stage_status_updated(stage, application, old_status, new_status) do
+    broadcast!(
+      %Events.JobApplicationStageStatusUpdated{
+        stage: stage,
+        application: application,
+        from: old_status,
+        to: new_status
       },
       application.applicant_id
     )

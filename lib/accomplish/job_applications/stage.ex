@@ -8,14 +8,15 @@ defmodule Accomplish.JobApplications.Stage do
   @permitted ~w(title type status position is_final_stage date location notes)a
   @required ~w(title type status)a
 
-  @type_values [:screening, :assessment, :interview, :offer]
-  @status_values [:pending, :in_progress, :completed, :skipped]
+  @type_values ~w(screening assessment interview offer)a
+  @status_values ~w(pending scheduled in_progress completed skipped)a
 
   @derive {JSON.Encoder,
            only: [
              :id,
              :title,
              :type,
+             :status,
              :position,
              :is_final_stage,
              :date,

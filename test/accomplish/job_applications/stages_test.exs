@@ -21,19 +21,19 @@ defmodule Accomplish.JobApplications.StagesTest do
     end
 
     test "returns the correct stage by slug", %{job_application: job_application, stage: stage} do
-      assert {:ok, found_stage} = Stages.get_by_slug(job_application, stage.slug)
+      assert {:ok, found_stage} = Stages.get_by_slug(stage.slug, job_application.id)
       assert found_stage.id == stage.id
     end
 
     test "returns :error when stage does not exist", %{job_application: job_application} do
-      assert :error = Stages.get_by_slug(job_application, UUIDv7.generate())
+      assert :error = Stages.get_by_slug("non-existant", job_application.id)
     end
 
     test "does not return a stage from a different application", %{
       other_application: other_application,
       stage: stage
     } do
-      assert :error = Stages.get_by_slug(other_application, stage.slug)
+      assert :error = Stages.get_by_slug(stage.slug, other_application.id)
     end
   end
 end

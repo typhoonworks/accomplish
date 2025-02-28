@@ -74,6 +74,20 @@ defmodule AccomplishWeb.Components.Activity do
     """
   end
 
+  defp activity_message(%{action: "job_application.stage_status_updated"} = assigns) do
+    assigns =
+      assigns
+      |> assign_new(:from, fn -> assigns[:activity].metadata["from"] end)
+      |> assign_new(:to, fn -> assigns[:activity].metadata["to"] end)
+      |> assign_new(:stage_title, fn -> assigns[:activity].metadata["stage"]["title"] end)
+
+    ~H"""
+    <span class="text-zinc-50">{@stage_title}</span>
+    moved to
+    <.shadow_pill class={status_color(@to)}>{@to}</.shadow_pill>
+    """
+  end
+
   defp activity_color("job_application.created"), do: "bg-green-600"
   defp activity_color("job_application.updated"), do: "bg-blue-600"
   defp activity_color("job_application.stage_updated"), do: "bg-zinc-600"

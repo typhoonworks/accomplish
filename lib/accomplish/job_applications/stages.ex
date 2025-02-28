@@ -17,16 +17,22 @@ defmodule Accomplish.JobApplications.Stages do
 
   def predefined_stages, do: @stages
 
+  def get!(id, application_id, preloads \\ []) do
+    Stage
+    |> Repo.get_by!(id: id, application_id: application_id)
+    |> Repo.preload(preloads)
+  end
+
   def get(id, application_id, preloads \\ []) do
     Stage
     |> Repo.get_by(id: id, application_id: application_id)
     |> Repo.preload(preloads)
   end
 
-  def get_by_slug(application, slug, preloads \\ []) do
+  def get_by_slug(slug, application_id, preloads \\ []) do
     query =
       from s in Stage,
-        where: s.slug == ^slug and s.application_id == ^application.id,
+        where: s.slug == ^slug and s.application_id == ^application_id,
         preload: ^preloads
 
     case Repo.one(query) do
