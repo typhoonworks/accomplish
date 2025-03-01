@@ -12,7 +12,8 @@ defmodule Accomplish.JobApplications.Stages do
     %{title: "Live Coding", type: :assessment, is_final_stage: false},
     %{title: "Take-Home Assignment", type: :assessment, is_final_stage: false},
     %{title: "System Design", type: :interview, is_final_stage: false},
-    %{title: "Final Interview", type: :interview, is_final_stage: true}
+    %{title: "Final Interview", type: :interview, is_final_stage: true},
+    %{title: "Offer Negotiation", type: :offer, is_final_stage: true}
   ]
 
   def predefined_stages, do: @stages

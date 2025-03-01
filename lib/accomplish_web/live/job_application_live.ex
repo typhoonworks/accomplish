@@ -10,7 +10,9 @@ defmodule AccomplishWeb.JobApplicationLive do
   import AccomplishWeb.Shadowrun.Tooltip
   import AccomplishWeb.Components.Activity
   import AccomplishWeb.Shadowrun.StackedList
-  import AccomplishWeb.Components.JobApplicationStageComponents
+
+  import AccomplishWeb.Components.JobApplications.StageList
+  import AccomplishWeb.Components.JobApplications.StageDialog
 
   @pubsub Accomplish.PubSub
   @activities_topic "activities"
@@ -116,6 +118,8 @@ defmodule AccomplishWeb.JobApplicationLive do
         </div>
       </div>
     </.layout>
+
+    <.stage_dialog :if={@live_action == :stages} form={@stage_form} socket={@socket} />
     """
   end
 
@@ -241,6 +245,7 @@ defmodule AccomplishWeb.JobApplicationLive do
         |> assign(application: application)
         |> assign(stages_count: application.stages_count)
         |> assign_form(application)
+        |> assign_new_stage_form(%{application_id: application.id})
         |> assign_statuses()
         |> assign_sounds()
         |> assign_play_sounds(true)
@@ -250,6 +255,96 @@ defmodule AccomplishWeb.JobApplicationLive do
 
       {:ok, socket}
     end
+  end
+
+  def handle_event(
+        "prepare_new_stage",
+        %{"status" => status},
+        socket
+      ) do
+    application = socket.assigns.application
+
+    {:noreply,
+     socket
+     |> assign_new_stage_form(%{application_id: application.id, status: status, type: :screening})
+     |> push_event("js-exec", %{
+       to: "#new-stage-modal",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event("update_stage_form_type", %{"value" => value}, socket) do
+    form = socket.assigns.stage_form
+
+    changeset =
+      Ecto.Changeset.put_change(form.source, :type, value)
+
+    {:noreply, assign(socket, :stage_form, to_form(changeset))}
+  end
+
+  def handle_event("update_stage_form_status", %{"value" => value}, socket) do
+    form = socket.assigns.stage_form
+
+    changeset =
+      Ecto.Changeset.put_change(form.source, :status, value)
+
+    {:noreply, assign(socket, :stage_form, to_form(changeset))}
+  end
+
+  def handle_event("validate_stage", %{"stage" => stage_params}, socket) do
+    changeset = JobApplications.change_stage_form(stage_params)
+
+    {:noreply, assign(socket, :stage_form, to_form(changeset))}
+  end
+
+  def handle_event("save_application", %{"application_form" => application_params}, socket) do
+    case JobApplications.create_application(socket.assigns.current_user, application_params) do
+      {:ok, _application} ->
+        changeset = JobApplications.change_application_form(%{})
+
+        socket =
+          socket
+          |> put_flash(:info, "Job application created successfully.")
+          |> assign(:form, to_form(changeset))
+          |> close_modal("new-job-application")
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        changeset = %{changeset | action: :insert}
+        {:noreply, assign(socket, form: to_form(changeset))}
+    end
+  end
+
+  def handle_event("save_stage", %{"stage" => stage_params}, socket) do
+    application = socket.assigns.application
+
+    case Accomplish.JobApplications.add_stage(application, stage_params) do
+      {:ok, _stage, _application} ->
+        changeset = JobApplications.change_stage_form(%{})
+
+        socket =
+          socket
+          |> assign(:stage_form, to_form(changeset))
+          |> close_modal("new-stage-modal")
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        changeset = %{changeset | action: :insert}
+        {:noreply, assign(socket, stage_form: to_form(changeset))}
+    end
+  end
+
+  def handle_event("reset_stage_form", %{"id" => modal_id}, socket) do
+    changeset = JobApplications.change_stage_form(%{})
+
+    socket =
+      socket
+      |> assign(:stage_form, to_form(changeset))
+      |> close_modal(modal_id)
+
+    {:noreply, socket}
   end
 
   def handle_event("update_stage_status", %{"id" => stage_id, "status" => status}, socket) do
@@ -316,17 +411,13 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  def handle_info(%{id: _id, field: field_name, date: date, form: _form}, socket) do
-    update_field(socket, field_name, date)
+  defp handle_event(%{name: "job_application.stage_added"} = event, socket) do
+    socket =
+      socket
+      |> assign(:has_applications, true)
+      |> insert_new_stage(event.stage)
+
     {:noreply, socket}
-  end
-
-  def handle_info({:new_activity, activity}, socket) do
-    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
-  end
-
-  def handle_info({JobApplications, event}, socket) do
-    handle_event(event, socket)
   end
 
   defp handle_event(%{name: "job_application.stage_updated"} = event, socket) do
@@ -346,6 +437,31 @@ defmodule AccomplishWeb.JobApplicationLive do
     {:noreply, socket}
   end
 
+  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
+    params = Map.put(form.params || %{}, to_string(field), date)
+
+    case form.name do
+      "application_form" ->
+        updated_changeset = Accomplish.JobApplications.change_application_form(params)
+        {:noreply, assign(socket, form: to_form(updated_changeset))}
+
+      "stage" ->
+        updated_changeset = Accomplish.JobApplications.change_stage_form(params)
+        {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_info({:new_activity, activity}, socket) do
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
+  end
+
+  def handle_info({JobApplications, event}, socket) do
+    handle_event(event, socket)
+  end
+
   defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
 
@@ -361,6 +477,11 @@ defmodule AccomplishWeb.JobApplicationLive do
   defp assign_form(socket, application) do
     form = JobApplications.change_application_form(Map.from_struct(application))
     assign(socket, form: to_form(form))
+  end
+
+  defp assign_new_stage_form(socket, attrs) do
+    changeset = JobApplications.change_stage_form(attrs)
+    assign(socket, :stage_form, to_form(changeset))
   end
 
   defp assign_statuses(socket) do
@@ -424,6 +545,11 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
+  defp insert_new_stage(socket, stage) do
+    key = stream_key(stage.status)
+    stream_insert(socket, key, stage, at: 0)
+  end
+
   defp replace_stage(socket, stage, diff) do
     old_status =
       if Map.has_key?(diff, :status) do
@@ -470,4 +596,12 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   defp stream_key(status), do: String.to_atom("stages_#{status}")
+
+  defp close_modal(socket, modal_id) do
+    socket
+    |> push_event("js-exec", %{
+      to: "##{modal_id}",
+      attr: "phx-remove"
+    })
+  end
 end

@@ -38,7 +38,7 @@ defmodule AccomplishWeb.Shadowrun.Dialog do
         aria-hidden="true"
       />
       <div
-        class="fixed inset-0 flex items-center justify-center overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center  overflow-y-auto"
         role="dialog"
         aria-modal="true"
         tabindex="0"

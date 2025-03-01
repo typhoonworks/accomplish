@@ -4,7 +4,7 @@ defmodule AccomplishWeb.JobApplicationStageLive do
   alias Accomplish.JobApplications
 
   import AccomplishWeb.Layout
-  import AccomplishWeb.JobApplicationStageHelpers
+  import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.Shadowrun.Tooltip
 
   def render(assigns) do
