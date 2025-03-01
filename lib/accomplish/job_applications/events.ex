@@ -34,4 +34,30 @@ defmodule Accomplish.JobApplications.Events do
     @moduledoc false
     defstruct name: "job_application.stage_updated", application: nil, from: nil, to: nil
   end
+
+  defmodule JobApplicationStageStatusUpdated do
+    @moduledoc false
+
+    defstruct name: "job_application.stage_status_updated",
+              stage: nil,
+              application: nil,
+              from: nil,
+              to: nil
+  end
+
+  defmodule JobApplicationStageUpdated do
+    @moduledoc false
+
+    defstruct name: "job_application.stage_updated",
+              stage: nil,
+              application: nil,
+              company: nil,
+              diff: %{}
+  end
+
+  defmodule JobApplicationStageDeleted do
+    @moduledoc false
+
+    defstruct name: "job_application.stage_deleted", application: nil, stage: nil
+  end
 end

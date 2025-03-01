@@ -322,4 +322,106 @@ defmodule Accomplish.JobApplicationsTest do
       assert updated_application.current_stage_id == stage1.id
     end
   end
+
+  describe "delete_stage/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+
+      {:ok, stage1, application} =
+        JobApplications.add_stage(application, %{title: "Recruiter Screen", type: :screening})
+
+      {:ok, stage2, application} =
+        JobApplications.add_stage(application, %{title: "Technical Interview", type: :interview})
+
+      {:ok, stage3, application} =
+        JobApplications.add_stage(application, %{title: "Final Interview", type: :interview})
+
+      %{
+        applicant: applicant,
+        application: application,
+        stage1: stage1,
+        stage2: stage2,
+        stage3: stage3
+      }
+    end
+
+    test "successfully deletes a stage and updates the stage count", %{
+      applicant: applicant,
+      application: application,
+      stage2: stage2
+    } do
+      assert application.stages_count == 3
+
+      :ok = JobApplications.delete_stage(stage2, application)
+
+      updated_application = JobApplications.get_application!(applicant, application.id)
+
+      assert updated_application.stages_count == 2
+      assert Repo.get(Accomplish.JobApplications.Stage, stage2.id) == nil
+    end
+
+    test "updates the positions of remaining stages", %{
+      application: application,
+      stage2: stage2,
+      stage3: stage3
+    } do
+      assert stage2.position == 2
+      assert stage3.position == 3
+
+      :ok = JobApplications.delete_stage(stage2, application)
+
+      updated_stage3 = Repo.get(Accomplish.JobApplications.Stage, stage3.id)
+      assert updated_stage3.position == 2
+    end
+
+    test "updates current_stage_id when deleting the current stage", %{
+      applicant: applicant,
+      application: application,
+      stage2: stage2
+    } do
+      {:ok, application} = JobApplications.set_current_stage(application, stage2.id)
+      assert application.current_stage_id == stage2.id
+
+      :ok = JobApplications.delete_stage(stage2, application)
+
+      updated_application = JobApplications.get_application!(applicant, application.id)
+
+      assert updated_application.current_stage_id == nil
+    end
+
+    test "leaves current_stage_id unchanged when deleting a non-current stage", %{
+      applicant: applicant,
+      application: application,
+      stage1: stage1,
+      stage3: stage3
+    } do
+      {:ok, application} = JobApplications.set_current_stage(application, stage1.id)
+      assert application.current_stage_id == stage1.id
+
+      :ok = JobApplications.delete_stage(stage3, application)
+      updated_application = JobApplications.get_application!(applicant, application.id)
+
+      assert updated_application.current_stage_id == stage1.id
+    end
+
+    test "handles deletion of the last stage", %{
+      applicant: applicant
+    } do
+      application = job_application_fixture(applicant)
+
+      {:ok, stage, application} =
+        JobApplications.add_stage(application, %{title: "Solo Stage", type: :screening})
+
+      assert application.stages_count == 1
+      assert application.current_stage_id == stage.id
+
+      :ok = JobApplications.delete_stage(stage, application)
+
+      updated_application = JobApplications.get_application!(applicant, application.id)
+
+      assert updated_application.stages_count == 0
+      assert updated_application.current_stage_id == nil
+    end
+  end
 end

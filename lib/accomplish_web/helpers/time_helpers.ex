@@ -74,6 +74,23 @@ defmodule AccomplishWeb.TimeHelpers do
   end
 
   @doc """
+  Formats a given datetime to a full date and time string.
+
+  ## Examples
+
+      iex> formatted_full_datetime(~U[2025-02-16 14:30:00Z])
+      "16 Feb 2025, 14:30 UTC"
+
+      iex> formatted_full_datetime(~U[2025-02-16 09:05:00Z], "America/New_York")
+      "16 Feb 2025, 04:05 EST"
+  """
+  def formatted_full_datetime(date, timezone \\ "UTC") do
+    date
+    |> Timex.to_datetime(timezone)
+    |> Timex.format!("{0D} {Mshort} {YYYY}, {h24}:{0m}")
+  end
+
+  @doc """
   Extracts the day of the month from a date.
 
   ## Examples

@@ -37,6 +37,8 @@ defmodule Accomplish.JobApplications.Application do
     field :notes, :string
     field :stages_count, :integer, default: 0
 
+    field :lock_version, :integer, default: 1
+
     belongs_to :company, Company
     belongs_to :applicant, User, foreign_key: :applicant_id
 

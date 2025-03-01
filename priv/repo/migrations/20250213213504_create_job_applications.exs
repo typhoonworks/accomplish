@@ -16,6 +16,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :notes, :text
 
       add :stages_count, :integer, default: 0, null: false
+      add :lock_version, :integer, default: 1, null: false
 
       add :company_id, references(:companies, type: :uuid, on_delete: :delete_all), null: false
 

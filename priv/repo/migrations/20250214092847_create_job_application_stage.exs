@@ -10,6 +10,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
       add :slug, :string
       add :title, :string, null: false
       add :type, :string, null: false
+      add :status, :string, null: false
       add :position, :integer, null: false
       add :is_final_stage, :boolean, default: false, null: false
       add :date, :utc_datetime
