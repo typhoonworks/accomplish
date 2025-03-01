@@ -58,6 +58,8 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
 
               <.menu id={"context-menu-#{stage.id}"} class="hidden w-56 text-zinc-300 bg-zinc-800">
                 <.menu_group>
+                  {status_menu_item(%{stage: stage, application: @application})}
+                  {current_stage_menu_item(%{stage: stage, application: @application})}
                   <.menu_separator />
                   <.menu_item
                     phx-click="delete_stage"
@@ -139,6 +141,75 @@ defmodule AccomplishWeb.Components.JobApplicationStageComponents do
         </.menu>
       </.dropdown_menu_content>
     </.dropdown_menu>
+    """
+  end
+
+  defp status_menu_item(assigns) do
+    ~H"""
+    <div class="relative group">
+      <.menu_item class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <.icon name="hero-envelope-open" class="size-4" />
+          <span>Status</span>
+        </div>
+        <.menu_shortcut>
+          <div class="flex gap-4">
+            <span>S</span>
+            <span class="text-[8px]">▶</span>
+          </div>
+        </.menu_shortcut>
+      </.menu_item>
+      
+    <!-- Submenu positioned absolutely -->
+      <div class="absolute left-full top-0 hidden group-hover:block w-48 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
+        <.menu class="w-full">
+          <.menu_group>
+            <%= for option <- options_for_stage_status() do %>
+              <.menu_item
+                phx-click="update_stage_status"
+                phx-value-id={@stage.id}
+                phx-value-application_id={@application.id}
+                phx-value-status={option.value}
+              >
+                <div class="w-full flex items-center gap-2">
+                  <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
+                  <span>{option.label}</span>
+                  <.menu_shortcut>
+                    <div class="w-full flex items-center gap-2 justify-between">
+                      <%= if option.value  == @stage.status do %>
+                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                      <% end %>
+                    </div>
+                  </.menu_shortcut>
+                </div>
+              </.menu_item>
+            <% end %>
+          </.menu_group>
+        </.menu>
+      </div>
+    </div>
+    """
+  end
+
+  def current_stage_menu_item(assigns) do
+    ~H"""
+    <div class="relative group">
+      <.menu_item
+        phx-click="set_current_stage"
+        phx-value-application-id={@application.id}
+        phx-value-stage-id={@stage.id}
+      >
+        <div class="w-full flex items-center gap-2">
+          <.icon name="hero-square-3-stack-3d" class="size-4" />
+          <span>Set current stage</span>
+          <.menu_shortcut>
+            <div class="flex gap-1">
+              <span>C</span>
+            </div>
+          </.menu_shortcut>
+        </div>
+      </.menu_item>
+    </div>
     """
   end
 end

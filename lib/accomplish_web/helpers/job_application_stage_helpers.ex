@@ -17,7 +17,7 @@ defmodule AccomplishWeb.JobApplicationStageHelpers do
     [
       %{
         label: "Pending",
-        value: :applied,
+        value: :pending,
         icon: "hero-ellipsis-horizontal-circle",
         color: "text-yellow-600",
         shortcut: "1"

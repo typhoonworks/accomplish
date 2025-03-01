@@ -286,6 +286,26 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
+  def handle_event(
+        "set_current_stage",
+        %{"application-id" => application_id, "stage-id" => stage_id},
+        socket
+      ) do
+    user = socket.assigns.current_user
+    application = JobApplications.get_application!(user, application_id)
+
+    case JobApplications.set_current_stage(application, stage_id) do
+      {:ok, _} ->
+        {:noreply, assign(socket, :application, application)}
+
+      {:error, :stage_not_found} ->
+        {:noreply, put_flash(socket, :error, "Stage not found")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not update stage")}
+    end
+  end
+
   def handle_event("delete_stage", %{"id" => stage_id}, socket) do
     with application <- socket.assigns.application,
          stage <- JobApplications.get_stage!(application, stage_id),

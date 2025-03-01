@@ -46,8 +46,15 @@ window.addEventListener("phx:js-exec", (event: any) => {
   });
 });
 
-// Configure the top progress bar
-topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
+topbar.config({
+  barColors: {
+    0: "#4b0082",
+    0.5: "#9400d3",
+    1.0: "#00ffc8",
+  },
+  shadowColor: "rgba(0, 0, 0, 0.3)",
+});
+
 window.addEventListener("phx:page-loading-start", () => topbar.show(300));
 window.addEventListener("phx:page-loading-stop", () => topbar.hide());
 
