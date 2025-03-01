@@ -156,8 +156,6 @@ defmodule AccomplishWeb.JobApplicationStageLive do
     with {:ok, application} <-
            JobApplications.get_application_by_slug(applicant, application_slug, :company),
          {:ok, stage} <- JobApplications.get_stage_by_slug(application, slug) do
-      IO.inspect("MOUNT: #{stage.notes}")
-
       socket =
         socket
         |> assign(application: application)
@@ -199,7 +197,6 @@ defmodule AccomplishWeb.JobApplicationStageLive do
   end
 
   defp update_field(socket, field, value) do
-    IO.inspect("FIELD: #{value}")
     application = socket.assigns.application
     stage = socket.assigns.stage
 
