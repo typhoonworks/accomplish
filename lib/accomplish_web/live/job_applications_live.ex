@@ -7,7 +7,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.StackedList
-  import AccomplishWeb.Components.JobApplicationComponents
+
+  import AccomplishWeb.Components.JobApplications.List
+  import AccomplishWeb.Components.JobApplications.StageDialog
 
   import AccomplishWeb.JobApplicationHelpers
 
@@ -162,91 +164,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       </.shadow_form>
     </.dialog>
 
-    <.dialog
-      id="new-stage-modal"
-      position={:upper_third}
-      on_cancel={hide_modal("new-stage-modal")}
-      class="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
-    >
-      <.dialog_header>
-        <.dialog_title class="text-sm text-zinc-200 font-light">
-          <div class="flex items-center gap-2">
-            <.icon name="hero-envelope-open" class="size-4" />
-            <p>New Job Application Stage</p>
-          </div>
-        </.dialog_title>
-      </.dialog_header>
-
-      <.shadow_form
-        for={@stage_form}
-        id="stage_form"
-        as="stage"
-        phx-change="validate_stage"
-        phx-submit="save_stage"
-      >
-        <input type="hidden" name="stage[application_id]" value={@stage_form[:application_id].value} />
-
-        <.dialog_content id="new-stage-content">
-          <div class="flex flex-col gap-2">
-            <div class="space-y-3 mb-2">
-              <.shadow_input
-                field={@stage_form[:title]}
-                placeholder="Stage title (e.g., 'Technical Interview', 'Final Round')"
-                class="text-xl tracking-tighter"
-              />
-            </div>
-
-            <div class="flex justify-start gap-2 mb-2">
-              <.shadow_select_input
-                id="stage-type-select"
-                field={@stage_form[:type]}
-                prompt="Select stage type"
-                value={@stage_form[:type].value}
-                options={options_for_stage_type()}
-                on_select="update_stage_form_type"
-              />
-
-              <.shadow_date_picker
-                label="Date"
-                id={"#{@stage_form.id}-date_picker"}
-                form={@stage_form}
-                start_date_field={@stage_form[:date]}
-                max={Date.utc_today() |> Date.add(365)}
-                required={false}
-              />
-            </div>
-
-            <.separator />
-
-            <div class="space-y-3 mt-4">
-              <.shadow_input
-                field={@stage_form[:notes]}
-                type="textarea"
-                placeholder="Key details, next steps, or important notes for this stage..."
-                class="text-base tracking-tighter"
-                socket={@socket}
-              />
-            </div>
-          </div>
-        </.dialog_content>
-
-        <.dialog_footer>
-          <div class="flex justify-end gap-2">
-            <.shadow_button
-              type="button"
-              variant="secondary"
-              phx-click="reset_stage_form"
-              phx-value-id="new-stage-modal"
-            >
-              Cancel
-            </.shadow_button>
-            <.shadow_button type="submit" variant="primary">
-              Add Stage
-            </.shadow_button>
-          </div>
-        </.dialog_footer>
-      </.shadow_form>
-    </.dialog>
+    <.stage_dialog form={@stage_form} socket={@socket} />
     """
   end
 
@@ -417,6 +335,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, assign(socket, :stage_form, to_form(changeset))}
   end
 
+  def handle_event("update_stage_form_status", %{"value" => value}, socket) do
+    form = socket.assigns.stage_form
+
+    changeset =
+      Ecto.Changeset.put_change(form.source, :status, value)
+
+    {:noreply, assign(socket, :stage_form, to_form(changeset))}
+  end
+
   def handle_event("validate_stage", %{"stage" => stage_params}, socket) do
     changeset = JobApplications.change_stage_form(stage_params)
 
@@ -475,11 +402,21 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  def handle_info(%{id: _id, date: date, form: form}, socket) do
-    params = Map.put(form.params || %{}, "applied_at", date)
-    updated_changeset = Accomplish.JobApplications.change_application_form(params)
+  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
+    params = Map.put(form.params || %{}, to_string(field), date)
 
-    {:noreply, assign(socket, form: to_form(updated_changeset))}
+    case form.name do
+      "application_form" ->
+        updated_changeset = Accomplish.JobApplications.change_application_form(params)
+        {:noreply, assign(socket, form: to_form(updated_changeset))}
+
+      "stage" ->
+        updated_changeset = Accomplish.JobApplications.change_stage_form(params)
+        {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
+
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   def handle_info({JobApplications, event}, socket) do
