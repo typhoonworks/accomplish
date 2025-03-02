@@ -2,10 +2,16 @@ defmodule AccomplishWeb.JobApplicationStageLive do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
+  alias Accomplish.Activities
 
   import AccomplishWeb.Layout
   import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.Shadowrun.Tooltip
+  import AccomplishWeb.Components.Activity
+
+  @pubsub Accomplish.PubSub
+  @activities_topic "activities"
+  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
@@ -75,6 +81,14 @@ defmodule AccomplishWeb.JobApplicationStageLive do
                   </.tooltip>
                 </div>
               </div>
+            </div>
+
+            <.separator />
+
+            <div class="px-4 sm:px-6 py-6">
+              <h3 class="mb-6 text-sm/6 font-semibold text-zinc-400">Activity</h3>
+
+              <.activity_feed activities={@streams.activities} />
             </div>
           </:drawer_content>
         </.page_drawer>
@@ -150,6 +164,16 @@ defmodule AccomplishWeb.JobApplicationStageLive do
     """
   end
 
+  defp activity_feed(assigns) do
+    ~H"""
+    <div class="flow-root">
+      <ul id="activitvies" role="list" class="-mb-8" phx-update="stream">
+        <.activity :for={{dom_id, activity} <- @activities} id={dom_id} activity={activity} />
+      </ul>
+    </div>
+    """
+  end
+
   def mount(%{"application_slug" => application_slug, "slug" => slug}, _session, socket) do
     applicant = socket.assigns.current_user
 
@@ -161,6 +185,7 @@ defmodule AccomplishWeb.JobApplicationStageLive do
         |> assign(application: application)
         |> assign(stage: stage)
         |> assign_form(stage)
+        |> stream_activities(stage)
 
       {:ok, socket}
     else
@@ -191,9 +216,26 @@ defmodule AccomplishWeb.JobApplicationStageLive do
     {:noreply, socket}
   end
 
+  def handle_info({Activities, event}, socket) do
+    handle_activity(event, socket)
+  end
+
+  defp handle_activity(%{name: "activity.logged"} = event, socket) do
+    activity = %{event.activity | entity: event.entity, context: event.context}
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
+  end
+
+  defp handle_activity(_, socket), do: {:noreply, socket}
+
   defp assign_form(socket, stage) do
     form = JobApplications.change_stage_form(Map.from_struct(stage))
     assign(socket, form: to_form(form))
+  end
+
+  defp stream_activities(socket, stage) do
+    if connected?(socket), do: subscribe_to_activities_topic(stage.id)
+    activities = Activities.list_activities_for_entity_or_context(stage)
+    stream(socket, :activities, activities)
   end
 
   defp update_field(socket, field, value) do
@@ -212,5 +254,9 @@ defmodule AccomplishWeb.JobApplicationStageLive do
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
+  end
+
+  defp subscribe_to_activities_topic(stage_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":job_application_stage:#{stage_id}")
   end
 end

@@ -98,6 +98,7 @@ defmodule AccomplishWeb.JobApplicationLive do
             </div>
 
             <.separator />
+
             <div class="px-4 sm:px-6 py-6">
               <h3 class="mb-6 text-sm/6 font-semibold text-zinc-400">Activity</h3>
 
