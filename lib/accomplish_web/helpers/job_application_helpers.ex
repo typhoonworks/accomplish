@@ -1,6 +1,7 @@
 defmodule AccomplishWeb.JobApplicationHelpers do
   @moduledoc false
 
+  def format_status(:draft), do: "Draft"
   def format_status(:applied), do: "Applied"
   def format_status(:interviewing), do: "Interviewing"
   def format_status(:offer), do: "Offer"
@@ -13,6 +14,7 @@ defmodule AccomplishWeb.JobApplicationHelpers do
   def format_status(:completed), do: "Completed"
   def format_status(:skipped), do: "Skipped"
 
+  def status_color(:draft), do: "bg-slate-400"
   def status_color(:applied), do: "bg-green-600"
   def status_color(:interviewing), do: "bg-yellow-600"
   def status_color(:offer), do: "bg-blue-600"
@@ -28,39 +30,46 @@ defmodule AccomplishWeb.JobApplicationHelpers do
   def options_for_application_status do
     [
       %{
+        label: "Draft",
+        value: :draft,
+        icon: "hero-pencil-square",
+        color: "text-slate-400",
+        shortcut: "1"
+      },
+      %{
         label: "Applied",
         value: :applied,
         icon: "hero-paper-airplane",
         color: "text-green-600",
-        shortcut: "1"
+        shortcut: "2"
       },
       %{
         label: "Interviewing",
         value: :interviewing,
         icon: "hero-envelope-open",
         color: "text-yellow-600",
-        shortcut: "2"
+        shortcut: "3"
       },
       %{
         label: "Offer",
         value: :offer,
         icon: "hero-hand-thumb-up",
         color: "text-blue-600",
-        shortcut: "3"
+        shortcut: "4"
       },
       %{
         label: "Rejected",
         value: :rejected,
         icon: "hero-hand-thumb-down",
         color: "text-red-600",
-        shortcut: "4"
+        shortcut: "5"
       },
       %{
         label: "Accepted",
         value: :accepted,
         icon: "hero-star",
         color: "text-purple-600",
-        shortcut: "5"
+        shortcut: "6"
       }
     ]
   end

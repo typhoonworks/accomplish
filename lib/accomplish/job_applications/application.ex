@@ -8,9 +8,10 @@ defmodule Accomplish.JobApplications.Application do
   alias Accomplish.JobApplications.Stage
 
   @permitted ~w(role status applied_at last_updated_at source notes)a
-  @required ~w(role status applied_at)a
+  @required ~w(role status)a
+  @required_when_not_draft ~w(applied_at)a
 
-  @status_types [:applied, :interviewing, :offer, :accepted, :rejected]
+  @status_types ~w(draft applied interviewing offer accepted rejected)a
 
   @derive {JSON.Encoder,
            only: [
@@ -71,7 +72,17 @@ defmodule Accomplish.JobApplications.Application do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
+    |> validate_conditional_requirements()
     |> assoc_constraint(:company)
     |> assoc_constraint(:applicant)
+  end
+
+  defp validate_conditional_requirements(%{changes: %{status: :draft}} = changeset), do: changeset
+
+  defp validate_conditional_requirements(changeset) do
+    case get_field(changeset, :status) do
+      :draft -> changeset
+      _other -> validate_required(changeset, @required_when_not_draft)
+    end
   end
 end

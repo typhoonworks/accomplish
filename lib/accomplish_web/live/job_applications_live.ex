@@ -34,6 +34,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
               href={~p"/job_applications?filter=active"}
               active={@filter == "active"}
             />
+            <.nav_button
+              icon="square-pen"
+              text="Draft"
+              href={~p"/job_applications?filter=draft"}
+              active={@filter == "draft"}
+            />
           </:actions>
         </.page_header>
       </:page_header>
@@ -437,7 +443,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     socket =
       socket
       |> assign(:has_applications, true)
-      |> insert_new_application(event.application, event.company)
+      |> maybe_insert_new_application(event.application, event.company)
 
     {:noreply, socket}
   end
@@ -460,10 +466,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
     stream_insert(socket, key, updated_application)
   end
 
-  defp insert_new_application(socket, application, company) do
+  defp maybe_insert_new_application(socket, application, company) do
     application = %Application{application | company: company}
     key = stream_key(application.status)
-    stream_insert(socket, key, application, at: 0)
+
+    if application.status in socket.assigns.statuses do
+      stream_insert(socket, key, application, at: 0)
+    else
+      socket
+    end
   end
 
   defp replace_application(socket, application, company, diff) do
@@ -554,10 +565,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp visible_statuses("all") do
-    ~w(accepted offer interviewing applied rejected)a
+    ~w(accepted offer interviewing applied draft rejected)a
   end
 
   defp visible_statuses("active") do
     ~w(offer interviewing applied)a
+  end
+
+  defp visible_statuses("draft") do
+    ~w(draft)a
   end
 end

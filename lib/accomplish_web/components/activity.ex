@@ -114,6 +114,7 @@ defmodule AccomplishWeb.Components.Activity do
     Map.get(@activity_icons, event, "hero-user-solid")
   end
 
+  def status_color("draft"), do: "border-slate-600"
   def status_color("accepted"), do: "border-purple-600"
   def status_color("offer"), do: "border-blue-600"
   def status_color("applied"), do: "border-green-600"
