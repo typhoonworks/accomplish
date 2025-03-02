@@ -458,7 +458,8 @@ defmodule AccomplishWeb.JobApplicationLive do
     handle_activity(event, socket)
   end
 
-  defp handle_activity(%{name: "activity.logged", activity: activity}, socket) do
+  defp handle_activity(%{name: "activity.logged"} = event, socket) do
+    activity = %{event.activity | entity: event.entity, context: event.context}
     {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
@@ -609,9 +610,13 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  defp subscribe_to_activities_topic(entity_id) do
-    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":#{entity_id}")
-    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":context:#{entity_id}")
+  defp subscribe_to_activities_topic(application_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":job_application:#{application_id}")
+
+    Phoenix.PubSub.subscribe(
+      @pubsub,
+      @activities_topic <> ":context:job_application:#{application_id}"
+    )
   end
 
   defp subscribe_to_notifications_topic(socket) do

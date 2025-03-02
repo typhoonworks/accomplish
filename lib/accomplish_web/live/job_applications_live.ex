@@ -436,7 +436,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp handle_activity(%{name: "activity.logged"} = event, socket) do
-    {:noreply, stream_insert(socket, :activities, event.activity, at: 0)}
+    activity = %{event.activity | entity: event.entity, context: event.context}
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
   defp handle_activity(_, socket), do: {:noreply, socket}

@@ -18,6 +18,12 @@ defmodule Accomplish.Activities do
     Accomplish.Accounts.User => "Accounts.User"
   }
 
+  @topic_names %{
+    "JobApplications.Application" => "job_application",
+    "JobApplications.Stage" => "job_application_stage",
+    "Accounts.User" => "user"
+  }
+
   @pubsub Accomplish.PubSub
   @activities_topic "activities"
 
@@ -211,19 +217,34 @@ defmodule Accomplish.Activities do
   # BROADCASTING EVENTS
   # ===========================
 
-  defp broadcast_activity_logged(activity, actor, entity, context) do
-    broadcast!(
-      %Events.NewActivity{
-        activity: activity,
-        actor: actor,
-        entity: entity,
-        context: context
-      },
-      entity.id
-    )
+  defp topic_suffix(:entity, entity) do
+    entity_type = get_entity_type(entity)
+    topic_name = Map.get(@topic_names, entity_type, "unknown")
+    "#{topic_name}:#{entity.id}"
   end
 
-  defp broadcast!(msg, entity_id) do
-    Phoenix.PubSub.broadcast!(@pubsub, @activities_topic <> ":#{entity_id}", {__MODULE__, msg})
+  defp topic_suffix(:context, context) do
+    context_type = get_context_type(context)
+    topic_name = Map.get(@topic_names, context_type, "unknown")
+    "context:#{topic_name}:#{context.id}"
+  end
+
+  defp broadcast_activity_logged(activity, actor, entity, context) do
+    msg = %Events.NewActivity{
+      activity: activity,
+      actor: actor,
+      entity: entity,
+      context: context
+    }
+
+    broadcast!(msg, topic_suffix(:entity, entity))
+
+    if context do
+      broadcast!(msg, topic_suffix(:context, context))
+    end
+  end
+
+  defp broadcast!(msg, topic_suffix) do
+    Phoenix.PubSub.broadcast!(@pubsub, @activities_topic <> ":#{topic_suffix}", {__MODULE__, msg})
   end
 end

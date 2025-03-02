@@ -320,4 +320,63 @@ defmodule Accomplish.ActivitiesTest do
       assert profile_activity.entity.__struct__ == Accomplish.Accounts.User
     end
   end
+
+  describe "broadcasting activities" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+      stage = job_application_stage_fixture(application)
+
+      :ok =
+        Phoenix.PubSub.unsubscribe(
+          Accomplish.PubSub,
+          "activities:job_application_stage:#{stage.id}"
+        )
+
+      :ok =
+        Phoenix.PubSub.unsubscribe(
+          Accomplish.PubSub,
+          "activities:context:job_application:#{application.id}"
+        )
+
+      {:ok, applicant: applicant, application: application, stage: stage}
+    end
+
+    test "broadcasts activity to correct topics when context is provided", %{
+      applicant: applicant,
+      stage: stage,
+      application: application
+    } do
+      entity_topic = "activities:job_application_stage:#{stage.id}"
+      context_topic = "activities:context:job_application:#{application.id}"
+
+      Phoenix.PubSub.subscribe(Accomplish.PubSub, entity_topic)
+      Phoenix.PubSub.subscribe(Accomplish.PubSub, context_topic)
+
+      {:ok, _activity} =
+        Activities.log_activity(
+          applicant,
+          "job_application.stage_status_updated",
+          stage,
+          %{from: "pending", to: "scheduled"},
+          DateTime.utc_now(),
+          application
+        )
+
+      assert_receive {Accomplish.Activities, msg_entity}, 1000
+      assert_receive {Accomplish.Activities, msg_context}, 1000
+
+      # Validate the entity broadcast.
+      assert msg_entity.entity.id == stage.id
+      assert msg_entity.entity.__struct__ == Accomplish.JobApplications.Stage
+      assert msg_entity.context.id == application.id
+      assert msg_entity.context.__struct__ == Accomplish.JobApplications.Application
+
+      # Validate that the context broadcast includes the application.
+      assert msg_context.entity.id == stage.id
+      assert msg_context.entity.__struct__ == Accomplish.JobApplications.Stage
+      assert msg_context.context.id == application.id
+      assert msg_context.context.__struct__ == Accomplish.JobApplications.Application
+    end
+  end
 end
