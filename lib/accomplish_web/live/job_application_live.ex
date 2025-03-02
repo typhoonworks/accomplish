@@ -427,7 +427,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     with application <- socket.assigns.application,
          stage <- JobApplications.get_stage!(application, stage_id),
          :ok <- JobApplications.delete_stage(stage, application) do
-      {:noreply, socket}
+      {:noreply, socket |> maybe_play_sound("swoosh")}
     else
       _ -> {:noreply, put_flash(socket, :error, "Failed to delete job application stage.")}
     end
@@ -488,7 +488,6 @@ defmodule AccomplishWeb.JobApplicationLive do
       socket
       |> assign(:stages_count, socket.assigns.stages_count - 1)
       |> maybe_stream_delete(key, stage)
-      |> maybe_play_sound("swoosh")
 
     {:noreply, socket}
   end

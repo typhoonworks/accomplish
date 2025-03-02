@@ -251,6 +251,35 @@ defmodule Accomplish.ActivitiesTest do
       assert second_activity.entity.__struct__ == Accomplish.JobApplications.Application
     end
 
+    test "preloads soft deleted entity for an activity", %{
+      applicant: applicant,
+      application: application
+    } do
+      soft_deleted_stage = soft_deleted_job_application_stage_fixture(application)
+      timestamp = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      {:ok, _activity} =
+        Activities.log_activity(
+          applicant,
+          "job_application.stage_updated",
+          soft_deleted_stage,
+          %{old_status: "pending", new_status: "cancelled"},
+          timestamp,
+          application
+        )
+
+      activities = Activities.list_activities_for_entity_or_context(soft_deleted_stage)
+
+      [activity] =
+        Enum.filter(activities, fn a ->
+          a.entity_id == soft_deleted_stage.id and a.entity_type == "JobApplications.Stage"
+        end)
+
+      assert activity.entity.id == soft_deleted_stage.id
+      assert activity.entity.deleted_at != nil
+      assert activity.entity_deleted == true
+    end
+
     test "preloads context when it exists", %{application: application, stage: stage} do
       activities = Activities.list_activities_for_entity_or_context(stage)
 

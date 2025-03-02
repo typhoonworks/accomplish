@@ -240,7 +240,16 @@ defmodule Accomplish.JobApplications do
 
     Ecto.Multi.new()
     |> lock_application(application.id)
-    |> Ecto.Multi.delete(:delete, stage)
+    |> Ecto.Multi.run(:soft_delete, fn repo, _ ->
+      repo.soft_delete(stage)
+    end)
+    |> Ecto.Multi.run(:update_current_stage, fn repo, _changes ->
+      if application.current_stage_id == stage.id do
+        repo.update(Ecto.Changeset.change(application, current_stage_id: nil))
+      else
+        {:ok, application}
+      end
+    end)
     |> multi_update_all(:dec_positions, fn _ ->
       from(s in Stage,
         where: s.application_id == ^application.id,
@@ -251,12 +260,88 @@ defmodule Accomplish.JobApplications do
     |> update_application_stages_count(application.id, -1)
     |> Repo.transaction()
     |> case do
-      {:ok, _} ->
-        broadcast_stage_deleted(application, stage)
-        :ok
+      {:ok, %{soft_delete: deleted_stage}} ->
+        broadcast_stage_deleted(application, deleted_stage)
+        {:ok, deleted_stage}
+
+      {:error, _, reason, _} ->
+        {:error, reason}
 
       other ->
         other
+    end
+  end
+
+  def permanently_delete_stage(%Stage{} = stage, %Application{} = application) do
+    old_position = stage.position
+
+    Ecto.Multi.new()
+    |> lock_application(application.id)
+    |> Ecto.Multi.delete(:hard_delete, stage)
+    |> multi_update_all(:dec_positions, fn _ ->
+      from(s in Stage,
+        where: s.application_id == ^application.id,
+        where: s.position > ^old_position,
+        update: [inc: [position: -1]]
+      )
+    end)
+    |> update_application_stages_count(application.id, -1)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{hard_delete: deleted_stage}} ->
+        broadcast_stage_deleted(application, deleted_stage)
+        {:ok, deleted_stage}
+
+      {:error, _, reason, _} ->
+        {:error, reason}
+
+      other ->
+        other
+    end
+  end
+
+  def restore_stage(%Stage{} = stage, %Application{} = application) do
+    stage_with_deleted =
+      if is_nil(stage.deleted_at) do
+        Repo.get(Stage, stage.id, with_deleted: true)
+      else
+        stage
+      end
+
+    if is_nil(stage_with_deleted) || is_nil(stage_with_deleted.deleted_at) do
+      {:error, :not_deleted}
+    else
+      latest_position =
+        from(s in Stage,
+          where: s.application_id == ^application.id,
+          select: max(s.position)
+        )
+        |> Repo.one()
+        |> Kernel.||(0)
+
+      changeset =
+        stage_with_deleted
+        |> Ecto.Changeset.change(
+          deleted_at: nil,
+          position: latest_position + 1
+        )
+
+      Ecto.Multi.new()
+      |> lock_application(application.id)
+      |> Ecto.Multi.update(:restore, changeset)
+      |> update_application_stages_count(application.id, 1)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{restore: restored_stage}} ->
+          broadcast_stage_restored(application, stage)
+          {:ok, restored_stage}
+
+        {:error, _, reason, _} ->
+          {:error, reason}
+
+        other ->
+          other
+      end
     end
   end
 
@@ -409,6 +494,16 @@ defmodule Accomplish.JobApplications do
   defp broadcast_stage_deleted(application, stage) do
     broadcast!(
       %Events.JobApplicationStageDeleted{
+        application: application,
+        stage: stage
+      },
+      application.applicant_id
+    )
+  end
+
+  defp broadcast_stage_restored(application, stage) do
+    broadcast!(
+      %Events.JobApplicationStageRestored{
         application: application,
         stage: stage
       },

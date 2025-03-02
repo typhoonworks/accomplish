@@ -5,6 +5,7 @@ defmodule Accomplish.JobApplicationsFixtures do
   """
 
   alias Accomplish.JobApplications
+  alias Accomplish.Repo
 
   @doc """
   Generates a job application for a given applicant.
@@ -38,5 +39,14 @@ defmodule Accomplish.JobApplicationsFixtures do
     {:ok, stage, _application} = JobApplications.add_stage(application, attrs)
 
     stage
+  end
+
+  @doc """
+  Generates a soft-deleted job application stage for a given application.
+  """
+  def soft_deleted_job_application_stage_fixture(application, attrs \\ %{}) do
+    stage = job_application_stage_fixture(application, attrs)
+    {:ok, soft_deleted_stage} = Repo.soft_delete(stage)
+    soft_deleted_stage
   end
 end

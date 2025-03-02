@@ -59,4 +59,10 @@ defmodule Accomplish.JobApplications.Events do
 
     defstruct name: "job_application.stage_deleted", application: nil, stage: nil
   end
+
+  defmodule JobApplicationStageRestored do
+    @moduledoc false
+
+    defstruct name: "job_application.stage_restored", application: nil, stage: nil
+  end
 end

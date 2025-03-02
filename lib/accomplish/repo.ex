@@ -3,6 +3,8 @@ defmodule Accomplish.Repo do
     otp_app: :accomplish,
     adapter: Ecto.Adapters.Postgres
 
+  use Ecto.SoftDelete.Repo
+
   @locks %{job_application: 1}
 
   def multi_transaction_lock(multi, scope, id) when is_atom(scope) and is_integer(id) do

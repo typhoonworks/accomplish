@@ -1,5 +1,6 @@
 defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
   use Ecto.Migration
+  import Ecto.SoftDelete.Migration
 
   @disable_ddl_transaction true
   @disable_migration_lock true
@@ -22,13 +23,21 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
         null: false
 
       timestamps(type: :utc_datetime)
+      soft_delete_columns()
     end
 
-    create unique_index(:job_application_stages, [:application_id, :position], concurrently: true)
+    create unique_index(
+             :job_application_stages,
+             [:application_id, :position],
+             where: "deleted_at IS NULL",
+             concurrently: true
+           )
   end
 
   def down do
-    drop_if_exists unique_index(:job_application_stages, [:application_id, :position],
+    drop_if_exists unique_index(
+                     :job_application_stages,
+                     [:application_id, :position],
                      concurrently: true
                    )
 

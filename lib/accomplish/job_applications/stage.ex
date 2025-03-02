@@ -2,6 +2,7 @@ defmodule Accomplish.JobApplications.Stage do
   @moduledoc false
 
   use Accomplish.Schema
+  import Ecto.SoftDelete.Schema
 
   alias Accomplish.JobApplications.Application
 
@@ -41,6 +42,7 @@ defmodule Accomplish.JobApplications.Stage do
     belongs_to :application, Application, foreign_key: :application_id
 
     timestamps(type: :utc_datetime)
+    soft_delete_schema()
   end
 
   @doc false

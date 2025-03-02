@@ -127,12 +127,12 @@ defmodule Accomplish.Activities do
   end
 
   # Preload entities in a batch operation
+  # This updates the preload_entities function in the Activities module to handle soft deleted entities
+
   defp preload_entities(activities) do
-    # Group activities by entity type
     activities_by_entity_type =
       Enum.group_by(activities, fn activity -> activity.entity_type end)
 
-    # For each entity type, fetch the corresponding entities
     entities_by_type_and_id =
       activities_by_entity_type
       |> Enum.flat_map(fn {entity_type, activities} ->
@@ -140,7 +140,8 @@ defmodule Accomplish.Activities do
         entity_module = Map.get(@entity_modules, entity_type)
 
         if entity_module do
-          entities = Repo.all(from e in entity_module, where: e.id in ^entity_ids)
+          query = from(e in entity_module, where: e.id in ^entity_ids)
+          entities = Repo.all(query, with_deleted: true)
           [{entity_type, Enum.group_by(entities, & &1.id)}]
         else
           []
@@ -148,14 +149,15 @@ defmodule Accomplish.Activities do
       end)
       |> Map.new()
 
-    # Assign the correct entity to each activity
     Enum.map(activities, fn activity ->
-      entity =
-        entities_by_type_and_id
-        |> get_in([activity.entity_type, activity.entity_id])
-        |> List.first()
+      entity_list = get_in(entities_by_type_and_id, [activity.entity_type, activity.entity_id])
+      entity = if is_list(entity_list), do: List.first(entity_list), else: nil
 
-      Map.put(activity, :entity, entity)
+      is_deleted = entity && Map.get(entity, :deleted_at) != nil
+
+      activity
+      |> Map.put(:entity, entity)
+      |> Map.put(:entity_deleted, is_deleted)
     end)
   end
 

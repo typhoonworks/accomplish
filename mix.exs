@@ -44,6 +44,7 @@ defmodule Accomplish.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dns_cluster, "~> 0.1.1"},
       {:ecto_sql, "~> 3.10"},
+      {:ecto_soft_delete, "~> 2.0"},
       {:excellent_migrations, "~> 0.1", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test, runtime: false},
       {:finch, "~> 0.13"},
