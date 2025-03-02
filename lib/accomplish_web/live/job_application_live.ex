@@ -205,6 +205,30 @@ defmodule AccomplishWeb.JobApplicationLive do
               />
             <% end %>
           </.stacked_list>
+          <%= if @stages_count == 0 do %>
+            <div class="mt-36 flex flex-col items-start justify-center gap-4 px-6 py-10 bg-zinc-900 max-w-sm mx-auto text-left">
+              <div class="flex items-center justify-center">
+                <.icon
+                  name="hero-square-3-stack-3d-solid"
+                  class="size-12 text-zinc-300/50 icon-reflection"
+                />
+              </div>
+
+              <div class="space-y-4">
+                <h2 class="text-md font-light text-zinc-100">Job Application Stages</h2>
+                <p class="text-sm font-light  text-zinc-400 leading-relaxed">
+                  Add stages to track your progress through interviews, assessments, and negotiations. Stay organized and move forward with confidence.
+                </p>
+                <.shadow_button
+                  phx-click="prepare_new_stage"
+                  phx-value-status="pending"
+                  phx-value-modal_id="new-stage-modal"
+                >
+                  Add a new stage
+                </.shadow_button>
+              </div>
+            </div>
+          <% end %>
         </div>
       </div>
     </section>
@@ -325,7 +349,7 @@ defmodule AccomplishWeb.JobApplicationLive do
 
         socket =
           socket
-          |> assign(:stage_form, to_form(changeset))
+          |> assign(stage_form: to_form(changeset))
           |> close_modal("new-stage-modal")
 
         {:noreply, socket}
@@ -411,32 +435,6 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  defp handle_event(%{name: "job_application.stage_added"} = event, socket) do
-    socket =
-      socket
-      |> assign(:has_applications, true)
-      |> insert_new_stage(event.stage)
-
-    {:noreply, socket}
-  end
-
-  defp handle_event(%{name: "job_application.stage_updated"} = event, socket) do
-    {:noreply, replace_stage(socket, event.stage, event.diff)}
-  end
-
-  defp handle_event(%{name: "job_application.stage_deleted"} = event, socket) do
-    stage = event.stage
-    key = stream_key(stage.status)
-
-    socket =
-      socket
-      |> assign(:stages_count, socket.assigns.stages_count - 1)
-      |> maybe_stream_delete(key, stage)
-      |> maybe_play_sound("swoosh")
-
-    {:noreply, socket}
-  end
-
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
     params = Map.put(form.params || %{}, to_string(field), date)
 
@@ -454,13 +452,47 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  def handle_info({:new_activity, activity}, socket) do
-    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
+  def handle_info({JobApplications, event}, socket) do
+    handle_notification(event, socket)
   end
 
-  def handle_info({JobApplications, event}, socket) do
-    handle_event(event, socket)
+  def handle_info({Activities, event}, socket) do
+    handle_activity(event, socket)
   end
+
+  defp handle_activity(%{name: "activity.logged"} = event, socket) do
+    {:noreply, stream_insert(socket, :activities, event.activity, at: 0)}
+  end
+
+  defp handle_activity(_, socket), do: {:noreply, socket}
+
+  defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
+    socket =
+      socket
+      |> assign(:stages_count, event.application.stages_count)
+      |> insert_new_stage(event.stage)
+
+    {:noreply, socket}
+  end
+
+  defp handle_notification(%{name: "job_application.stage_updated"} = event, socket) do
+    {:noreply, replace_stage(socket, event.stage, event.diff)}
+  end
+
+  defp handle_notification(%{name: "job_application.stage_deleted"} = event, socket) do
+    stage = event.stage
+    key = stream_key(stage.status)
+
+    socket =
+      socket
+      |> assign(:stages_count, socket.assigns.stages_count - 1)
+      |> maybe_stream_delete(key, stage)
+      |> maybe_play_sound("swoosh")
+
+    {:noreply, socket}
+  end
+
+  defp handle_notification(_, socket), do: {:noreply, socket}
 
   defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
