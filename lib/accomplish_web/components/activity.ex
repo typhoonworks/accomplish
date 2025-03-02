@@ -8,7 +8,7 @@ defmodule AccomplishWeb.Components.Activity do
 
   def activity(assigns) do
     ~H"""
-    <li class="relative pb-8 group last:pb-0">
+    <li id={@id} class="relative pb-8 group last:pb-0">
       <span
         class="absolute left-4 top-4 -ml-px h-full w-px bg-zinc-200 group-last:hidden"
         aria-hidden="true"

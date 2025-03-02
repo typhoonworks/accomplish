@@ -238,7 +238,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   defp activity_feed(assigns) do
     ~H"""
     <div class="flow-root">
-      <ul role="list" class="-mb-8">
+      <ul id="activitvies" role="list" class="-mb-8" phx-update="stream">
         <.activity :for={{dom_id, activity} <- @activities} id={dom_id} activity={activity} />
       </ul>
     </div>
