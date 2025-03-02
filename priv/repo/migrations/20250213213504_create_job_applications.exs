@@ -9,6 +9,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :id, :uuid, primary_key: true
       add :slug, :string
       add :role, :string, null: false
+      add :company_name, :string, null: false
       add :status, :string, null: false
       add :applied_at, :utc_datetime
       add :last_updated_at, :utc_datetime
@@ -18,19 +19,15 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :stages_count, :integer, default: 0, null: false
       add :lock_version, :integer, default: 1, null: false
 
-      add :company_id, references(:companies, type: :uuid, on_delete: :delete_all), null: false
-
       add :applicant_id, references(:users, type: :uuid, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)
     end
 
-    create index(:job_applications, [:company_id], concurrently: true)
     create index(:job_applications, [:applicant_id], concurrently: true)
   end
 
   def down do
-    drop_if_exists index(:job_applications, [:company_id], concurrently: true)
     drop_if_exists index(:job_applications, [:applicant_id], concurrently: true)
     drop table(:job_applications)
   end

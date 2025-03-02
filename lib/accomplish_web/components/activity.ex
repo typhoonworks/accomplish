@@ -42,8 +42,8 @@ defmodule AccomplishWeb.Components.Activity do
 
   defp activity_message(%{action: "job_application.created"} = assigns) do
     ~H"""
-    Applied to <span class="text-zinc-50">{@activity.target.role}</span>
-    at <span class="text-zinc-50">{@activity.target.company.name}</span>
+    Applied to <span class="text-zinc-50">{@activity.entity.role}</span>
+    at <span class="text-zinc-50">{@activity.entity.company_name}</span>
     """
   end
 
@@ -63,7 +63,7 @@ defmodule AccomplishWeb.Components.Activity do
 
   defp activity_message(%{action: "job_application.stage_added"} = assigns) do
     ~H"""
-    Added stage <span class="text-zinc-50">{@activity.metadata["stage_title"]}</span>
+    Added stage <span class="text-zinc-50">{@activity.entity.title}</span>
     """
   end
 
@@ -79,22 +79,17 @@ defmodule AccomplishWeb.Components.Activity do
       assigns
       |> assign_new(:from, fn -> assigns[:activity].metadata["from"] end)
       |> assign_new(:to, fn -> assigns[:activity].metadata["to"] end)
-      |> assign_new(:stage_title, fn -> assigns[:activity].metadata["stage"]["title"] end)
 
     ~H"""
-    <span class="text-zinc-50">{@stage_title}</span>
+    <span class="text-zinc-50">{@activity.entity.title}</span>
     moved to
     <.shadow_pill class={status_color(@to)}>{@to}</.shadow_pill>
     """
   end
 
   defp activity_message(%{action: "job_application.stage_deleted"} = assigns) do
-    assigns =
-      assigns
-      |> assign_new(:stage_title, fn -> assigns[:activity].metadata["stage"]["title"] end)
-
     ~H"""
-    Removed stage <span class="text-zinc-50">{@stage_title}</span>
+    Removed stage <span class="text-zinc-50">{@activity.entity.title}</span>
     """
   end
 

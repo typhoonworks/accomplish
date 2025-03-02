@@ -4,8 +4,6 @@ defmodule Accomplish.JobApplications do
   use Accomplish.Context
   alias Accomplish.Repo
   alias Accomplish.JobApplications.Application
-  alias Accomplish.JobApplications.ApplicationForm
-  alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
   alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
@@ -40,7 +38,7 @@ defmodule Accomplish.JobApplications do
     query =
       from a in Application,
         where: a.applicant_id == ^applicant.id,
-        preload: ^([:company] ++ preloads)
+        preload: ^preloads
 
     query =
       case filter do
@@ -74,31 +72,34 @@ defmodule Accomplish.JobApplications do
   end
 
   def create_application(applicant, attrs) do
-    with {:ok, form_changeset} <- validate_application_form(attrs),
-         {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name) do
-      Ecto.Multi.new()
-      |> Ecto.Multi.insert(
-        :application,
-        Application.create_changeset(company, applicant, form_changeset.changes)
-      )
-      |> Ecto.Multi.run(:update_slug, fn repo, %{application: application} ->
-        updated_application = repo.get!(Application, application.id) |> repo.preload(:company)
-        slug = generate_slug(updated_application)
+    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
+    changeset = Application.create_changeset(applicant, attrs)
 
-        repo.update(Ecto.Changeset.change(updated_application, slug: slug))
-      end)
-      |> Repo.transaction()
-      |> case do
-        {:ok, %{application: _application, update_slug: updated_application}} ->
-          broadcast_application_created(updated_application, company)
-          {:ok, updated_application}
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(
+      :application,
+      changeset
+    )
+    |> Ecto.Multi.run(:update_slug, fn repo, %{application: application} ->
+      updated_application =
+        repo.get!(Application, application.id)
+        |> repo.preload([:current_stage, :stages])
 
-        {:error, :application, changeset, _} ->
-          {:error, changeset}
+      slug = generate_slug(updated_application)
 
-        {:error, :update_slug, changeset, _} ->
-          {:error, changeset}
-      end
+      repo.update(Ecto.Changeset.change(updated_application, slug: slug))
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{application: _application, update_slug: updated_application}} ->
+        broadcast_application_created(updated_application)
+        {:ok, updated_application}
+
+      {:error, :application, changeset, _} ->
+        {:error, changeset}
+
+      {:error, :update_slug, changeset, _} ->
+        {:error, changeset}
     end
   end
 
@@ -109,7 +110,7 @@ defmodule Accomplish.JobApplications do
     case Repo.update(changeset) do
       {:ok, updated_application} ->
         diff = update_diff(application, changeset)
-        broadcast_application_updated(updated_application, application.company, diff)
+        broadcast_application_updated(updated_application, diff)
 
         if old_status != updated_application.status do
           broadcast_application_status_updated(
@@ -141,18 +142,8 @@ defmodule Accomplish.JobApplications do
     end
   end
 
-  defp validate_application_form(attrs) do
-    changeset = change_application_form(attrs)
-
-    if changeset.valid? do
-      {:ok, changeset}
-    else
-      {:error, changeset}
-    end
-  end
-
   def change_application_form(attrs \\ %{}) do
-    ApplicationForm.changeset(attrs)
+    %Application{} |> Application.changeset(attrs)
   end
 
   def change_stage_form(attrs \\ %{}) do
@@ -249,7 +240,16 @@ defmodule Accomplish.JobApplications do
 
     Ecto.Multi.new()
     |> lock_application(application.id)
-    |> Ecto.Multi.delete(:delete, stage)
+    |> Ecto.Multi.run(:soft_delete, fn repo, _ ->
+      repo.soft_delete(stage)
+    end)
+    |> Ecto.Multi.run(:update_current_stage, fn repo, _changes ->
+      if application.current_stage_id == stage.id do
+        repo.update(Ecto.Changeset.change(application, current_stage_id: nil))
+      else
+        {:ok, application}
+      end
+    end)
     |> multi_update_all(:dec_positions, fn _ ->
       from(s in Stage,
         where: s.application_id == ^application.id,
@@ -260,12 +260,88 @@ defmodule Accomplish.JobApplications do
     |> update_application_stages_count(application.id, -1)
     |> Repo.transaction()
     |> case do
-      {:ok, _} ->
-        broadcast_stage_deleted(application, stage)
-        :ok
+      {:ok, %{soft_delete: deleted_stage}} ->
+        broadcast_stage_deleted(application, deleted_stage)
+        {:ok, deleted_stage}
+
+      {:error, _, reason, _} ->
+        {:error, reason}
 
       other ->
         other
+    end
+  end
+
+  def permanently_delete_stage(%Stage{} = stage, %Application{} = application) do
+    old_position = stage.position
+
+    Ecto.Multi.new()
+    |> lock_application(application.id)
+    |> Ecto.Multi.delete(:hard_delete, stage)
+    |> multi_update_all(:dec_positions, fn _ ->
+      from(s in Stage,
+        where: s.application_id == ^application.id,
+        where: s.position > ^old_position,
+        update: [inc: [position: -1]]
+      )
+    end)
+    |> update_application_stages_count(application.id, -1)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{hard_delete: deleted_stage}} ->
+        broadcast_stage_deleted(application, deleted_stage)
+        {:ok, deleted_stage}
+
+      {:error, _, reason, _} ->
+        {:error, reason}
+
+      other ->
+        other
+    end
+  end
+
+  def restore_stage(%Stage{} = stage, %Application{} = application) do
+    stage_with_deleted =
+      if is_nil(stage.deleted_at) do
+        Repo.get(Stage, stage.id, with_deleted: true)
+      else
+        stage
+      end
+
+    if is_nil(stage_with_deleted) || is_nil(stage_with_deleted.deleted_at) do
+      {:error, :not_deleted}
+    else
+      latest_position =
+        from(s in Stage,
+          where: s.application_id == ^application.id,
+          select: max(s.position)
+        )
+        |> Repo.one()
+        |> Kernel.||(0)
+
+      changeset =
+        stage_with_deleted
+        |> Ecto.Changeset.change(
+          deleted_at: nil,
+          position: latest_position + 1
+        )
+
+      Ecto.Multi.new()
+      |> lock_application(application.id)
+      |> Ecto.Multi.update(:restore, changeset)
+      |> update_application_stages_count(application.id, 1)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{restore: restored_stage}} ->
+          broadcast_stage_restored(application, stage)
+          {:ok, restored_stage}
+
+        {:error, _, reason, _} ->
+          {:error, reason}
+
+        other ->
+          other
+      end
     end
   end
 
@@ -309,7 +385,7 @@ defmodule Accomplish.JobApplications do
   end
 
   defp generate_slug(application) do
-    [application.role, application.company.name]
+    [application.role, application.company_name]
     |> Slug.slugify()
     |> Slug.add_suffix(application.id)
   end
@@ -332,21 +408,19 @@ defmodule Accomplish.JobApplications do
     Ecto.Multi.update_all(multi, name, func, opts)
   end
 
-  defp broadcast_application_created(application, company) do
+  defp broadcast_application_created(application) do
     broadcast!(
       %Events.NewJobApplication{
-        application: application,
-        company: company
+        application: application
       },
       application.applicant_id
     )
   end
 
-  defp broadcast_application_updated(application, company, diff) do
+  defp broadcast_application_updated(application, diff) do
     broadcast!(
       %Events.JobApplicationUpdated{
         application: application,
-        company: company,
         diff: diff
       },
       application.applicant_id
@@ -420,6 +494,16 @@ defmodule Accomplish.JobApplications do
   defp broadcast_stage_deleted(application, stage) do
     broadcast!(
       %Events.JobApplicationStageDeleted{
+        application: application,
+        stage: stage
+      },
+      application.applicant_id
+    )
+  end
+
+  defp broadcast_stage_restored(application, stage) do
+    broadcast!(
+      %Events.JobApplicationStageRestored{
         application: application,
         stage: stage
       },

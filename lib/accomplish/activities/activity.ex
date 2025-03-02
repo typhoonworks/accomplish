@@ -5,8 +5,8 @@ defmodule Accomplish.Activities.Activity do
 
   use Accomplish.Schema
 
-  @permitted ~w(actor_id actor_type action target_id target_type metadata occurred_at)a
-  @required ~w(actor_id action target_id target_type occurred_at)a
+  @permitted ~w(actor_id actor_type action entity_id entity_type context_id context_type metadata occurred_at)a
+  @required ~w(actor_id action entity_id entity_type occurred_at)a
 
   @derive {JSON.Encoder,
            only: [
@@ -14,8 +14,10 @@ defmodule Accomplish.Activities.Activity do
              :actor_id,
              :actor_type,
              :action,
-             :target_id,
-             :target_type,
+             :entity_id,
+             :entity_type,
+             :context_id,
+             :context_type,
              :metadata,
              :occurred_at,
              :inserted_at
@@ -27,11 +29,15 @@ defmodule Accomplish.Activities.Activity do
     field :action, :string
     field :metadata, :map, default: %{}
 
-    field :target_id, :binary_id
-    field :target_type, :string
+    field :entity_id, :binary_id
+    field :entity_type, :string
+
+    field :context_id, :binary_id
+    field :context_type, :string
 
     field :actor, :any, virtual: true
-    field :target, :any, virtual: true
+    field :entity, :any, virtual: true
+    field :context, :any, virtual: true
 
     field :occurred_at, :utc_datetime
 

@@ -2,6 +2,7 @@ defmodule Accomplish.JobApplicationsTest do
   use Accomplish.DataCase
 
   alias Accomplish.JobApplications
+  alias Accomplish.JobApplications.Stage
 
   describe "get_application!/3" do
     setup do
@@ -14,11 +15,14 @@ defmodule Accomplish.JobApplicationsTest do
       applicant: applicant,
       application: application
     } do
+      {:ok, _stage, _application_with_stage} =
+        JobApplications.add_stage(application, %{title: "First Stage", type: :screening})
+
       fetched_application =
-        JobApplications.get_application!(applicant, application.id, [:company])
+        JobApplications.get_application!(applicant, application.id, [:current_stage])
 
       assert fetched_application.id == application.id
-      assert fetched_application.company != nil
+      assert fetched_application.current_stage != nil
     end
 
     test "raises error when the application is not found", %{applicant: applicant} do
@@ -96,7 +100,7 @@ defmodule Accomplish.JobApplicationsTest do
 
       assert job_application.role == "Software Engineer"
       assert job_application.status == :applied
-      assert job_application.company.name == "Tech Corp"
+      assert job_application.company_name == "Tech Corp"
       assert job_application.applicant_id == applicant.id
     end
 
@@ -346,19 +350,24 @@ defmodule Accomplish.JobApplicationsTest do
       }
     end
 
-    test "successfully deletes a stage and updates the stage count", %{
+    test "successfully soft deletes a stage and updates the stage count", %{
       applicant: applicant,
       application: application,
       stage2: stage2
     } do
       assert application.stages_count == 3
 
-      :ok = JobApplications.delete_stage(stage2, application)
+      {:ok, _soft_deleted_stage} = JobApplications.delete_stage(stage2, application)
 
       updated_application = JobApplications.get_application!(applicant, application.id)
-
       assert updated_application.stages_count == 2
-      assert Repo.get(Accomplish.JobApplications.Stage, stage2.id) == nil
+
+      # Stage should not be visible by default
+      refute Repo.get(Stage, stage2.id)
+
+      # But we should be able to get it using the with_deleted option
+      assert deleted_stage = Repo.get(Stage, stage2.id, with_deleted: true)
+      assert deleted_stage.deleted_at != nil
     end
 
     test "updates the positions of remaining stages", %{
@@ -369,9 +378,9 @@ defmodule Accomplish.JobApplicationsTest do
       assert stage2.position == 2
       assert stage3.position == 3
 
-      :ok = JobApplications.delete_stage(stage2, application)
+      {:ok, _} = JobApplications.delete_stage(stage2, application)
 
-      updated_stage3 = Repo.get(Accomplish.JobApplications.Stage, stage3.id)
+      updated_stage3 = Repo.get(Stage, stage3.id)
       assert updated_stage3.position == 2
     end
 
@@ -383,7 +392,7 @@ defmodule Accomplish.JobApplicationsTest do
       {:ok, application} = JobApplications.set_current_stage(application, stage2.id)
       assert application.current_stage_id == stage2.id
 
-      :ok = JobApplications.delete_stage(stage2, application)
+      {:ok, _} = JobApplications.delete_stage(stage2, application)
 
       updated_application = JobApplications.get_application!(applicant, application.id)
 
@@ -399,7 +408,7 @@ defmodule Accomplish.JobApplicationsTest do
       {:ok, application} = JobApplications.set_current_stage(application, stage1.id)
       assert application.current_stage_id == stage1.id
 
-      :ok = JobApplications.delete_stage(stage3, application)
+      {:ok, _} = JobApplications.delete_stage(stage3, application)
       updated_application = JobApplications.get_application!(applicant, application.id)
 
       assert updated_application.current_stage_id == stage1.id
@@ -416,12 +425,105 @@ defmodule Accomplish.JobApplicationsTest do
       assert application.stages_count == 1
       assert application.current_stage_id == stage.id
 
-      :ok = JobApplications.delete_stage(stage, application)
+      {:ok, _} = JobApplications.delete_stage(stage, application)
 
       updated_application = JobApplications.get_application!(applicant, application.id)
 
       assert updated_application.stages_count == 0
       assert updated_application.current_stage_id == nil
+    end
+  end
+
+  describe "permanently_delete_stage/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+
+      {:ok, stage, application} =
+        JobApplications.add_stage(application, %{title: "Stage to Delete", type: :screening})
+
+      %{
+        applicant: applicant,
+        application: application,
+        stage: stage
+      }
+    end
+
+    test "permanently removes a stage from the database", %{
+      application: application,
+      stage: stage
+    } do
+      {:ok, _} = JobApplications.permanently_delete_stage(stage, application)
+
+      # Should not be found with regular query
+      refute Repo.get(Stage, stage.id)
+
+      # Should not be found even with with_deleted
+      refute Repo.get(Stage, stage.id, with_deleted: true)
+    end
+  end
+
+  describe "restore_stage/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+
+      # Create and then soft-delete a stage
+      {:ok, stage, application} =
+        JobApplications.add_stage(application, %{title: "Deleted Stage", type: :screening})
+
+      {:ok, deleted_stage} = JobApplications.delete_stage(stage, application)
+
+      # Create another visible stage
+      {:ok, visible_stage, application} =
+        JobApplications.add_stage(application, %{title: "Visible Stage", type: :interview})
+
+      %{
+        applicant: applicant,
+        application: application,
+        deleted_stage: deleted_stage,
+        visible_stage: visible_stage
+      }
+    end
+
+    test "restores a soft-deleted stage", %{
+      application: application,
+      deleted_stage: deleted_stage
+    } do
+      {:ok, restored_stage} = JobApplications.restore_stage(deleted_stage, application)
+
+      # Stage should now be visible
+      assert Repo.get(Stage, restored_stage.id)
+      assert restored_stage.deleted_at == nil
+
+      # It should have a new position at the end
+      assert restored_stage.position > 0
+    end
+
+    test "updates the stage count", %{
+      applicant: applicant,
+      application: application,
+      deleted_stage: deleted_stage
+    } do
+      # Before restoration
+      application_before = JobApplications.get_application!(applicant, application.id)
+      count_before = application_before.stages_count
+
+      # Restore
+      {:ok, _} = JobApplications.restore_stage(deleted_stage, application)
+
+      # After restoration
+      application_after = JobApplications.get_application!(applicant, application.id)
+      count_after = application_after.stages_count
+
+      assert count_after == count_before + 1
+    end
+
+    test "returns error when trying to restore a stage that's not deleted", %{
+      application: application,
+      visible_stage: visible_stage
+    } do
+      assert {:error, :not_deleted} = JobApplications.restore_stage(visible_stage, application)
     end
   end
 end

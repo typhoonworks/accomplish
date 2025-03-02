@@ -9,18 +9,14 @@ defmodule Accomplish.ActivitiesFixtures do
   @doc """
   Generates an activity log entry.
   """
-  def activity_fixture(actor, target, attrs \\ %{}) do
-    attrs =
-      Enum.into(attrs, %{
-        actor_id: actor.id,
-        actor_type: "User",
-        action: "job_application.created",
-        metadata: %{},
-        target_id: target.id,
-        target_type: "JobApplications.Application"
-      })
+  def activity_fixture(actor, entity, attrs \\ %{}) do
+    action = Map.get(attrs, :action, "job_application.created")
+    metadata = Map.get(attrs, :metadata, %{})
+    occurred_at = Map.get(attrs, :occurred_at, DateTime.utc_now())
+    context = Map.get(attrs, :context, nil)
 
-    {:ok, activity} = Activities.log_activity(actor, attrs.action, target, attrs.metadata)
+    {:ok, activity} =
+      Activities.log_activity(actor, action, entity, metadata, occurred_at, context)
 
     activity
   end

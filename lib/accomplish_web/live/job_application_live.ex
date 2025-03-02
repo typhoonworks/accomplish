@@ -29,7 +29,7 @@ defmodule AccomplishWeb.JobApplicationLive do
               <span class="hidden lg:inline-flex items-center text-zinc-400">
                 <.icon name="hero-chevron-right" class="size-3" />
               </span>
-              <span class="inline">{@application.role} at {@application.company.name}</span>
+              <span class="inline">{@application.role} at {@application.company_name}</span>
             </div>
           </:title>
           <:actions>
@@ -98,6 +98,7 @@ defmodule AccomplishWeb.JobApplicationLive do
             </div>
 
             <.separator />
+
             <div class="px-4 sm:px-6 py-6">
               <h3 class="mb-6 text-sm/6 font-semibold text-zinc-400">Activity</h3>
 
@@ -135,7 +136,7 @@ defmodule AccomplishWeb.JobApplicationLive do
           phx-value-field={@form[:role].field}
         />
 
-        <p class="text-zinc-300">{@application.company.name}</p>
+        <p class="text-zinc-300">{@application.company_name}</p>
       </div>
 
       <div class="flex justify-start gap-2 my-2">
@@ -246,9 +247,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   def mount(%{"slug" => slug}, _session, %{assigns: %{live_action: :overview}} = socket) do
-    preloads = ~w(company)a
-
-    with {:ok, socket, application} <- fetch_application(socket, slug, preloads) do
+    with {:ok, socket, application} <- fetch_application(socket, slug, []) do
       socket =
         socket
         |> assign(application: application)
@@ -261,7 +260,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   def mount(%{"slug" => slug}, _session, %{assigns: %{live_action: :stages}} = socket) do
-    preloads = ~w(company current_stage stages)a
+    preloads = ~w(current_stage stages)a
 
     with {:ok, socket, application} <- fetch_application(socket, slug, preloads) do
       socket =
@@ -321,7 +320,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     {:noreply, assign(socket, :stage_form, to_form(changeset))}
   end
 
-  def handle_event("save_application", %{"application_form" => application_params}, socket) do
+  def handle_event("save_application", %{"application" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
       {:ok, _application} ->
         changeset = JobApplications.change_application_form(%{})
@@ -429,7 +428,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     with application <- socket.assigns.application,
          stage <- JobApplications.get_stage!(application, stage_id),
          :ok <- JobApplications.delete_stage(stage, application) do
-      {:noreply, socket}
+      {:noreply, socket |> maybe_play_sound("swoosh")}
     else
       _ -> {:noreply, put_flash(socket, :error, "Failed to delete job application stage.")}
     end
@@ -439,7 +438,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     params = Map.put(form.params || %{}, to_string(field), date)
 
     case form.name do
-      "application_form" ->
+      "application" ->
         updated_changeset = Accomplish.JobApplications.change_application_form(params)
         {:noreply, assign(socket, form: to_form(updated_changeset))}
 
@@ -461,16 +460,20 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   defp handle_activity(%{name: "activity.logged"} = event, socket) do
-    {:noreply, stream_insert(socket, :activities, event.activity, at: 0)}
+    activity = %{event.activity | entity: event.entity, context: event.context}
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
   defp handle_activity(_, socket), do: {:noreply, socket}
 
   defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
+    stage = event.stage
+    key = stream_key(stage.status)
+
     socket =
       socket
       |> assign(:stages_count, event.application.stages_count)
-      |> insert_new_stage(event.stage)
+      |> maybe_stream_insert(key, stage)
 
     {:noreply, socket}
   end
@@ -487,7 +490,6 @@ defmodule AccomplishWeb.JobApplicationLive do
       socket
       |> assign(:stages_count, socket.assigns.stages_count - 1)
       |> maybe_stream_delete(key, stage)
-      |> maybe_play_sound("swoosh")
 
     {:noreply, socket}
   end
@@ -554,7 +556,7 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp stream_activities(socket, application) do
     if connected?(socket), do: subscribe_to_activities_topic(application.id)
-    activities = Activities.list_activities_for_target(application)
+    activities = Activities.list_activities_for_entity_or_context(application)
     stream(socket, :activities, activities)
   end
 
@@ -575,11 +577,6 @@ defmodule AccomplishWeb.JobApplicationLive do
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
-  end
-
-  defp insert_new_stage(socket, stage) do
-    key = stream_key(stage.status)
-    stream_insert(socket, key, stage, at: 0)
   end
 
   defp replace_stage(socket, stage, diff) do
@@ -607,15 +604,20 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   defp maybe_stream_insert(socket, key, stage) do
-    if stage.status in socket.assigns.statuses do
+    if socket.assigns.live_action == :stages and stage.status in socket.assigns.statuses do
       stream_insert(socket, key, stage, at: 0)
     else
       socket
     end
   end
 
-  defp subscribe_to_activities_topic(target_id) do
-    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":#{target_id}")
+  defp subscribe_to_activities_topic(application_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":job_application:#{application_id}")
+
+    Phoenix.PubSub.subscribe(
+      @pubsub,
+      @activities_topic <> ":context:job_application:#{application_id}"
+    )
   end
 
   defp subscribe_to_notifications_topic(socket) do

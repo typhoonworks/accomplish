@@ -4,6 +4,6 @@ defmodule Accomplish.Activities.Events do
   defmodule NewActivity do
     @moduledoc false
 
-    defstruct name: "activity.logged", activity: nil, actor: nil, target: nil
+    defstruct name: "activity.logged", activity: nil, actor: nil, entity: nil, context: nil
   end
 end

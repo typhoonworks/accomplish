@@ -1,9 +1,11 @@
 defmodule Accomplish.Activities.EventHandler do
   @moduledoc """
-  Listens for job application events and logs corresponding activities.
+  Listens for events and logs corresponding activities.
   """
 
   use GenServer
+  require Logger
+
   alias Accomplish.JobApplications.Events
   alias Accomplish.Activities
 
@@ -19,58 +21,82 @@ defmodule Accomplish.Activities.EventHandler do
     {:ok, nil}
   end
 
+  # =============================
+  # EVENT HANDLING
+  # =============================
+
   def handle_info({_, %Events.NewJobApplication{} = event}, state) do
     log_activity(event.application.applicant_id, event.name, event.application)
     {:noreply, state}
   end
 
   def handle_info({_, %Events.JobApplicationStatusUpdated{} = event}, state) do
-    metadata = %{from: event.from, to: event.to}
-    log_activity(event.application.applicant_id, event.name, event.application, metadata)
+    log_activity(event.application.applicant_id, event.name, event.application,
+      metadata: %{from: event.from, to: event.to}
+    )
+
     {:noreply, state}
   end
 
   def handle_info({_, %Events.JobApplicationNewStage{} = event}, state) do
-    stage = event.stage
-    metadata = %{stage_title: stage.title, stage_type: stage.type}
-    log_activity(event.application.applicant_id, event.name, event.application, metadata)
+    log_activity(event.application.applicant_id, event.name, event.stage,
+      context: event.application
+    )
+
     {:noreply, state}
   end
 
   def handle_info({_, %Events.JobApplicationCurrentStageUpdated{} = event}, state) do
-    metadata = %{from: event.from.title, to: event.to.title}
-    log_activity(event.application.applicant_id, event.name, event.application, metadata)
+    log_activity(event.application.applicant_id, event.name, event.application,
+      metadata: %{from: event.from.title, to: event.to.title}
+    )
+
     {:noreply, state}
   end
 
   def handle_info({_, %Events.JobApplicationStageStatusUpdated{} = event}, state) do
-    metadata = %{
-      from: event.from,
-      to: event.to,
-      stage: %{id: event.stage.id, title: event.stage.title}
-    }
+    log_activity(event.application.applicant_id, event.name, event.stage,
+      metadata: %{from: event.from, to: event.to},
+      context: event.application
+    )
 
-    log_activity(event.application.applicant_id, event.name, event.application, metadata)
     {:noreply, state}
   end
 
   def handle_info({_, %Events.JobApplicationStageDeleted{} = event}, state) do
-    metadata = %{stage: %{id: event.stage.id, title: event.stage.title}}
-    log_activity(event.application.applicant_id, event.name, event.application, metadata)
+    log_activity(event.application.applicant_id, event.name, event.stage,
+      context: event.application
+    )
+
     {:noreply, state}
   end
 
-  def handle_info(_, state), do: {:noreply, state}
+  def handle_info(msg, state) do
+    Logger.warning("Unhandled event received: #{inspect(msg)}")
+    {:noreply, state}
+  end
 
-  defp log_activity(actor_id, action, target, metadata \\ %{}) do
-    target_type = Activities.get_target_type(target)
+  # =============================
+  # LOGGING ACTIVITY
+  # =============================
+
+  defp log_activity(actor_id, action, entity, opts \\ []) do
+    metadata = Keyword.get(opts, :metadata, %{})
+    occurred_at = Keyword.get(opts, :occurred_at, DateTime.utc_now())
+    context = Keyword.get(opts, :context, nil)
+
+    entity_type = Activities.get_entity_type(entity)
+    context_type = Activities.get_context_type(context)
 
     %{
       "actor_id" => actor_id,
       "action" => action,
-      "target_id" => target.id,
-      "target_type" => target_type,
-      "metadata" => metadata
+      "entity_id" => entity.id,
+      "entity_type" => entity_type,
+      "context_id" => context && context.id,
+      "context_type" => context_type,
+      "metadata" => metadata,
+      "occurred_at" => occurred_at
     }
     |> Accomplish.Activities.Worker.new()
     |> Oban.insert()

@@ -12,8 +12,11 @@ defmodule Accomplish.Repo.Migrations.CreateActivities do
       add :action, :string, null: false
       add :metadata, :map, default: %{}
 
-      add :target_id, :uuid, null: false
-      add :target_type, :string, null: false
+      add :entity_id, :uuid, null: false
+      add :entity_type, :string, null: false
+
+      add :context_id, :uuid, null: true
+      add :context_type, :string, null: true
 
       add :occurred_at, :utc_datetime, null: false
 
@@ -21,13 +24,15 @@ defmodule Accomplish.Repo.Migrations.CreateActivities do
     end
 
     create index(:activities, [:actor_id, :actor_type], concurrently: true)
-    create index(:activities, [:target_id, :target_type], concurrently: true)
+    create index(:activities, [:entity_id, :entity_type], concurrently: true)
+    create index(:activities, [:context_id, :context_type], concurrently: true)
     create index(:activities, [:inserted_at], concurrently: true)
   end
 
   def down do
     drop_if_exists index(:activities, [:actor_id, :actor_type], concurrently: true)
-    drop_if_exists index(:activities, [:target_id, :target_type], concurrently: true)
+    drop_if_exists index(:activities, [:entity_id, :entity_type], concurrently: true)
+    drop_if_exists index(:activities, [:context_id, :context_type], concurrently: true)
     drop_if_exists index(:activities, [:inserted_at], concurrently: true)
     drop table(:activities)
   end
