@@ -420,10 +420,20 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def handle_info({JobApplications, event}, socket) do
-    handle_event(event, socket)
+    handle_notification(event, socket)
   end
 
-  defp handle_event(%{name: "job_application.created"} = event, socket) do
+  def handle_info({Activities, event}, socket) do
+    handle_activity(event, socket)
+  end
+
+  defp handle_activity(%{name: "activity.logged"} = event, socket) do
+    {:noreply, stream_insert(socket, :activities, event.activity, at: 0)}
+  end
+
+  defp handle_activity(_, socket), do: {:noreply, socket}
+
+  defp handle_notification(%{name: "job_application.created"} = event, socket) do
     socket =
       socket
       |> assign(:has_applications, true)
@@ -432,11 +442,11 @@ defmodule AccomplishWeb.JobApplicationsLive do
     {:noreply, socket}
   end
 
-  defp handle_event(%{name: "job_application.updated"} = event, socket) do
+  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
     {:noreply, replace_application(socket, event.application, event.company, event.diff)}
   end
 
-  defp handle_event(_, socket), do: {:noreply, socket}
+  defp handle_notification(_, socket), do: {:noreply, socket}
 
   defp subscribe_to_notifications_topic(user_id) do
     Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
