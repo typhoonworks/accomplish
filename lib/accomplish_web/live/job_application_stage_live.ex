@@ -15,7 +15,7 @@ defmodule AccomplishWeb.JobApplicationStageLive do
           <:title>
             <div class="flex lg:items-center lg:gap-1">
               <.link href={~p"/job_application/#{@application.slug}/stages"} class="hidden lg:inline">
-                <span class="inline">{@application.role} at {@application.company.name}</span>
+                <span class="inline">{@application.role} at {@application.company_name}</span>
               </.link>
               <span class="hidden lg:inline-flex items-center text-zinc-400">
                 <.icon name="hero-chevron-right" class="size-3" />
@@ -154,7 +154,7 @@ defmodule AccomplishWeb.JobApplicationStageLive do
     applicant = socket.assigns.current_user
 
     with {:ok, application} <-
-           JobApplications.get_application_by_slug(applicant, application_slug, :company),
+           JobApplications.get_application_by_slug(applicant, application_slug),
          {:ok, stage} <- JobApplications.get_stage_by_slug(application, slug) do
       socket =
         socket

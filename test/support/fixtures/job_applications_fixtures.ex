@@ -6,33 +6,16 @@ defmodule Accomplish.JobApplicationsFixtures do
 
   alias Accomplish.JobApplications
 
-  def unique_company_name, do: "company-#{System.unique_integer()}"
-
-  @doc """
-  Generates a company.
-  """
-  def company_fixture(attrs \\ %{}) do
-    attrs = Enum.into(attrs, %{name: unique_company_name()})
-
-    {:ok, company} =
-      Accomplish.JobApplications.Company.create_changeset(attrs)
-      |> Accomplish.Repo.insert()
-
-    company
-  end
-
   @doc """
   Generates a job application for a given applicant.
   """
   def job_application_fixture(applicant, attrs \\ %{}) do
-    company = company_fixture()
-
     attrs =
       Enum.into(attrs, %{
         role: "Senior Developer",
         status: :applied,
         applied_at: DateTime.utc_now(),
-        company_name: company.name
+        company_name: "Typhoon Works"
       })
 
     {:ok, job_application} = JobApplications.create_application(applicant, attrs)

@@ -4,7 +4,7 @@ defmodule Accomplish.JobApplications.Events do
   defmodule NewJobApplication do
     @moduledoc false
 
-    defstruct name: "job_application.created", application: nil, company: nil
+    defstruct name: "job_application.created", application: nil
   end
 
   defmodule JobApplicationStatusUpdated do
@@ -16,7 +16,7 @@ defmodule Accomplish.JobApplications.Events do
   defmodule JobApplicationUpdated do
     @moduledoc false
 
-    defstruct name: "job_application.updated", application: nil, company: nil, diff: %{}
+    defstruct name: "job_application.updated", application: nil, diff: %{}
   end
 
   defmodule JobApplicationDeleted do
@@ -51,7 +51,6 @@ defmodule Accomplish.JobApplications.Events do
     defstruct name: "job_application.stage_updated",
               stage: nil,
               application: nil,
-              company: nil,
               diff: %{}
   end
 

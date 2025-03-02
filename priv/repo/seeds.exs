@@ -9,7 +9,6 @@ tables = [
   "activities",
   "job_application_stages",
   "job_applications",
-  "companies",
   "api_keys",
   "users",
   "oauth_applications"

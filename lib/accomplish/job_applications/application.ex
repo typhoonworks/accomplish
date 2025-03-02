@@ -4,11 +4,10 @@ defmodule Accomplish.JobApplications.Application do
   use Accomplish.Schema
 
   alias Accomplish.Accounts.User
-  alias Accomplish.JobApplications.Company
   alias Accomplish.JobApplications.Stage
 
-  @permitted ~w(role status applied_at last_updated_at source notes)a
-  @required ~w(role status)a
+  @permitted ~w(role company_name status applied_at last_updated_at source notes)a
+  @required ~w(role company_name status)a
   @required_when_not_draft ~w(applied_at)a
 
   @status_types ~w(draft applied interviewing offer accepted rejected)a
@@ -18,12 +17,12 @@ defmodule Accomplish.JobApplications.Application do
              :id,
              :slug,
              :role,
+             :company_name,
              :status,
              :applied_at,
              :last_updated_at,
              :source,
              :notes,
-             :company_id,
              :inserted_at,
              :updated_at
            ]}
@@ -31,6 +30,7 @@ defmodule Accomplish.JobApplications.Application do
   schema "job_applications" do
     field :slug, :string
     field :role, :string
+    field :company_name, :string
     field :status, Ecto.Enum, values: @status_types, default: :applied
     field :applied_at, :utc_datetime
     field :last_updated_at, :utc_datetime
@@ -40,7 +40,6 @@ defmodule Accomplish.JobApplications.Application do
 
     field :lock_version, :integer, default: 1
 
-    belongs_to :company, Company
     belongs_to :applicant, User, foreign_key: :applicant_id
 
     has_many :stages, Stage, preload_order: [asc: :position]
@@ -57,10 +56,9 @@ defmodule Accomplish.JobApplications.Application do
   end
 
   @doc false
-  def create_changeset(company, applicant, attrs) do
+  def create_changeset(applicant, attrs) do
     %__MODULE__{}
     |> changeset(attrs)
-    |> put_assoc(:company, company)
     |> put_assoc(:applicant, applicant)
   end
 
@@ -73,7 +71,6 @@ defmodule Accomplish.JobApplications.Application do
     changeset
     |> validate_required(@required)
     |> validate_conditional_requirements()
-    |> assoc_constraint(:company)
     |> assoc_constraint(:applicant)
   end
 

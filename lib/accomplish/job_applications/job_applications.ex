@@ -4,8 +4,6 @@ defmodule Accomplish.JobApplications do
   use Accomplish.Context
   alias Accomplish.Repo
   alias Accomplish.JobApplications.Application
-  alias Accomplish.JobApplications.ApplicationForm
-  alias Accomplish.JobApplications.Companies
   alias Accomplish.JobApplications.Stage
   alias Accomplish.JobApplications.Stages
   alias Accomplish.JobApplications.Events
@@ -40,7 +38,7 @@ defmodule Accomplish.JobApplications do
     query =
       from a in Application,
         where: a.applicant_id == ^applicant.id,
-        preload: ^([:company] ++ preloads)
+        preload: ^preloads
 
     query =
       case filter do
@@ -74,34 +72,34 @@ defmodule Accomplish.JobApplications do
   end
 
   def create_application(applicant, attrs) do
-    with {:ok, form_changeset} <- validate_application_form(attrs),
-         {:ok, company} <- Companies.get_or_create(form_changeset.changes.company_name) do
-      Ecto.Multi.new()
-      |> Ecto.Multi.insert(
-        :application,
-        Application.create_changeset(company, applicant, form_changeset.changes)
-      )
-      |> Ecto.Multi.run(:update_slug, fn repo, %{application: application} ->
-        updated_application =
-          repo.get!(Application, application.id)
-          |> repo.preload([:company, :current_stage, :stages])
+    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
+    changeset = Application.create_changeset(applicant, attrs)
 
-        slug = generate_slug(updated_application)
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(
+      :application,
+      changeset
+    )
+    |> Ecto.Multi.run(:update_slug, fn repo, %{application: application} ->
+      updated_application =
+        repo.get!(Application, application.id)
+        |> repo.preload([:current_stage, :stages])
 
-        repo.update(Ecto.Changeset.change(updated_application, slug: slug))
-      end)
-      |> Repo.transaction()
-      |> case do
-        {:ok, %{application: _application, update_slug: updated_application}} ->
-          broadcast_application_created(updated_application, company)
-          {:ok, updated_application}
+      slug = generate_slug(updated_application)
 
-        {:error, :application, changeset, _} ->
-          {:error, changeset}
+      repo.update(Ecto.Changeset.change(updated_application, slug: slug))
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{application: _application, update_slug: updated_application}} ->
+        broadcast_application_created(updated_application)
+        {:ok, updated_application}
 
-        {:error, :update_slug, changeset, _} ->
-          {:error, changeset}
-      end
+      {:error, :application, changeset, _} ->
+        {:error, changeset}
+
+      {:error, :update_slug, changeset, _} ->
+        {:error, changeset}
     end
   end
 
@@ -112,7 +110,7 @@ defmodule Accomplish.JobApplications do
     case Repo.update(changeset) do
       {:ok, updated_application} ->
         diff = update_diff(application, changeset)
-        broadcast_application_updated(updated_application, application.company, diff)
+        broadcast_application_updated(updated_application, diff)
 
         if old_status != updated_application.status do
           broadcast_application_status_updated(
@@ -144,18 +142,8 @@ defmodule Accomplish.JobApplications do
     end
   end
 
-  defp validate_application_form(attrs) do
-    changeset = change_application_form(attrs)
-
-    if changeset.valid? do
-      {:ok, changeset}
-    else
-      {:error, changeset}
-    end
-  end
-
   def change_application_form(attrs \\ %{}) do
-    ApplicationForm.changeset(attrs)
+    %Application{} |> Application.changeset(attrs)
   end
 
   def change_stage_form(attrs \\ %{}) do
@@ -312,7 +300,7 @@ defmodule Accomplish.JobApplications do
   end
 
   defp generate_slug(application) do
-    [application.role, application.company.name]
+    [application.role, application.company_name]
     |> Slug.slugify()
     |> Slug.add_suffix(application.id)
   end
@@ -335,21 +323,19 @@ defmodule Accomplish.JobApplications do
     Ecto.Multi.update_all(multi, name, func, opts)
   end
 
-  defp broadcast_application_created(application, company) do
+  defp broadcast_application_created(application) do
     broadcast!(
       %Events.NewJobApplication{
-        application: application,
-        company: company
+        application: application
       },
       application.applicant_id
     )
   end
 
-  defp broadcast_application_updated(application, company, diff) do
+  defp broadcast_application_updated(application, diff) do
     broadcast!(
       %Events.JobApplicationUpdated{
         application: application,
-        company: company,
         diff: diff
       },
       application.applicant_id

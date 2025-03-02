@@ -52,7 +52,7 @@ defmodule AccomplishWeb.Components.JobApplications.List do
               <div class="flex items-center gap-2">
                 <.application_status_select application={application} />
                 <p class="text-[13px] text-zinc-300 leading-tight">
-                  {application.company.name}
+                  {application.company_name}
                   <span class="text-zinc-400">• {application.role}</span>
                 </p>
               </div>

@@ -168,7 +168,7 @@ defmodule Accomplish.ActivitiesTest do
     end
   end
 
-  describe "list_activities_for_entity_or_context/2" do
+  describe "list_activities_for_entity_or_context/1" do
     setup do
       applicant = user_fixture()
       application = job_application_fixture(applicant)
@@ -223,12 +223,72 @@ defmodule Accomplish.ActivitiesTest do
       assert length(activities_for_app) == 2
     end
 
-    test "preloads actors when requested", %{application: application, applicant: applicant} do
-      activities = Activities.list_activities_for_entity_or_context(application, true)
+    test "preloads actor for all activities", %{application: application, applicant: applicant} do
+      activities = Activities.list_activities_for_entity_or_context(application)
 
       assert length(activities) == 2
-      assert activities |> hd() |> Map.has_key?(:actor)
-      assert activities |> hd() |> Map.get(:actor) == applicant
+
+      first_activity = activities |> Enum.at(0)
+      assert Map.has_key?(first_activity, :actor)
+      assert first_activity.actor.id == applicant.id
+
+      second_activity = activities |> Enum.at(1)
+      assert Map.has_key?(second_activity, :actor)
+      assert second_activity.actor.id == applicant.id
+    end
+
+    test "preloads entity for all activities", %{application: application, stage: stage} do
+      activities = Activities.list_activities_for_entity_or_context(application)
+
+      first_activity = activities |> Enum.at(0)
+      assert Map.has_key?(first_activity, :entity)
+      assert first_activity.entity.id == stage.id
+      assert first_activity.entity.__struct__ == Accomplish.JobApplications.Stage
+
+      second_activity = activities |> Enum.at(1)
+      assert Map.has_key?(second_activity, :entity)
+      assert second_activity.entity.id == application.id
+      assert second_activity.entity.__struct__ == Accomplish.JobApplications.Application
+    end
+
+    test "preloads context when it exists", %{application: application, stage: stage} do
+      activities = Activities.list_activities_for_entity_or_context(stage)
+
+      activity = activities |> hd()
+      assert Map.has_key?(activity, :context)
+      assert activity.context.id == application.id
+      assert activity.context.__struct__ == Accomplish.JobApplications.Application
+
+      activities = Activities.list_activities_for_entity_or_context(application)
+      activity_without_context = activities |> Enum.at(1)
+
+      assert Map.has_key?(activity_without_context, :context)
+      assert is_nil(activity_without_context.context)
+    end
+
+    test "correctly handles activities with different entity types", %{
+      applicant: applicant
+    } do
+      timestamp_3 = DateTime.utc_now()
+
+      {:ok, _activity3} =
+        Activities.log_activity(
+          applicant,
+          "user.profile_updated",
+          applicant,
+          %{},
+          timestamp_3
+        )
+
+      activities = Activities.list_activities_for_entity_or_context(applicant)
+
+      assert length(activities) >= 1
+
+      profile_activity = Enum.find(activities, fn a -> a.action == "user.profile_updated" end)
+
+      assert profile_activity.entity_type == "Accounts.User"
+      assert profile_activity.entity.id == applicant.id
+      assert profile_activity.entity.__struct__ == Accomplish.Accounts.User
     end
   end
 end

@@ -14,11 +14,15 @@ defmodule Accomplish.JobApplicationsTest do
       applicant: applicant,
       application: application
     } do
+      # Add a stage to preload
+      {:ok, _stage, _application_with_stage} =
+        JobApplications.add_stage(application, %{title: "First Stage", type: :screening})
+
       fetched_application =
-        JobApplications.get_application!(applicant, application.id, [:company])
+        JobApplications.get_application!(applicant, application.id, [:current_stage])
 
       assert fetched_application.id == application.id
-      assert fetched_application.company != nil
+      assert fetched_application.current_stage != nil
     end
 
     test "raises error when the application is not found", %{applicant: applicant} do
@@ -96,7 +100,7 @@ defmodule Accomplish.JobApplicationsTest do
 
       assert job_application.role == "Software Engineer"
       assert job_application.status == :applied
-      assert job_application.company.name == "Tech Corp"
+      assert job_application.company_name == "Tech Corp"
       assert job_application.applicant_id == applicant.id
     end
 

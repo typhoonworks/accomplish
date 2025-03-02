@@ -99,7 +99,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       </.dialog_header>
       <.shadow_form
         for={@form}
-        id="application_form"
+        id="application"
         as="application"
         phx-change="validate_application"
         phx-submit="save_application"
@@ -229,7 +229,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
   def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
     user = socket.assigns.current_user
 
-    with %Application{} = application <- JobApplications.get_application!(user, id, :company),
+    with %Application{} = application <- JobApplications.get_application!(user, id),
          {:ok, _updated_application} <-
            JobApplications.update_application(application, %{status: status}) do
       {:noreply, socket}
@@ -242,12 +242,14 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  def handle_event("validate_application", %{"application_form" => application_params}, socket) do
-    changeset = JobApplications.change_application_form(application_params)
+  def handle_event("validate_application", %{"application" => application_params}, socket) do
+    changeset =
+      JobApplications.change_application_form(application_params) |> Map.put(:action, :validate)
+
     {:noreply, assign(socket, form: to_form(changeset))}
   end
 
-  def handle_event("save_application", %{"application_form" => application_params}, socket) do
+  def handle_event("save_application", %{"application" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
       {:ok, _application} ->
         changeset = JobApplications.change_application_form(%{})
@@ -412,12 +414,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
     params = Map.put(form.params || %{}, to_string(field), date)
 
     case form.name do
-      "application_form" ->
-        updated_changeset = Accomplish.JobApplications.change_application_form(params)
+      "application" ->
+        updated_changeset = JobApplications.change_application_form(params)
         {:noreply, assign(socket, form: to_form(updated_changeset))}
 
       "stage" ->
-        updated_changeset = Accomplish.JobApplications.change_stage_form(params)
+        updated_changeset = JobApplications.change_stage_form(params)
         {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
 
       _ ->
@@ -443,13 +445,13 @@ defmodule AccomplishWeb.JobApplicationsLive do
     socket =
       socket
       |> assign(:has_applications, true)
-      |> maybe_insert_new_application(event.application, event.company)
+      |> maybe_insert_new_application(event.application)
 
     {:noreply, socket}
   end
 
   defp handle_notification(%{name: "job_application.updated"} = event, socket) do
-    {:noreply, replace_application(socket, event.application, event.company, event.diff)}
+    {:noreply, replace_application(socket, event.application, event.diff)}
   end
 
   defp handle_notification(_, socket), do: {:noreply, socket}
@@ -460,14 +462,13 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   defp insert_application(socket, user, application) do
     updated_application =
-      JobApplications.get_application!(user, application.id, [:company, :current_stage, :stages])
+      JobApplications.get_application!(user, application.id, [:current_stage, :stages])
 
     key = stream_key(updated_application.status)
     stream_insert(socket, key, updated_application)
   end
 
-  defp maybe_insert_new_application(socket, application, company) do
-    application = %Application{application | company: company}
+  defp maybe_insert_new_application(socket, application) do
     key = stream_key(application.status)
 
     if application.status in socket.assigns.statuses do
@@ -477,9 +478,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     end
   end
 
-  defp replace_application(socket, application, company, diff) do
-    application = %Application{application | company: company}
-
+  defp replace_application(socket, application, diff) do
     old_status =
       if Map.has_key?(diff, :status) do
         diff[:status][:old]

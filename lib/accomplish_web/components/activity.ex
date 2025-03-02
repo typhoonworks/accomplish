@@ -43,7 +43,7 @@ defmodule AccomplishWeb.Components.Activity do
   defp activity_message(%{action: "job_application.created"} = assigns) do
     ~H"""
     Applied to <span class="text-zinc-50">{@activity.entity.role}</span>
-    at <span class="text-zinc-50"></span>
+    at <span class="text-zinc-50">{@activity.entity.company_name}</span>
     """
   end
 
