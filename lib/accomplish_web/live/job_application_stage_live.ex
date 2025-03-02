@@ -11,7 +11,6 @@ defmodule AccomplishWeb.JobApplicationStageLive do
 
   @pubsub Accomplish.PubSub
   @activities_topic "activities"
-  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
