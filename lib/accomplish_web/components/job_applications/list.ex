@@ -64,7 +64,7 @@ defmodule AccomplishWeb.Components.JobApplications.List do
               </p>
 
               <p class="text-[13px] text-zinc-400 leading-tight text-right w-24">
-                {formatted_relative_time(application.applied_at)}
+                {application.applied_at && formatted_relative_time(application.applied_at)}
               </p>
 
               <.menu
