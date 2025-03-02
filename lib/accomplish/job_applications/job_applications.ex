@@ -82,7 +82,10 @@ defmodule Accomplish.JobApplications do
         Application.create_changeset(company, applicant, form_changeset.changes)
       )
       |> Ecto.Multi.run(:update_slug, fn repo, %{application: application} ->
-        updated_application = repo.get!(Application, application.id) |> repo.preload(:company)
+        updated_application =
+          repo.get!(Application, application.id)
+          |> repo.preload([:company, :current_stage, :stages])
+
         slug = generate_slug(updated_application)
 
         repo.update(Ecto.Changeset.change(updated_application, slug: slug))

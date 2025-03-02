@@ -460,17 +460,20 @@ defmodule AccomplishWeb.JobApplicationLive do
     handle_activity(event, socket)
   end
 
-  defp handle_activity(%{name: "activity.logged"} = event, socket) do
-    {:noreply, stream_insert(socket, :activities, event.activity, at: 0)}
+  defp handle_activity(%{name: "activity.logged", activity: activity}, socket) do
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
   defp handle_activity(_, socket), do: {:noreply, socket}
 
   defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
+    stage = event.stage
+    key = stream_key(stage.status)
+
     socket =
       socket
       |> assign(:stages_count, event.application.stages_count)
-      |> insert_new_stage(event.stage)
+      |> maybe_stream_insert(key, stage)
 
     {:noreply, socket}
   end
@@ -554,7 +557,7 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp stream_activities(socket, application) do
     if connected?(socket), do: subscribe_to_activities_topic(application.id)
-    activities = Activities.list_activities_for_target(application)
+    activities = Activities.list_activities_for_entity_or_context(application)
     stream(socket, :activities, activities)
   end
 
@@ -575,11 +578,6 @@ defmodule AccomplishWeb.JobApplicationLive do
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
-  end
-
-  defp insert_new_stage(socket, stage) do
-    key = stream_key(stage.status)
-    stream_insert(socket, key, stage, at: 0)
   end
 
   defp replace_stage(socket, stage, diff) do
@@ -607,15 +605,16 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   defp maybe_stream_insert(socket, key, stage) do
-    if stage.status in socket.assigns.statuses do
+    if socket.assigns.live_action == :stages and stage.status in socket.assigns.statuses do
       stream_insert(socket, key, stage, at: 0)
     else
       socket
     end
   end
 
-  defp subscribe_to_activities_topic(target_id) do
-    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":#{target_id}")
+  defp subscribe_to_activities_topic(entity_id) do
+    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":#{entity_id}")
+    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":context:#{entity_id}")
   end
 
   defp subscribe_to_notifications_topic(socket) do
