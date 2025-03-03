@@ -219,7 +219,7 @@ defmodule AccomplishWeb.JobApplicationStageLive do
     handle_activity(event, socket)
   end
 
-  def handle_info(message, socket) do
+  def handle_info(_, socket) do
     {:noreply, socket}
   end
 
