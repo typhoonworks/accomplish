@@ -5,6 +5,7 @@ defmodule Accomplish.Activities do
   alias Accomplish.Repo
   alias Accomplish.Activities.Activity
   alias Accomplish.Activities.Events
+  require Logger
 
   @entity_modules %{
     "JobApplications.Application" => Accomplish.JobApplications.Application,
@@ -245,6 +246,7 @@ defmodule Accomplish.Activities do
   end
 
   defp broadcast!(msg, topic_suffix) do
+    Logger.warning("Broadcasting to: #{topic_suffix}\n")
     Phoenix.PubSub.broadcast!(@pubsub, @activities_topic <> ":#{topic_suffix}", {__MODULE__, msg})
   end
 end
