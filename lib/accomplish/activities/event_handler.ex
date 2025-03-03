@@ -72,7 +72,7 @@ defmodule Accomplish.Activities.EventHandler do
   end
 
   def handle_info(msg, state) do
-    Logger.warning("Unhandled event received: #{inspect(msg)}")
+    Logger.warning("Activities.EventHandler: Unhandled event received: #{inspect(msg)}")
     {:noreply, state}
   end
 

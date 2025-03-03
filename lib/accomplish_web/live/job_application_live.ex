@@ -251,6 +251,7 @@ defmodule AccomplishWeb.JobApplicationLive do
       socket =
         socket
         |> assign(application: application)
+        |> assign(stages_count: application.stages_count)
         |> assign_form(application)
         |> stream_activities(application)
         |> subscribe_to_notifications_topic()
@@ -466,6 +467,10 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp handle_activity(_, socket), do: {:noreply, socket}
 
+  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
+    {:noreply, assign(socket, application: event.application)}
+  end
+
   defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
     stage = event.stage
     key = stream_key(stage.status)
@@ -569,7 +574,6 @@ defmodule AccomplishWeb.JobApplicationLive do
 
         socket =
           socket
-          |> assign(application: updated_application)
           |> assign(form: to_form(form))
 
         {:noreply, socket}
@@ -605,19 +609,18 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   defp maybe_stream_insert(socket, key, stage) do
     if socket.assigns.live_action == :stages and stage.status in socket.assigns.statuses do
-      stream_insert(socket, key, stage, at: 0)
+      stream_insert(socket, key, stage, at: -1)
     else
       socket
     end
   end
 
   defp subscribe_to_activities_topic(application_id) do
-    Phoenix.PubSub.subscribe(@pubsub, @activities_topic <> ":job_application:#{application_id}")
+    entity_topic = @activities_topic <> ":job_application:#{application_id}"
+    context_topic = @activities_topic <> ":context:job_application:#{application_id}"
 
-    Phoenix.PubSub.subscribe(
-      @pubsub,
-      @activities_topic <> ":context:job_application:#{application_id}"
-    )
+    Phoenix.PubSub.subscribe(@pubsub, entity_topic)
+    Phoenix.PubSub.subscribe(@pubsub, context_topic)
   end
 
   defp subscribe_to_notifications_topic(socket) do

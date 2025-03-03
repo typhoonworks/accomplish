@@ -212,29 +212,26 @@ defmodule Accomplish.JobApplicationsTest do
       assert updated_application.stages_count == 1
     end
 
-    test "increments stages_count and assigns sequential positions when multiple stages are added",
+    test "increments stages_count when multiple stages are added",
          %{
            application: application
          } do
       assert application.stages_count == 0
 
-      {:ok, stage1, updated_application} =
+      {:ok, _stage1, updated_application} =
         JobApplications.add_stage(application, %{title: "Screening", type: :interview})
 
       assert updated_application.stages_count == 1
-      assert stage1.position == 1
 
-      {:ok, stage2, updated_application} =
+      {:ok, _stage2, updated_application} =
         JobApplications.add_stage(application, %{title: "Technical Interview", type: :interview})
 
       assert updated_application.stages_count == 2
-      assert stage2.position == 2
 
-      {:ok, stage3, updated_application} =
+      {:ok, _stage3, updated_application} =
         JobApplications.add_stage(application, %{title: "Final Interview", type: :interview})
 
       assert updated_application.stages_count == 3
-      assert stage3.position == 3
     end
 
     test "sets current_stage_id when first stage is added", %{application: application} do
@@ -370,20 +367,6 @@ defmodule Accomplish.JobApplicationsTest do
       assert deleted_stage.deleted_at != nil
     end
 
-    test "updates the positions of remaining stages", %{
-      application: application,
-      stage2: stage2,
-      stage3: stage3
-    } do
-      assert stage2.position == 2
-      assert stage3.position == 3
-
-      {:ok, _} = JobApplications.delete_stage(stage2, application)
-
-      updated_stage3 = Repo.get(Stage, stage3.id)
-      assert updated_stage3.position == 2
-    end
-
     test "updates current_stage_id when deleting the current stage", %{
       applicant: applicant,
       application: application,
@@ -495,9 +478,6 @@ defmodule Accomplish.JobApplicationsTest do
       # Stage should now be visible
       assert Repo.get(Stage, restored_stage.id)
       assert restored_stage.deleted_at == nil
-
-      # It should have a new position at the end
-      assert restored_stage.position > 0
     end
 
     test "updates the stage count", %{

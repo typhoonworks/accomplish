@@ -105,7 +105,9 @@ defmodule Accomplish.JobApplications do
 
   def update_application(%Application{} = application, attrs) do
     old_status = application.status
-    changeset = Application.update_changeset(application, attrs)
+
+    updated_attrs = Application.ensure_applied_at(attrs, application)
+    changeset = Application.update_changeset(application, updated_attrs)
 
     case Repo.update(changeset) do
       {:ok, updated_application} ->
@@ -160,17 +162,7 @@ defmodule Accomplish.JobApplications do
 
   def add_stage(application, attrs) do
     attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
-
-    latest_position =
-      from(s in Stage,
-        where: s.application_id == ^application.id,
-        select: max(s.position)
-      )
-      |> Repo.one()
-      |> Kernel.||(0)
-
-    position = latest_position + 1
-    stage_changeset = Stage.create_changeset(application, Map.put(attrs, :position, position))
+    stage_changeset = Stage.create_changeset(application, attrs)
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:stage, stage_changeset)
@@ -236,8 +228,6 @@ defmodule Accomplish.JobApplications do
   end
 
   def delete_stage(%Stage{} = stage, %Application{} = application) do
-    old_position = stage.position
-
     Ecto.Multi.new()
     |> lock_application(application.id)
     |> Ecto.Multi.run(:soft_delete, fn repo, _ ->
@@ -249,13 +239,6 @@ defmodule Accomplish.JobApplications do
       else
         {:ok, application}
       end
-    end)
-    |> multi_update_all(:dec_positions, fn _ ->
-      from(s in Stage,
-        where: s.application_id == ^application.id,
-        where: s.position > ^old_position,
-        update: [inc: [position: -1]]
-      )
     end)
     |> update_application_stages_count(application.id, -1)
     |> Repo.transaction()
@@ -273,18 +256,9 @@ defmodule Accomplish.JobApplications do
   end
 
   def permanently_delete_stage(%Stage{} = stage, %Application{} = application) do
-    old_position = stage.position
-
     Ecto.Multi.new()
     |> lock_application(application.id)
     |> Ecto.Multi.delete(:hard_delete, stage)
-    |> multi_update_all(:dec_positions, fn _ ->
-      from(s in Stage,
-        where: s.application_id == ^application.id,
-        where: s.position > ^old_position,
-        update: [inc: [position: -1]]
-      )
-    end)
     |> update_application_stages_count(application.id, -1)
     |> Repo.transaction()
     |> case do
@@ -311,20 +285,9 @@ defmodule Accomplish.JobApplications do
     if is_nil(stage_with_deleted) || is_nil(stage_with_deleted.deleted_at) do
       {:error, :not_deleted}
     else
-      latest_position =
-        from(s in Stage,
-          where: s.application_id == ^application.id,
-          select: max(s.position)
-        )
-        |> Repo.one()
-        |> Kernel.||(0)
-
       changeset =
         stage_with_deleted
-        |> Ecto.Changeset.change(
-          deleted_at: nil,
-          position: latest_position + 1
-        )
+        |> Ecto.Changeset.change(deleted_at: nil)
 
       Ecto.Multi.new()
       |> lock_application(application.id)
@@ -402,10 +365,6 @@ defmodule Accomplish.JobApplications do
       repo.get!(Application, application_id, lock: "FOR UPDATE NOWAIT")
       {:ok, application_id}
     end)
-  end
-
-  defp multi_update_all(multi, name, func, opts \\ []) do
-    Ecto.Multi.update_all(multi, name, func, opts)
   end
 
   defp broadcast_application_created(application) do

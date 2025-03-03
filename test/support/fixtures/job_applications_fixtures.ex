@@ -32,7 +32,6 @@ defmodule Accomplish.JobApplicationsFixtures do
       Enum.into(attrs, %{
         title: "Technical Interview",
         type: :interview,
-        position: 1,
         is_final_stage: false
       })
 

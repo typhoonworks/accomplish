@@ -6,7 +6,7 @@ defmodule Accomplish.JobApplications.Stage do
 
   alias Accomplish.JobApplications.Application
 
-  @permitted ~w(title type status position is_final_stage date location notes)a
+  @permitted ~w(title type status is_final_stage date location notes)a
   @required ~w(title type status)a
 
   @type_values ~w(screening assessment interview offer)a
@@ -18,7 +18,6 @@ defmodule Accomplish.JobApplications.Stage do
              :title,
              :type,
              :status,
-             :position,
              :is_final_stage,
              :date,
              :location,
@@ -33,7 +32,6 @@ defmodule Accomplish.JobApplications.Stage do
     field :title, :string
     field :type, Ecto.Enum, values: @type_values
     field :status, Ecto.Enum, values: @status_values, default: :pending
-    field :position, :integer
     field :is_final_stage, :boolean, default: false
     field :date, :utc_datetime
     field :location, :string
@@ -67,11 +65,6 @@ defmodule Accomplish.JobApplications.Stage do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
-    |> validate_number(:position, greater_than_or_equal_to: 1)
-    |> unsafe_validate_unique([:application_id, :position], Accomplish.Repo)
-    |> unique_constraint(:position,
-      name: :job_application_stages_application_id_position_index
-    )
     |> assoc_constraint(:application)
   end
 end

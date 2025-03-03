@@ -63,14 +63,12 @@ stripe_stages = [
   %{
     title: "Resume Screening",
     type: :screening,
-    position: 1,
     date: DateTime.new!(~D[2024-12-22], ~T[00:00:00], "Etc/UTC"),
     notes: "Resume passed initial screening"
   },
   %{
     title: "Recruiter Call",
     type: :screening,
-    position: 2,
     date: DateTime.new!(~D[2024-12-27], ~T[00:00:00], "Etc/UTC"),
     notes: "30-minute call with recruiter Sarah."
   }
@@ -107,14 +105,12 @@ gitlab_stages = [
   %{
     title: "Initial Screening",
     type: :screening,
-    position: 1,
     date: DateTime.new!(~D[2024-11-15], ~T[00:00:00], "Etc/UTC"),
     notes: "Quick screening call with HR"
   },
   %{
     title: "Technical Interview",
     type: :interview,
-    position: 2,
     date: DateTime.new!(~D[2024-11-25], ~T[00:00:00], "Etc/UTC"),
     notes: "Interview focused on Vue.js and frontend architecture"
   }
@@ -151,21 +147,18 @@ shopify_stages = [
   %{
     title: "Recruiter Screen",
     type: :screening,
-    position: 1,
     date: DateTime.new!(~D[2024-12-08], ~T[00:00:00], "Etc/UTC"),
     notes: "Call with Greg from talent acquisition"
   },
   %{
     title: "Technical Challenge",
     type: :assessment,
-    position: 2,
     date: DateTime.new!(~D[2024-12-15], ~T[00:00:00], "Etc/UTC"),
     notes: "Building a small e-commerce application"
   },
   %{
     title: "Final Interview",
     type: :interview,
-    position: 5,
     date: DateTime.new!(~D[2025-01-12], ~T[00:00:00], "Etc/UTC"),
     notes: "Meeting with CTO"
   }

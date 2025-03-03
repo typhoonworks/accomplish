@@ -37,7 +37,7 @@ defmodule Accomplish.Activities do
         {:error, "Unknown entity type: #{entity_type}"}
 
       module ->
-        case Repo.get(module, entity_id) do
+        case Repo.get(module, entity_id, with_deleted: true) do
           nil -> {:error, "Entity not found (#{entity_type}, ID: #{entity_id})"}
           entity -> {:ok, entity}
         end

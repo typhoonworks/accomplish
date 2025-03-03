@@ -12,7 +12,6 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
       add :title, :string, null: false
       add :type, :string, null: false
       add :status, :string, null: false
-      add :position, :integer, null: false
       add :is_final_stage, :boolean, default: false, null: false
       add :date, :utc_datetime
       add :location, :string
@@ -25,22 +24,9 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
       timestamps(type: :utc_datetime)
       soft_delete_columns()
     end
-
-    create unique_index(
-             :job_application_stages,
-             [:application_id, :position],
-             where: "deleted_at IS NULL",
-             concurrently: true
-           )
   end
 
   def down do
-    drop_if_exists unique_index(
-                     :job_application_stages,
-                     [:application_id, :position],
-                     concurrently: true
-                   )
-
     drop table(:job_application_stages)
   end
 end

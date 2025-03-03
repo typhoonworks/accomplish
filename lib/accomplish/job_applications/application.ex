@@ -42,7 +42,7 @@ defmodule Accomplish.JobApplications.Application do
 
     belongs_to :applicant, User, foreign_key: :applicant_id
 
-    has_many :stages, Stage, preload_order: [asc: :position]
+    has_many :stages, Stage, preload_order: [asc: :date]
     belongs_to :current_stage, Stage, foreign_key: :current_stage_id
 
     timestamps(type: :utc_datetime)
@@ -66,6 +66,15 @@ defmodule Accomplish.JobApplications.Application do
   def update_changeset(application, attrs) do
     application |> changeset(attrs)
   end
+
+  def ensure_applied_at(attrs, %__MODULE__{status: :draft, applied_at: nil}) do
+    case Map.get(attrs, :status) do
+      "draft" -> attrs
+      _ -> Map.put(attrs, :applied_at, DateTime.utc_now())
+    end
+  end
+
+  def ensure_applied_at(attrs, _application), do: attrs
 
   defp common_validations(changeset) do
     changeset

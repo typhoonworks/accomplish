@@ -92,7 +92,7 @@ defmodule Accomplish.JobApplications.Stages do
     query =
       from s in Stage,
         where: s.application_id == ^application_id,
-        order_by: [asc: s.position],
+        order_by: [asc: s.date],
         preload: ^preloads
 
     Repo.all(query, with_deleted: with_deleted)
