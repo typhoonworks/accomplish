@@ -468,7 +468,6 @@ defmodule AccomplishWeb.JobApplicationLive do
   defp handle_activity(_, socket), do: {:noreply, socket}
 
   defp handle_notification(%{name: "job_application.updated"} = event, socket) do
-    IO.inspect("VAITEFUDER")
     {:noreply, assign(socket, application: event.application)}
   end
 
