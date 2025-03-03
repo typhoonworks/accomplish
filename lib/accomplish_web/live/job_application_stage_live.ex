@@ -220,7 +220,6 @@ defmodule AccomplishWeb.JobApplicationStageLive do
   end
 
   def handle_info(message, socket) do
-    IO.puts("LiveView received message: #{inspect(message)}")
     {:noreply, socket}
   end
 
