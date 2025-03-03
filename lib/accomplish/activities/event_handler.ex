@@ -64,8 +64,6 @@ defmodule Accomplish.Activities.EventHandler do
   end
 
   def handle_info({_, %Events.JobApplicationStageDeleted{} = event}, state) do
-    Logger.warning("Deleting stage: #{inspect(event.stage)}")
-
     log_activity(event.application.applicant_id, event.name, event.stage,
       context: event.application
     )

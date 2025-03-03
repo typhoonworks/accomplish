@@ -5,7 +5,6 @@ defmodule Accomplish.Activities do
   alias Accomplish.Repo
   alias Accomplish.Activities.Activity
   alias Accomplish.Activities.Events
-  require Logger
 
   @entity_modules %{
     "JobApplications.Application" => Accomplish.JobApplications.Application,
