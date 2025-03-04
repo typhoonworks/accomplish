@@ -133,7 +133,11 @@ defmodule AccomplishWeb.Layout do
       <div class="flex grow flex-col gap-y-2 overflow-y-auto bg-zinc-950 px-6 pb-4">
         <%= case @context do %>
           <% :settings -> %>
-            <.settings_navigation id="sidebar" current_path={@current_path} />
+            <.settings_navigation
+              id="sidebar"
+              current_user={@current_user}
+              current_path={@current_path}
+            />
           <% _ -> %>
             <.main_navigation id="sidebar" current_user={@current_user} current_path={@current_path} />
         <% end %>
@@ -326,15 +330,11 @@ defmodule AccomplishWeb.Layout do
   def settings_navigation(assigns) do
     ~H"""
     <div class="flex h-14 shrink-0 items-center">
-      <button
+      <.live_component
+        module={AccomplishWeb.GoBackComponent}
         id={"#{@id}-back-button"}
-        type="button"
-        class="flex items-center gap-2 px-2 py-1.5 text-[13px] tracking-tight rounded-md transition-all text-zinc-400 hover:bg-zinc-800 hover:text-zinc-50"
-        phx-hook="GoBack"
-      >
-        <.icon name="hero-chevron-left" class="size-4 text-current group-hover:text-zinc-50" />
-        <span>Back to app</span>
-      </button>
+        current_user={@current_user}
+      />
     </div>
     <nav class="flex flex-1 flex-col">
       <ul role="list" class="flex flex-1 flex-col gap-y-4">
