@@ -7,11 +7,7 @@ defmodule AccomplishWeb.UserSettingsLive do
 
   def render(assigns) do
     ~H"""
-    <.layout current_user={@current_user} current_path={@current_path}>
-      <:page_header>
-        <.page_header page_title="Settings" />
-      </:page_header>
-
+    <.layout current_user={@current_user} current_path={@current_path} sidebar_context={:settings}>
       <.header class="text-center">
         Account Settings
         <:subtitle>Manage your account email address and password settings</:subtitle>
