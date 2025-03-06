@@ -15,6 +15,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :applied_at, :utc_datetime
       add :last_updated_at, :utc_datetime
       add :source, :string
+      add :job_description, :text
       add :notes, :text
 
       add :stages_count, :integer, default: 0, null: false

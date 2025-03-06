@@ -8,9 +8,11 @@ defmodule AccomplishWeb.JobApplicationLive do
 
   import AccomplishWeb.Layout
   import AccomplishWeb.JobApplicationHelpers
-  import AccomplishWeb.Shadowrun.Tooltip
-  import AccomplishWeb.Components.Activity
+  import AccomplishWeb.Shadowrun.Accordion
   import AccomplishWeb.Shadowrun.StackedList
+  import AccomplishWeb.Shadowrun.Tooltip
+
+  import AccomplishWeb.Components.Activity
 
   import AccomplishWeb.Components.JobApplications.StageList
   import AccomplishWeb.Components.JobApplications.StageDialog
@@ -190,16 +192,45 @@ defmodule AccomplishWeb.JobApplicationLive do
       </div>
 
       <div class="mt-12 space-y-2">
-        <h3 class="text-zinc-400">Notes</h3>
-        <.shadow_input
-          field={@form[:notes]}
-          type="textarea"
-          placeholder="Write down key details, next moves, or important notes..."
-          class="text-[14px] font-light hover:cursor-text"
-          socket={@socket}
-          phx-blur="save_field"
-          phx-value-field={@form[:notes].field}
-        />
+        <.accordion>
+          <.accordion_item>
+            <.accordion_trigger class="text-zinc-400 text-sm" open={true}>
+              <h3 class="text-zinc-400">Job Description</h3>
+            </.accordion_trigger>
+            <.accordion_content class="pt-2">
+              <.shadow_input
+                field={@form[:job_description]}
+                type="textarea"
+                placeholder="Provide an overview of the job role..."
+                class="text-[14px] font-light hover:cursor-text"
+                socket={@socket}
+                phx-blur="save_field"
+                phx-value-field={@form[:job_description].field}
+              />
+            </.accordion_content>
+          </.accordion_item>
+        </.accordion>
+      </div>
+
+      <div class="mt-12 space-y-2">
+        <.accordion>
+          <.accordion_item>
+            <.accordion_trigger class="text-zinc-400 text-sm" open={true}>
+              <h3 class="text-zinc-400">Notes</h3>
+            </.accordion_trigger>
+            <.accordion_content class="pt-2">
+              <.shadow_input
+                field={@form[:notes]}
+                type="textarea"
+                placeholder="Write down key details, next moves, or important notes..."
+                class="text-[14px] font-light hover:cursor-text"
+                socket={@socket}
+                phx-blur="save_field"
+                phx-value-field={@form[:notes].field}
+              />
+            </.accordion_content>
+          </.accordion_item>
+        </.accordion>
       </div>
     </section>
     """
