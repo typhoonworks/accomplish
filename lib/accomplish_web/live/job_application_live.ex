@@ -172,6 +172,21 @@ defmodule AccomplishWeb.JobApplicationLive do
             <p>Applied date</p>
           </.tooltip_content>
         </.tooltip>
+
+        <.tooltip>
+          <.shadow_select_input
+            id={"location_select_#{@form.id}_overview"}
+            field={@form[:location]}
+            prompt="Change job location type"
+            value={@form[:location].value}
+            options={options_for_application_location()}
+            on_select="save_field"
+            variant="transparent"
+          />
+          <.tooltip_content side="bottom">
+            <p>Change job location type</p>
+          </.tooltip_content>
+        </.tooltip>
       </div>
 
       <div class="mt-12 space-y-2">
