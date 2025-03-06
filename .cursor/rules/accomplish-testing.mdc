@@ -1,0 +1,20 @@
+---
+description: Enforces strong test coverage and structured test patterns.
+globs: test/**/*.exs
+---
+# Testing Rules
+
+- **All tests must be structured using `describe` blocks and `setup` functions** for better readability and reusability.
+- **Fixtures should always receive their parent entities** rather than creating associations inside the fixture function.
+- **Use test fixtures for creating entities** instead of setting up data manually in test cases.
+- **Fixtures should be defined inside `test/support/fixtures/` and imported automatically in `DataCase`**.
+- **`DataCase` must be used for database-related tests** and should always start the SQL sandbox.
+- **Tests that require a connection must use `ConnCase`**.
+- **Database interactions should always use Ecto’s sandboxing approach** to ensure data is rolled back between tests.
+- **Assertions should be specific and meaningful** to ensure test reliability.
+- **Ensure async testing is only enabled where safe (`use Accomplish.DataCase, async: true`)**.
+- **Prefer explicit test names** that describe the behavior under test.
+- **Every context function should have corresponding test coverage**.
+- **Use `errors_on/1` to validate changeset errors** rather than manually inspecting error tuples.
+- **When testing deletion, verify that the entity is no longer retrievable from the database**.
+- **Always test edge cases, such as invalid input, missing fields, and foreign key constraints**.

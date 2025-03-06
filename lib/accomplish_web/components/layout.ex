@@ -357,7 +357,7 @@ defmodule AccomplishWeb.Layout do
           </.sidebar_item>
           <.sidebar_item>
             <.sidebar_link
-              href="#"
+              href={~p"/settings/account/notifications"}
               icon="hero-bell-alert"
               text="Notifications"
               active={@current_path == "/settings/account/notifications"}
@@ -365,7 +365,7 @@ defmodule AccomplishWeb.Layout do
           </.sidebar_item>
           <.sidebar_item>
             <.sidebar_link
-              href="#"
+              href={~p"/settings/account/security"}
               icon="hero-lock-closed"
               text="Password & security"
               active={@current_path == "/settings/account/security"}
@@ -373,7 +373,7 @@ defmodule AccomplishWeb.Layout do
           </.sidebar_item>
           <.sidebar_item>
             <.sidebar_link
-              href="#"
+              href={~p"/settings/account/connections"}
               icon="hero-cpu-chip"
               text="Connected accounts"
               active={@current_path == "/settings/account/connections"}

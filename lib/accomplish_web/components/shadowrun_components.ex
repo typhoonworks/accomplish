@@ -462,4 +462,24 @@ defmodule AccomplishWeb.ShadowrunComponents do
     />
     """
   end
+
+  attr :class, :string, default: nil
+  attr :rest, :global
+  slot :inner_block, required: true
+
+  def shadow_box(assigns) do
+    ~H"""
+    <div
+      class={
+        classes([
+          "rounded-lg border border-solid p-4 border-zinc-700 bg-zinc-900 text-zinc-200 shadow-md",
+          @class
+        ])
+      }
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </div>
+    """
+  end
 end

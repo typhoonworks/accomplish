@@ -1,0 +1,10 @@
+---
+description: Ensures consistent API structure and response format.
+globs: lib/accomplish_web/controllers/api/**/*.ex
+---
+
+## API Rules
+- Controllers must be thin—business logic should be in contexts.
+- Follow RESTful conventions for controller actions.
+- Use `AccomplishWeb.JSONView` for API responses.
+- Ensure API serialization follows `@derive {JSON.Encoder, only: [...]}`.

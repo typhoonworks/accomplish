@@ -1,0 +1,10 @@
+---
+description: Ensures consistency in LiveView development and UI patterns.
+globs: ib/accomplish_web/live/**/*.ex
+---
+# LiveView Rules
+
+- Use Phoenix LiveView for UI updates whenever possible.
+- Complex interactivity should be handled with LiveSvelte components.
+- Ensure all forms and UI components use Accomplish’s Shadowrun UI design.
+- Follow Linear.app Warp-style UI minimalism.

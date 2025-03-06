@@ -102,8 +102,11 @@ defmodule AccomplishWeb.Router do
       ] do
       live "/settings", UserSettingsLive, :edit
       live "/settings/email_confirmation/:token", UserSettingsLive, :confirm_email
-      live "/settings/account/preferences", UserAccountSettingsLive, :preferences
-      live "/settings/account/profile", UserAccountSettingsLive, :profile
+      live "/settings/account/preferences", SettingsLive.AccountPreferences
+      live "/settings/account/profile", SettingsLive.AccountProfile
+      live "/settings/account/notifications", SettingsLive.AccountNotifications
+      live "/settings/account/security", SettingsLive.AccountSecurity
+      live "/settings/account/connections", SettingsLive.ConnectedAccounts
     end
   end
 
