@@ -65,7 +65,7 @@ defmodule AccomplishWeb.SettingsLive.AccountSecurity do
                 </div>
 
                 <div class="mt-8 flex">
-                  <.shadow_button phx-disable-with="Changing...">
+                  <.shadow_button type="submit" phx-disable-with="Saving...">
                     Save
                   </.shadow_button>
                 </div>

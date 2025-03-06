@@ -73,19 +73,21 @@ defmodule AccomplishWeb.Shadowrun.Forms do
       <.shadow_label :if={@label} for={@id} required={@rest[:required]} class="text-left w-auto">
         {@label}
       </.shadow_label>
-      <input
-        type={@type}
-        name={@name}
-        id={@id}
-        value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-        class={[
-          "w-1/3 px-3 py-2 border border-zinc-600 rounded-md bg-transparent text-zinc-200 text-sm placeholder-zinc-500",
-          "focus:outline-none focus:ring-2 focus:ring-zinc-500",
-          @errors != [] && "border-red-600 focus:ring-red-600"
-        ]}
-        {@rest}
-      />
-      <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
+      <div class="w-1/3 px-3 py-2">
+        <input
+          type={@type}
+          name={@name}
+          id={@id}
+          value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+          class={[
+            "border border-zinc-600 rounded-md bg-transparent text-zinc-200 text-sm placeholder-zinc-500",
+            "focus:outline-none focus:ring-2 focus:ring-zinc-500",
+            @errors != [] && "border-red-600 focus:ring-red-600"
+          ]}
+          {@rest}
+        />
+        <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
+      </div>
     </div>
     """
   end

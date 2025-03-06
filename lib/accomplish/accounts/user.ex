@@ -16,6 +16,8 @@ defmodule Accomplish.Accounts.User do
   schema "users" do
     field :first_name, :string
     field :last_name, :string
+    field :full_name, :string, virtual: true
+
     field :username, :string
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -69,10 +71,15 @@ defmodule Accomplish.Accounts.User do
     |> cast_embed(:notification_settings)
   end
 
-  def profile_changeset(user, attrs) do
+  def profile_changeset(user, attrs, opts \\ []) do
+    attrs = process_full_name(attrs)
+
     user
     |> cast(attrs, @profile_fields)
+    |> downcase_username()
+    |> validate_username(opts)
     |> cast_embed(:profile)
+    |> maybe_set_full_name()
   end
 
   @doc """
@@ -281,4 +288,55 @@ defmodule Accomplish.Accounts.User do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+  def display_name(user) do
+    cond do
+      user.first_name && user.last_name -> "#{user.first_name} #{user.last_name}"
+      user.first_name -> user.first_name
+      true -> user.username
+    end
+  end
+
+  defp maybe_set_full_name(changeset) do
+    if get_change(changeset, :full_name) do
+      changeset
+    else
+      user = changeset.data
+      first = get_field(changeset, :first_name) || user.first_name || ""
+      last = get_field(changeset, :last_name) || user.last_name || ""
+
+      full_name =
+        [first, last]
+        |> Enum.reject(&(is_nil(&1) || &1 == ""))
+        |> Enum.join(" ")
+        |> String.trim()
+
+      put_change(changeset, :full_name, full_name)
+    end
+  end
+
+  defp process_full_name(%{"full_name" => full_name} = attrs)
+       when is_binary(full_name) and full_name != "" do
+    names = String.split(full_name, " ", trim: true)
+
+    first_name = List.first(names, "")
+
+    last_name =
+      case Enum.drop(names, 1) do
+        [] -> nil
+        rest -> Enum.join(rest, " ")
+      end
+
+    attrs
+    |> Map.delete("full_name")
+    |> Map.put("first_name", first_name)
+    |> Map.put("last_name", last_name)
+  end
+
+  defp process_full_name(%{full_name: full_name} = attrs)
+       when is_binary(full_name) and full_name != "" do
+    process_full_name(%{"full_name" => full_name} |> Map.merge(Map.drop(attrs, [:full_name])))
+  end
+
+  defp process_full_name(attrs), do: attrs
 end
