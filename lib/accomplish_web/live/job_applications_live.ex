@@ -590,7 +590,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp visible_statuses("all") do
-    ~w(accepted offer interviewing applied draft rejected)a
+    ~w(accepted offer interviewing applied draft rejected ghosted)a
   end
 
   defp visible_statuses("active") do
