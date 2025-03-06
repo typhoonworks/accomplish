@@ -3,6 +3,8 @@ defmodule AccomplishWeb.Layout do
 
   use AccomplishWeb, :live_view
 
+  alias Accomplish.Accounts.User
+
   import AccomplishWeb.Shadowrun.Avatar
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
@@ -196,10 +198,10 @@ defmodule AccomplishWeb.Layout do
             aria-haspopup="true"
           >
             <span class="sr-only">Open user menu</span>
-            <.avatar name={@current_user.username} size={:xs} />
+            <.avatar name={User.display_name(@current_user)} size={:xs} />
             <span class="flex items-center">
               <span class="ml-4 text-[14px] text-zinc-50" aria-hidden="true">
-                {@current_user.username}
+                {User.display_name(@current_user)}
               </span>
               <.icon class="ml-2 size-4 text-zinc-400" name="hero-chevron-down" />
             </span>
