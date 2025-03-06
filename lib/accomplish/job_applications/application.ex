@@ -4,10 +4,11 @@ defmodule Accomplish.JobApplications.Application do
   use Accomplish.Schema
 
   alias Accomplish.Accounts.User
+  alias Accomplish.JobApplications.Company
   alias Accomplish.JobApplications.Stage
 
-  @permitted ~w(role company_name status applied_at last_updated_at source notes)a
-  @required ~w(role company_name status)a
+  @permitted ~w(role status applied_at last_updated_at source notes)a
+  @required ~w(role status)a
   @required_when_not_draft ~w(applied_at)a
 
   @status_types ~w(draft applied interviewing offer accepted rejected)a
@@ -17,7 +18,7 @@ defmodule Accomplish.JobApplications.Application do
              :id,
              :slug,
              :role,
-             :company_name,
+             :company,
              :status,
              :applied_at,
              :last_updated_at,
@@ -30,7 +31,6 @@ defmodule Accomplish.JobApplications.Application do
   schema "job_applications" do
     field :slug, :string
     field :role, :string
-    field :company_name, :string
     field :status, Ecto.Enum, values: @status_types, default: :applied
     field :applied_at, :utc_datetime
     field :last_updated_at, :utc_datetime
@@ -45,6 +45,8 @@ defmodule Accomplish.JobApplications.Application do
     has_many :stages, Stage, preload_order: [asc: :date]
     belongs_to :current_stage, Stage, foreign_key: :current_stage_id
 
+    embeds_one :company, Company, on_replace: :update
+
     timestamps(type: :utc_datetime)
   end
 
@@ -52,6 +54,8 @@ defmodule Accomplish.JobApplications.Application do
   def changeset(application, attrs) do
     application
     |> cast(attrs, @permitted)
+    |> cast_embed(:company)
+    |> cast_embed(:company, with: &Company.changeset/2, required: true)
     |> common_validations()
   end
 

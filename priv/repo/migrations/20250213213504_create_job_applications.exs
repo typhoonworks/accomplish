@@ -9,7 +9,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :id, :uuid, primary_key: true
       add :slug, :string
       add :role, :string, null: false
-      add :company_name, :string, null: false
+      add :company, :map, default: %{}, null: false
       add :status, :string, null: false
       add :applied_at, :utc_datetime
       add :last_updated_at, :utc_datetime

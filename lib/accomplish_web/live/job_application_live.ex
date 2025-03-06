@@ -2,6 +2,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
+  alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.Stage
   alias Accomplish.Activities
 
@@ -29,7 +30,7 @@ defmodule AccomplishWeb.JobApplicationLive do
               <span class="hidden lg:inline-flex items-center text-zinc-400">
                 <.icon name="hero-chevron-right" class="size-3" />
               </span>
-              <span class="inline">{@application.role} at {@application.company_name}</span>
+              <span class="inline">{@application.role} at {@application.company.name}</span>
             </div>
           </:title>
           <:actions>
@@ -135,8 +136,10 @@ defmodule AccomplishWeb.JobApplicationLive do
           phx-blur="save_field"
           phx-value-field={@form[:role].field}
         />
-
-        <p class="text-zinc-300">{@application.company_name}</p>
+        <p class="text-zinc-300 text-lg">{@application.company.name}</p>
+        <a href={@application.company.website} target="_blank" class="text-zinc-300 text-xs underline">
+          {@application.company.website}
+        </a>
       </div>
 
       <div class="flex justify-start gap-2 my-2">
@@ -324,7 +327,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   def handle_event("save_application", %{"application" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
       {:ok, _application} ->
-        changeset = JobApplications.change_application_form(%{})
+        changeset = JobApplications.change_application_form(%Application{}, %{})
 
         socket =
           socket
@@ -440,7 +443,9 @@ defmodule AccomplishWeb.JobApplicationLive do
 
     case form.name do
       "application" ->
-        updated_changeset = Accomplish.JobApplications.change_application_form(params)
+        updated_changeset =
+          Accomplish.JobApplications.change_application_form(%Application{}, params)
+
         {:noreply, assign(socket, form: to_form(updated_changeset))}
 
       "stage" ->
@@ -514,7 +519,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   end
 
   defp assign_form(socket, application) do
-    form = JobApplications.change_application_form(Map.from_struct(application))
+    form = JobApplications.change_application_form(application)
     assign(socket, form: to_form(form))
   end
 
@@ -570,7 +575,7 @@ defmodule AccomplishWeb.JobApplicationLive do
 
     case JobApplications.update_application(application, %{field => value}) do
       {:ok, updated_application} ->
-        form = JobApplications.change_application_form(Map.from_struct(updated_application))
+        form = JobApplications.change_application_form(updated_application)
 
         socket =
           socket

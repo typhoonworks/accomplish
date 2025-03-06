@@ -112,11 +112,13 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 placeholder="Job role"
                 class="text-xl tracking-tighter"
               />
-              <.shadow_input
-                field={@form[:company_name]}
-                placeholder="Company name"
-                class="text-base tracking-tighter"
-              />
+              <.inputs_for :let={company_f} field={@form[:company]}>
+                <.shadow_input
+                  field={company_f[:name]}
+                  placeholder="Company name"
+                  class="text-base tracking-tighter"
+                />
+              </.inputs_for>
             </div>
 
             <div class="flex justify-start gap-2 mb-2">
@@ -244,7 +246,8 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   def handle_event("validate_application", %{"application" => application_params}, socket) do
     changeset =
-      JobApplications.change_application_form(application_params) |> Map.put(:action, :validate)
+      JobApplications.change_application_form(%Application{}, application_params)
+      |> Map.put(:action, :validate)
 
     {:noreply, assign(socket, form: to_form(changeset))}
   end
@@ -252,7 +255,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
   def handle_event("save_application", %{"application" => application_params}, socket) do
     case JobApplications.create_application(socket.assigns.current_user, application_params) do
       {:ok, _application} ->
-        changeset = JobApplications.change_application_form(%{})
+        changeset = JobApplications.change_application_form(%Application{}, %{})
 
         socket =
           socket
@@ -269,7 +272,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   def handle_event("reset_application_form", %{"id" => modal_id}, socket) do
-    changeset = JobApplications.change_application_form(%{})
+    changeset = JobApplications.change_application_form(%Application{}, %{})
 
     socket =
       socket
@@ -415,7 +418,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
     case form.name do
       "application" ->
-        updated_changeset = JobApplications.change_application_form(params)
+        updated_changeset = JobApplications.change_application_form(%Application{}, params)
         {:noreply, assign(socket, form: to_form(updated_changeset))}
 
       "stage" ->
@@ -496,7 +499,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp assign_new_form(socket) do
-    changeset = JobApplications.change_application_form(%{})
+    changeset = JobApplications.change_application_form(%Application{}, %{})
 
     assign(socket, :form, to_form(changeset))
   end

@@ -11,20 +11,23 @@ defmodule Accomplish.Validators do
   ## Options
 
     * `:message` - Custom error message to use (default varies based on validation error).
+    * `:strict` - If `true`, checks if the host resolves via DNS. Defaults to `true`.
 
   ## Examples
 
-      iex> changeset = validate_url(changeset, :redirect_uri)
+      iex> changeset = validate_url(changeset, :website)
       %Ecto.Changeset{}
 
-      iex> changeset = validate_url(changeset, :invalid_field)
-      %Ecto.Changeset{errors: [redirect_uri: "is missing a scheme (e.g. https)"]}
+      iex> changeset = validate_url(changeset, :website, strict: false)
+      %Ecto.Changeset{}
   """
   def validate_url(changeset, field, opts \\ []) do
+    strict = Keyword.get(opts, :strict, true)
+
     validate_change(changeset, field, fn _, value ->
       value
       |> parse_url()
-      |> validate_parsed_url(field, opts)
+      |> validate_parsed_url(field, opts, strict)
     end)
   end
 
@@ -32,20 +35,20 @@ defmodule Accomplish.Validators do
     case URI.parse(value) do
       %URI{scheme: nil} -> {:error, "is missing a scheme (e.g. https)"}
       %URI{host: nil} -> {:error, "is missing a host"}
-      %URI{host: host} -> validate_host(host)
+      %URI{host: host} -> {:ok, host}
     end
   end
 
-  defp validate_host(host) do
+  defp validate_parsed_url({:ok, _host}, _field, _opts, false), do: []
+
+  defp validate_parsed_url({:ok, host}, field, _opts, true) do
     case :inet.gethostbyname(Kernel.to_charlist(host)) do
-      {:ok, _} -> :ok
-      {:error, _} -> {:error, "invalid host"}
+      {:ok, _} -> []
+      {:error, _} -> [{field, "invalid host"}]
     end
   end
 
-  defp validate_parsed_url(:ok, _field, _opts), do: []
-
-  defp validate_parsed_url({:error, error}, field, opts) do
+  defp validate_parsed_url({:error, error}, field, opts, _strict) do
     [{field, Keyword.get(opts, :message, error)}]
   end
 end

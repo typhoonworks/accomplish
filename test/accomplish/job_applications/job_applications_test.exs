@@ -43,19 +43,19 @@ defmodule Accomplish.JobApplicationsTest do
           role: "Software Engineer",
           status: :applied,
           applied_at: DateTime.utc_now(),
-          company_name: "Acme Corp"
+          company: %{name: "Acme Corp", website: "https://acme.com"}
         },
         %{
           role: "Backend Engineer",
           status: :interviewing,
           applied_at: DateTime.utc_now(),
-          company_name: "Globex"
+          company: %{name: "Globex", website: "https://globex.com"}
         },
         %{
           role: "Frontend Engineer",
           status: :rejected,
           applied_at: DateTime.utc_now(),
-          company_name: "Hooli"
+          company: %{name: "Hooli", website: "https://hooli.com"}
         }
       ]
 
@@ -92,7 +92,7 @@ defmodule Accomplish.JobApplicationsTest do
         role: "Software Engineer",
         status: :applied,
         applied_at: DateTime.utc_now(),
-        company_name: "Tech Corp"
+        company: %{name: "Tech Corp", website: "https://techcorp.com"}
       }
 
       {:ok, job_application} =
@@ -100,7 +100,8 @@ defmodule Accomplish.JobApplicationsTest do
 
       assert job_application.role == "Software Engineer"
       assert job_application.status == :applied
-      assert job_application.company_name == "Tech Corp"
+      assert job_application.company.name == "Tech Corp"
+      assert job_application.company.website == "https://techcorp.com"
       assert job_application.applicant_id == applicant.id
     end
 
@@ -109,7 +110,7 @@ defmodule Accomplish.JobApplicationsTest do
         role: "Software Engineer",
         status: :applied,
         applied_at: DateTime.utc_now(),
-        company_name: "Tech Corp"
+        company: %{name: "Tech Corp"}
       }
 
       {:ok, job_application} = JobApplications.create_application(applicant, valid_attrs)
@@ -117,13 +118,15 @@ defmodule Accomplish.JobApplicationsTest do
       assert job_application.slug =~ "software-engineer--tech-corp"
     end
 
-    test "returns an error when company_name is missing", %{applicant: applicant} do
-      invalid_attrs = %{}
+    test "returns an error when company name is missing", %{applicant: applicant} do
+      invalid_attrs = %{
+        "company" => %{}
+      }
 
       {:error, changeset} = JobApplications.create_application(applicant, invalid_attrs)
 
       assert changeset.valid? == false
-      assert "can't be blank" in errors_on(changeset).company_name
+      assert "can't be blank" in errors_on(changeset).company.name
     end
 
     test "returns an error when required fields are missing", %{applicant: applicant} do
