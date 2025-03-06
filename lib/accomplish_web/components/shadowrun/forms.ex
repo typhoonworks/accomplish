@@ -10,7 +10,7 @@ defmodule AccomplishWeb.Shadowrun.Forms do
   import AccomplishWeb.CoreComponents, only: [translate_error: 1]
 
   attr :id, :string, default: nil
-  attr :name, :string, required: true
+  attr :name, :any
   attr :label, :string, default: nil
   attr :hint, :string, default: nil
   attr :value, :any
@@ -101,7 +101,7 @@ defmodule AccomplishWeb.Shadowrun.Forms do
   def shadow_label(assigns) do
     ~H"""
     <label for={@for} class="block text-sm font-medium text-zinc-300">
-      <%= render_slot(@inner_block) %>
+      {render_slot(@inner_block)}
       <span :if={@required} class="text-red-600">*</span>
     </label>
     """
@@ -115,7 +115,7 @@ defmodule AccomplishWeb.Shadowrun.Forms do
   def shadow_error(assigns) do
     ~H"""
     <p class="mt-1 text-xs text-red-600 phx-no-feedback:hidden">
-      <%= render_slot(@inner_block) %>
+      {render_slot(@inner_block)}
     </p>
     """
   end

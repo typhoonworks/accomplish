@@ -1,4 +1,6 @@
 defmodule Accomplish.Accounts.PreferenceSettings do
+  @moduledoc false
+
   use Accomplish.Schema
 
   @primary_key false

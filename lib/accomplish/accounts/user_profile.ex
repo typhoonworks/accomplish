@@ -1,4 +1,6 @@
 defmodule Accomplish.Accounts.UserProfile do
+  @moduledoc false
+
   use Accomplish.Schema
 
   @primary_key false

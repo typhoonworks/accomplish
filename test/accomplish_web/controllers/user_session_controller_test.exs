@@ -35,7 +35,7 @@ defmodule AccomplishWeb.UserSessionControllerTest do
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")
       response = html_response(conn, 200)
-      assert response =~ ~p"/settings"
+      assert response =~ ~p"/settings/account/security"
       assert response =~ ~p"/logout"
     end
 

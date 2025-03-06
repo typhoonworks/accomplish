@@ -19,7 +19,7 @@ defmodule AccomplishWeb.SettingsLive.AccountSecurity do
               <.form
                 for={@password_form}
                 id="password_form"
-                action={~p"/members/log_in?_action=password_updated"}
+                action={~p"/login?_action=password_updated"}
                 method="post"
                 phx-change="validate_password"
                 phx-submit="update_password"
@@ -35,14 +35,14 @@ defmodule AccomplishWeb.SettingsLive.AccountSecurity do
                 <div class="space-y-6">
                   <div>
                     <.shadow_structured_input
-                        field={@password_form[:current_password]}
-                        name="current_password"
-                        type="password"
-                        label="Current password"
-                        autocomplete="password"
-                        id="current_password_for_password"
-                        value={@current_password}
-                      />
+                      field={@password_form[:current_password]}
+                      name="current_password"
+                      type="password"
+                      label="Current password"
+                      autocomplete="password"
+                      id="current_password_for_password"
+                      value={@current_password}
+                    />
                   </div>
 
                   <div>
@@ -174,7 +174,7 @@ defmodule AccomplishWeb.SettingsLive.AccountSecurity do
         Accounts.deliver_user_update_email_instructions(
           applied_user,
           user.email,
-          &url(~p"/settings/email_confirmation/#{&1}")
+          &url(~p"/settings/account/email_confirmation/#{&1}")
         )
 
         info = "A link to confirm your email change has been sent to the new address."

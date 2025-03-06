@@ -100,11 +100,14 @@ defmodule AccomplishWeb.Router do
         {AccomplishWeb.Plugs.UserAuth, :ensure_authenticated},
         {AccomplishWeb.Plugs.Navigation, :default}
       ] do
-      live "/settings", UserSettingsLive, :edit
-      live "/settings/email_confirmation/:token", UserSettingsLive, :confirm_email
       live "/settings/account/preferences", SettingsLive.AccountPreferences
       live "/settings/account/profile", SettingsLive.AccountProfile
       live "/settings/account/notifications", SettingsLive.AccountNotifications
+
+      live "/settings/account/email_confirmation/:token",
+           SettingsLive.AccountSecurity,
+           :confirm_email
+
       live "/settings/account/security", SettingsLive.AccountSecurity
       live "/settings/account/connections", SettingsLive.ConnectedAccounts
     end

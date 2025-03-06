@@ -1,4 +1,6 @@
 defmodule Accomplish.Accounts.NotificationSettings do
+  @moduledoc false
+
   use Accomplish.Schema
 
   alias Accomplish.Accounts.NotificationTypes

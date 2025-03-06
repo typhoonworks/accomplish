@@ -1,8 +1,6 @@
 defmodule AccomplishWeb.SettingsLive.AccountPreferences do
   use AccomplishWeb, :live_view
 
-  alias Accomplish.Accounts
-
   import AccomplishWeb.Layout
 
   def render(assigns) do

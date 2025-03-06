@@ -5,19 +5,19 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
   import Phoenix.LiveViewTest
   import Accomplish.AccountsFixtures
 
-  describe "Settings page" do
-    test "renders settings page", %{conn: conn} do
+  describe "Settings account security page" do
+    test "renders settings account security page", %{conn: conn} do
       {:ok, _lv, html} =
         conn
         |> log_in_user(user_fixture())
-        |> live(~p"/settings")
+        |> live(~p"/settings/account/security")
 
       assert html =~ "Change Email"
       assert html =~ "Change Password"
     end
 
     test "redirects if user is not logged in", %{conn: conn} do
-      assert {:error, redirect} = live(conn, ~p"/settings")
+      assert {:error, redirect} = live(conn, ~p"/settings/account/security")
 
       assert {:redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/login"
@@ -36,7 +36,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     test "updates the user email", %{conn: conn, password: password, user: user} do
       new_email = unique_user_email()
 
-      {:ok, lv, _html} = live(conn, ~p"/settings")
+      {:ok, lv, _html} = live(conn, ~p"/settings/account/security")
 
       result =
         lv
@@ -51,7 +51,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, ~p"/settings")
+      {:ok, lv, _html} = live(conn, ~p"/settings/account/security")
 
       result =
         lv
@@ -67,7 +67,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     end
 
     test "renders errors with invalid data (phx-submit)", %{conn: conn, user: user} do
-      {:ok, lv, _html} = live(conn, ~p"/settings")
+      {:ok, lv, _html} = live(conn, ~p"/settings/account/security")
 
       result =
         lv
@@ -93,7 +93,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     test "updates the user password", %{conn: conn, user: user, password: password} do
       new_password = valid_user_password()
 
-      {:ok, lv, _html} = live(conn, ~p"/settings")
+      {:ok, lv, _html} = live(conn, ~p"/settings/account/security")
 
       form =
         form(lv, "#password_form", %{
@@ -109,7 +109,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
 
       new_password_conn = follow_trigger_action(form, conn)
 
-      assert redirected_to(new_password_conn) == ~p"/settings"
+      assert redirected_to(new_password_conn) == ~p"/settings/account/security"
 
       assert get_session(new_password_conn, :user_token) != get_session(conn, :user_token)
 
@@ -120,7 +120,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, ~p"/settings")
+      {:ok, lv, _html} = live(conn, ~p"/settings/account/security")
 
       result =
         lv
@@ -139,7 +139,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     end
 
     test "renders errors with invalid data (phx-submit)", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, ~p"/settings")
+      {:ok, lv, _html} = live(conn, ~p"/settings/account/security")
 
       result =
         lv
@@ -173,27 +173,27 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
     end
 
     test "updates the user email once", %{conn: conn, user: user, token: token, email: email} do
-      {:error, redirect} = live(conn, ~p"/settings/email_confirmation/#{token}")
+      {:error, redirect} = live(conn, ~p"/settings/account/email_confirmation/#{token}")
 
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/settings"
+      assert path == ~p"/settings/account/security"
       assert %{"info" => message} = flash
       assert message == "Email changed successfully."
       refute Accounts.get_user_by_email(user.email)
       assert Accounts.get_user_by_email(email)
 
       # use confirm token again
-      {:error, redirect} = live(conn, ~p"/settings/email_confirmation/#{token}")
+      {:error, redirect} = live(conn, ~p"/settings/account/email_confirmation/#{token}")
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/settings"
+      assert path == ~p"/settings/account/security"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."
     end
 
     test "does not update email with invalid token", %{conn: conn, user: user} do
-      {:error, redirect} = live(conn, ~p"/settings/email_confirmation/oops")
+      {:error, redirect} = live(conn, ~p"/settings/account/email_confirmation/oops")
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/settings"
+      assert path == ~p"/settings/account/security"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."
       assert Accounts.get_user_by_email(user.email)
@@ -201,7 +201,7 @@ defmodule AccomplishWeb.UserSettingsLiveTest do
 
     test "redirects if user is not logged in", %{token: token} do
       conn = build_conn()
-      {:error, redirect} = live(conn, ~p"/settings/email_confirmation/#{token}")
+      {:error, redirect} = live(conn, ~p"/settings/account/email_confirmation/#{token}")
       assert {:redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/login"
       assert %{"error" => message} = flash
