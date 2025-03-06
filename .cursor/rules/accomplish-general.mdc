@@ -1,0 +1,12 @@
+---
+description: General AI behavior for Accomplish. Ensures structured, high-quality code following best practices.
+globs: 
+---
+# General Rules
+- Always follow Accomplish's established coding patterns.
+- Ensure all changes align with the existing project architecture.
+- No direct `Repo` calls in controllers—use context functions.
+- Schemas must follow the `Accomplish.Schema` structure.
+- Migrations must follow Accomplish’s structured migration format.
+- Unit tests are mandatory for new logic.
+- Use idiomatic Elixir and Ecto best practices.

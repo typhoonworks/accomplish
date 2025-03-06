@@ -16,6 +16,7 @@ import AudioMp3 from "./hooks/audio_mp3";
 import CodeInput from "./hooks/code_input";
 import ContextMenu from "./hooks/context_menu";
 import DropdownMenu from "./hooks/dropdown_menu";
+import GoBack from "./hooks/go_back";
 import StackedList from "./hooks/stacked_list";
 
 sendTimezoneToServer();
@@ -25,6 +26,7 @@ const hooks = {
   CodeInput,
   ContextMenu,
   DropdownMenu,
+  GoBack,
   StackedList,
   ...getHooks(Components),
 };

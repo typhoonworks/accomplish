@@ -80,20 +80,36 @@ defmodule AccomplishWeb.Router do
       post "/device/verify", OAuthDeviceGrantController, :verify_user_code
     end
 
-    live_session :require_authenticated_user,
+    live_session :require_authenticated_user_with_tracking,
       root_layout: {AccomplishWeb.Layouts, :root_app},
       on_mount: [
         {AccomplishWeb.Plugs.UserAuth, :ensure_authenticated},
-        AccomplishWeb.Nav
+        {AccomplishWeb.Plugs.Navigation, :default},
+        {AccomplishWeb.Plugs.Navigation, :track_history}
       ] do
-      live "/settings", UserSettingsLive, :edit
-      live "/settings/email_confirmation/:token", UserSettingsLive, :confirm_email
-
       live "/mission_control", MissionControlLive, :show
       live "/job_applications", JobApplicationsLive, :index
       live "/job_application/:slug/overview", JobApplicationLive, :overview
       live "/job_application/:slug/stages", JobApplicationLive, :stages
       live "/job_application/:application_slug/stage/:slug", JobApplicationStageLive, :show
+    end
+
+    live_session :require_authenticated_user_without_tracking,
+      root_layout: {AccomplishWeb.Layouts, :root_app},
+      on_mount: [
+        {AccomplishWeb.Plugs.UserAuth, :ensure_authenticated},
+        {AccomplishWeb.Plugs.Navigation, :default}
+      ] do
+      live "/settings/account/preferences", SettingsLive.AccountPreferences
+      live "/settings/account/profile", SettingsLive.AccountProfile
+      live "/settings/account/notifications", SettingsLive.AccountNotifications
+
+      live "/settings/account/email_confirmation/:token",
+           SettingsLive.AccountSecurity,
+           :confirm_email
+
+      live "/settings/account/security", SettingsLive.AccountSecurity
+      live "/settings/account/connections", SettingsLive.ConnectedAccounts
     end
   end
 

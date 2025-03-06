@@ -1,0 +1,10 @@
+---
+description: Ensures all migrations follow Accomplish’s structured migration style.
+globs: priv/repo/migrations/*.exs
+---
+# Migration Rules
+- Use `@disable_ddl_transaction true` and `@disable_migration_lock true`.
+- Define `up/0` and `down/0` explicitly.
+- Use UUID primary keys where appropriate with the `UUIDv7` package.
+- Create indexes concurrently (`CONCURRENTLY`).
+- Ensure foreign keys and constraints are properly indexed.

@@ -3,9 +3,19 @@ defmodule Accomplish.Accounts.User do
 
   use Accomplish.Schema
   alias Accomplish.Accounts.ApiKey
+  alias Accomplish.Accounts.NotificationSettings
+  alias Accomplish.Accounts.UserProfile
   alias Accomplish.OAuth
 
+  @profile_fields ~w(
+    first_name
+    last_name
+    username
+  )a
+
   schema "users" do
+    field :first_name, :string
+    field :last_name, :string
     field :username, :string
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -15,6 +25,9 @@ defmodule Accomplish.Accounts.User do
 
     has_many :api_keys, ApiKey
     has_many :oauth_identities, OAuth.Identity, foreign_key: :user_id
+
+    embeds_one :profile, UserProfile, on_replace: :update
+    embeds_one :notification_settings, NotificationSettings, on_replace: :update
 
     timestamps(type: :utc_datetime)
   end
@@ -49,6 +62,17 @@ defmodule Accomplish.Accounts.User do
     |> validate_email(opts)
     |> validate_password(opts)
     |> validate_username(opts)
+  end
+
+  def notification_settings_changeset(user, _attrs) do
+    user
+    |> cast_embed(:notification_settings)
+  end
+
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, @profile_fields)
+    |> cast_embed(:profile)
   end
 
   @doc """

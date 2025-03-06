@@ -11,6 +11,20 @@ defmodule Accomplish.Repo.Migrations.CreateUsersAuthTables do
 
     create table(:users, primary_key: false) do
       add :id, :uuid, primary_key: true
+
+      # Personal fields
+      add :first_name, :string
+      add :last_name, :string
+      add :profile, :map, default: %{}, null: false
+
+      # Setttings
+      add :preference_settings, :map, default: %{}, null: false
+
+      add :notification_settings, :map,
+        default: %{sounds: true, email: %{everything: true}, web: %{everything: true}},
+        null: false
+
+      # Auth fields
       add :username, :string, null: false
       add :email, :citext, null: false
       add :hashed_password, :string, null: false

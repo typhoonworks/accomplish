@@ -111,6 +111,16 @@ defmodule Accomplish.Accounts do
     User.registration_changeset(user, attrs, hash_password: false, validate_email: false)
   end
 
+  def change_user_profile(user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  def update_user_profile(user, attrs) do
+    user
+    |> change_user_profile(attrs)
+    |> Repo.update()
+  end
+
   ## Settings
 
   @doc """

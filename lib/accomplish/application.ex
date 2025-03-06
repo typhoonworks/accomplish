@@ -19,6 +19,7 @@ defmodule Accomplish.Application do
       # {Accomplish.Worker, arg},
       # Start to serve requests, typically the last entry
       AccomplishWeb.Endpoint,
+      AccomplishWeb.NavigationTracker,
       TwMerge.Cache
     ]
 

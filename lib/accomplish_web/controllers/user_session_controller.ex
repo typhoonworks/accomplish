@@ -16,7 +16,7 @@ defmodule AccomplishWeb.UserSessionController do
 
   def create(conn, %{"_action" => "password_updated"} = params) do
     conn
-    |> put_session(:user_return_to, ~p"/settings")
+    |> put_session(:user_return_to, ~p"/settings/account/security")
     |> create(params, "Password updated successfully!")
   end
 

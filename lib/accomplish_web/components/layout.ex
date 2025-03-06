@@ -11,14 +11,19 @@ defmodule AccomplishWeb.Layout do
 
   attr :current_user, :map, default: nil
   attr :current_path, :string, default: "/"
+  attr :sidebar_context, :atom, default: :main
   slot :page_header
   slot :page_drawer
   slot :inner_block, required: true
 
   def layout(assigns) do
     ~H"""
-    <.mobile_sidebar current_path={@current_path} current_user={@current_user} />
-    <.sidebar current_path={@current_path} current_user={@current_user} />
+    <.mobile_sidebar
+      current_path={@current_path}
+      current_user={@current_user}
+      context={@sidebar_context}
+    />
+    <.sidebar current_path={@current_path} current_user={@current_user} context={@sidebar_context} />
 
     <div class="lg:pl-72 h-screen lg:p-2 flex flex-col overflow-hidden ">
       <!-- Bordered box (centered) -->
@@ -126,143 +131,16 @@ defmodule AccomplishWeb.Layout do
     ~H"""
     <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
       <div class="flex grow flex-col gap-y-2 overflow-y-auto bg-zinc-950 px-6 pb-4">
-        <div class="flex h-14 shrink-0 items-center">
-          <.dropdown_menu>
-            <.dropdown_menu_trigger id="sidebar-user-dropdown-trigger" class="group">
-              <button
-                type="button"
-                class="-m-2 flex items-center p-2 rounded-md bg-zinc-950 hover:bg-zinc-800 group-[&[data-state=open]]:bg-zinc-800 transition-colors"
-                id="user-menu-button"
-                aria-expanded="false"
-                aria-haspopup="true"
-              >
-                <span class="sr-only">Open user menu</span>
-                <.avatar name={@current_user.username} size={:xs} />
-                <span class="flex items-center">
-                  <span class="ml-4 text-[14px] text-zinc-50" aria-hidden="true">
-                    {@current_user.username}
-                  </span>
-                  <.icon class="ml-2 size-4 text-zinc-400" name="hero-chevron-down" />
-                </span>
-              </button>
-            </.dropdown_menu_trigger>
-            <.dropdown_menu_content>
-              <.menu class="w-56 text-zinc-300 bg-zinc-900">
-                <.menu_group>
-                  <.menu_item class="text-[13px]">
-                    <span>Profile</span>
-                    <.menu_shortcut>⌘P</.menu_shortcut>
-                  </.menu_item>
-                  <.link href={~p"/settings"}>
-                    <.menu_item class="text-[13px]">
-                      <span>Settings</span>
-                      <.menu_shortcut>⌘S</.menu_shortcut>
-                    </.menu_item>
-                  </.link>
-                </.menu_group>
-                <.menu_separator />
-                <.menu_group>
-                  <.link href={~p"/logout"} method="delete">
-                    <.menu_item class="text-[13px]">
-                      <span>Log out</span>
-                      <.menu_shortcut>⌥⇧Q</.menu_shortcut>
-                    </.menu_item>
-                  </.link>
-                </.menu_group>
-              </.menu>
-            </.dropdown_menu_content>
-          </.dropdown_menu>
-        </div>
-        <nav class="flex flex-1 flex-col">
-          <ul role="list" class="flex flex-1 flex-col gap-y-4">
-            <li>
-              <ul role="list" class="-mx-2 space-y-1">
-                <li>
-                  <.sidebar_link
-                    href={~p"/mission_control"}
-                    icon="hero-rocket-launch-solid"
-                    text="Mission Control"
-                    active={@current_path == "/mission_control"}
-                  />
-                </li>
-              </ul>
-            </li>
-            <.sidebar_group id="workbench-menu" name="Workbench">
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-wrench-screwdriver-solid"
-                  text="Projects"
-                  active={@current_path == "/projects"}
-                />
-              </.sidebar_item>
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-chart-bar-solid"
-                  text="Work Logs"
-                  active={@current_path == "/work_logs"}
-                />
-              </.sidebar_item>
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-calendar-solid"
-                  text="Calendar"
-                  active={@current_path == "/calendar"}
-                />
-              </.sidebar_item>
-            </.sidebar_group>
-            <.sidebar_group id="vault-menu" name="Vault">
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-code-bracket-solid"
-                  text="Snippets"
-                  active={@current_path == "/snippets"}
-                />
-              </.sidebar_item>
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-beaker-solid"
-                  text="Recipes"
-                  active={@current_path == "/recipes"}
-                />
-              </.sidebar_item>
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-document-text-solid"
-                  text="Notes"
-                  active={@current_path == "/notes"}
-                />
-              </.sidebar_item>
-            </.sidebar_group>
-            <.sidebar_group id="career-menu" name="Career">
-              <.sidebar_item>
-                <.sidebar_link
-                  href={~p"/job_applications"}
-                  icon="hero-envelope-solid"
-                  text="Job Applications"
-                  active={@current_path == "/job_applications"}
-                />
-              </.sidebar_item>
-              <.sidebar_item>
-                <.sidebar_link
-                  href="#"
-                  icon="hero-folder-open-solid"
-                  text="Documents"
-                  active={@current_path == "/documents"}
-                />
-              </.sidebar_item>
-            </.sidebar_group>
-
-            <li class="mt-auto">
-              <%!-- Placeholder --%>
-            </li>
-          </ul>
-        </nav>
+        <%= case @context do %>
+          <% :settings -> %>
+            <.settings_navigation
+              id="sidebar"
+              current_user={@current_user}
+              current_path={@current_path}
+            />
+          <% _ -> %>
+            <.main_navigation id="sidebar" current_user={@current_user} current_path={@current_path} />
+        <% end %>
       </div>
     </div>
     """
@@ -293,146 +171,221 @@ defmodule AccomplishWeb.Layout do
           </div>
 
           <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-zinc-950 px-6 pb-4 ring-1 ring-white/10">
-            <div class="flex h-16 shrink-0 items-center">
-              <.dropdown_menu>
-                <.dropdown_menu_trigger id="mobile-sidebar-user-dropdown-trigger" class="group">
-                  <button
-                    type="button"
-                    class="-m-2 flex items-center p-2 rounded-md bg-zinc-950 hover:bg-zinc-800 group-[&[data-state=open]]:bg-zinc-800 transition-colors"
-                    id="user-mobile-menu-button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span class="sr-only">Open user menu</span>
-                    <.avatar name={@current_user.username} size={:xs} />
-                    <span class="flex items-center">
-                      <span class="ml-4 text-[14px] text-zinc-50" aria-hidden="true">
-                        {@current_user.username}
-                      </span>
-                      <.icon class="ml-2 size-4 text-zinc-400" name="hero-chevron-down" />
-                    </span>
-                  </button>
-                </.dropdown_menu_trigger>
-                <.dropdown_menu_content>
-                  <.menu class="w-56 text-zinc-300 bg-zinc-800">
-                    <.menu_group>
-                      <.menu_item class="text-[13px]">
-                        <span>Profile</span>
-                        <.menu_shortcut>⌘P</.menu_shortcut>
-                      </.menu_item>
-                      <.link href={~p"/settings"}>
-                        <.menu_item class="text-[13px]">
-                          <span>Settings</span>
-                          <.menu_shortcut>⌘S</.menu_shortcut>
-                        </.menu_item>
-                      </.link>
-                    </.menu_group>
-                    <.menu_separator />
-                    <.menu_group>
-                      <.link href={~p"/logout"} method="delete">
-                        <.menu_item class="text-[13px]">
-                          <span>Log out</span>
-                          <.menu_shortcut>⌥⇧Q</.menu_shortcut>
-                        </.menu_item>
-                      </.link>
-                    </.menu_group>
-                  </.menu>
-                </.dropdown_menu_content>
-              </.dropdown_menu>
-            </div>
-            <nav class="flex flex-1 flex-col">
-              <ul role="list" class="flex flex-1 flex-col gap-y-4">
-                <li>
-                  <ul role="list" class="-mx-2 space-y-1">
-                    <li>
-                      <.sidebar_link
-                        href={~p"/mission_control"}
-                        icon="hero-rocket-launch-solid"
-                        text="Mission Control"
-                        active={@current_path == "/mission_control"}
-                      />
-                    </li>
-                  </ul>
-                </li>
-                <.sidebar_group id="workbench-mobile-menu" name="Workbench">
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-wrench-screwdriver-solid"
-                      text="Projects"
-                      active={@current_path == "/projects"}
-                    />
-                  </.sidebar_item>
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-chart-bar-solid"
-                      text="Work Logs"
-                      active={@current_path == "/work_logs"}
-                    />
-                  </.sidebar_item>
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-calendar-solid"
-                      text="Calendar"
-                      active={@current_path == "/calendar"}
-                    />
-                  </.sidebar_item>
-                </.sidebar_group>
-                <.sidebar_group id="vault-mobile-menu" name="Vault">
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-code-bracket-solid"
-                      text="Snippets"
-                      active={@current_path == "/snippets"}
-                    />
-                  </.sidebar_item>
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-beaker-solid"
-                      text="Recipes"
-                      active={@current_path == "/recipes"}
-                    />
-                  </.sidebar_item>
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-document-text-solid"
-                      text="Notes"
-                      active={@current_path == "/notes"}
-                    />
-                  </.sidebar_item>
-                </.sidebar_group>
-                <.sidebar_group id="career-mobile-menu" name="Career">
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href={~p"/job_applications"}
-                      icon="hero-briefcase-solid"
-                      text="Job Applications"
-                      active={@current_path == "/job_applications"}
-                    />
-                  </.sidebar_item>
-                  <.sidebar_item>
-                    <.sidebar_link
-                      href="#"
-                      icon="hero-folder-open-solid"
-                      text="Documents"
-                      active={@current_path == "/documents"}
-                    />
-                  </.sidebar_item>
-                </.sidebar_group>
-                <li class="mt-auto">
-                  <%!-- Placeholder --%>
-                </li>
-              </ul>
-            </nav>
+            <.main_navigation
+              id="mobile-sidebar"
+              current_user={@current_user}
+              current_path={@current_path}
+            />
           </div>
         </div>
       </div>
     </div>
+    """
+  end
+
+  def main_navigation(assigns) do
+    ~H"""
+    <div class="flex h-14 shrink-0 items-center">
+      <.dropdown_menu>
+        <.dropdown_menu_trigger id={"#{@id}-user-dropdown-trigger"} class="group">
+          <button
+            type="button"
+            class="-m-2 flex items-center p-2 rounded-md bg-zinc-950 hover:bg-zinc-800 group-[&[data-state=open]]:bg-zinc-800 transition-colors"
+            id={"#{@id}-user-menu-button"}
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span class="sr-only">Open user menu</span>
+            <.avatar name={@current_user.username} size={:xs} />
+            <span class="flex items-center">
+              <span class="ml-4 text-[14px] text-zinc-50" aria-hidden="true">
+                {@current_user.username}
+              </span>
+              <.icon class="ml-2 size-4 text-zinc-400" name="hero-chevron-down" />
+            </span>
+          </button>
+        </.dropdown_menu_trigger>
+        <.dropdown_menu_content>
+          <.menu class="w-56 text-zinc-300 bg-zinc-900">
+            <.menu_group>
+              <.link href={~p"/settings/account/preferences"}>
+                <.menu_item class="text-[13px]">
+                  <span>Settings</span>
+                  <.menu_shortcut>⌘S</.menu_shortcut>
+                </.menu_item>
+              </.link>
+              <.link href={~p"/settings/account/profile"}>
+                <.menu_item class="text-[13px]">
+                  <span>Profile</span>
+                  <.menu_shortcut>⌘P</.menu_shortcut>
+                </.menu_item>
+              </.link>
+            </.menu_group>
+            <.menu_separator />
+            <.menu_group>
+              <.link href={~p"/logout"} method="delete">
+                <.menu_item class="text-[13px]">
+                  <span>Log out</span>
+                  <.menu_shortcut>⌥⇧Q</.menu_shortcut>
+                </.menu_item>
+              </.link>
+            </.menu_group>
+          </.menu>
+        </.dropdown_menu_content>
+      </.dropdown_menu>
+    </div>
+    <nav class="flex flex-1 flex-col">
+      <ul role="list" class="flex flex-1 flex-col gap-y-4">
+        <li>
+          <ul role="list" class="-mx-2 space-y-1">
+            <li>
+              <.sidebar_link
+                href={~p"/mission_control"}
+                icon="hero-rocket-launch-solid"
+                text="Mission Control"
+                active={@current_path == "/mission_control"}
+              />
+            </li>
+          </ul>
+        </li>
+        <.sidebar_group id={"#{@id}-workbench-menu"} name="Workbench">
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-wrench-screwdriver-solid"
+              text="Projects"
+              active={@current_path == "/projects"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-chart-bar-solid"
+              text="Work Logs"
+              active={@current_path == "/work_logs"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-calendar-solid"
+              text="Calendar"
+              active={@current_path == "/calendar"}
+            />
+          </.sidebar_item>
+        </.sidebar_group>
+        <.sidebar_group id={"#{@id}-vault-menu"} name="Vault">
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-code-bracket-solid"
+              text="Snippets"
+              active={@current_path == "/snippets"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-beaker-solid"
+              text="Recipes"
+              active={@current_path == "/recipes"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-document-text-solid"
+              text="Notes"
+              active={@current_path == "/notes"}
+            />
+          </.sidebar_item>
+        </.sidebar_group>
+        <.sidebar_group id={"#{@id}-career-menu"} name="Career">
+          <.sidebar_item>
+            <.sidebar_link
+              href={~p"/job_applications"}
+              icon="hero-envelope-solid"
+              text="Job Applications"
+              active={@current_path == "/job_applications"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href="#"
+              icon="hero-folder-open-solid"
+              text="Documents"
+              active={@current_path == "/documents"}
+            />
+          </.sidebar_item>
+        </.sidebar_group>
+
+        <li class="mt-auto">
+          <%!-- Placeholder --%>
+        </li>
+      </ul>
+    </nav>
+    """
+  end
+
+  def settings_navigation(assigns) do
+    ~H"""
+    <div class="flex h-14 shrink-0 items-center">
+      <.live_component
+        module={AccomplishWeb.GoBackComponent}
+        id={"#{@id}-back-button"}
+        current_user={@current_user}
+      />
+    </div>
+    <nav class="flex flex-1 flex-col">
+      <ul role="list" class="flex flex-1 flex-col gap-y-4">
+        <.sidebar_group id={"#{@id}-account-menu"} name="Account">
+          <.sidebar_item>
+            <.sidebar_link
+              href={~p"/settings/account/preferences"}
+              icon="hero-adjustments-horizontal"
+              text="Preferences"
+              active={@current_path == "/settings/account/preferences"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href={~p"/settings/account/profile"}
+              icon="hero-user-circle"
+              text="Profile"
+              active={@current_path == "/settings/account/profile"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href={~p"/settings/account/notifications"}
+              icon="hero-bell-alert"
+              text="Notifications"
+              active={@current_path == "/settings/account/notifications"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href={~p"/settings/account/security"}
+              icon="hero-lock-closed"
+              text="Password & security"
+              active={@current_path == "/settings/account/security"}
+            />
+          </.sidebar_item>
+          <.sidebar_item>
+            <.sidebar_link
+              href={~p"/settings/account/connections"}
+              icon="hero-cpu-chip"
+              text="Connected accounts"
+              active={@current_path == "/settings/account/connections"}
+            />
+          </.sidebar_item>
+        </.sidebar_group>
+
+        <li class="mt-auto">
+          <%!-- Placeholder --%>
+        </li>
+      </ul>
+    </nav>
     """
   end
 end

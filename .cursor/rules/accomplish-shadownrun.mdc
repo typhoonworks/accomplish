@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+---
+
+# Shadowrun Component Rules
+
+- **Core Shadownrun components** live in [shadowrun_components.ex](mdc:lib/accomplish_web/components/shadowrun_components.ex)
+- **Complex Shadowrun components must be placed inside `lib/accomplish_web/components/shadowrun/`**.
+- Component files should follow the naming convention `AccomplishWeb.Shadowrun.ComponentName`.
+- Use `Phoenix.Component` and `LiveSvelte.Components` to ensure compatibility with Phoenix LiveView and Svelte.
+- Components should support `:class`, `:rest`, and `slot :inner_block` unless unnecessary.
+- Class merging should be done using `TwMerge.merge/1` in a `classes/1` function to ensure proper Tailwind class handling.
+- Component variants must be handled with helper functions, e.g., `button_variant_class/1`.
+- Reusable elements (icons, buttons, etc.) should be separate components within `shadowrun/`.
+- For UI interactivity, use `Phoenix.LiveView.JS` instead of inline JavaScript to ensure LiveView reactivity.
+- Form components should follow the structure of `shadow_form/1` and `shadow_input/1` for consistency.
+- Ensure components are built with accessibility (`aria-*` attributes) in mind.
+- Styles should be minimal, dark-mode-first, and aligned with the Linear.app and Warp-style UI.
+- Dropdowns, modals, and sidebars should use `JS.show/JS.hide` for toggling visibility.
+- Interactive elements (buttons, inputs, dropdowns) should use proper focus states and keyboard navigation.
