@@ -115,5 +115,6 @@ defmodule AccomplishWeb.Components.Activity do
   def status_color("applied"), do: "border-green-600"
   def status_color("interviewing"), do: "border-yellow-600"
   def status_color("rejected"), do: "border-red-600"
+  def status_color("ghosted"), do: "border-zinc-600"
   def status_color(_), do: "border-zinc-200"
 end

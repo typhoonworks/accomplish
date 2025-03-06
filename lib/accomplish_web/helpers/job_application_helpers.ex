@@ -7,6 +7,7 @@ defmodule AccomplishWeb.JobApplicationHelpers do
   def format_status(:offer), do: "Offer"
   def format_status(:rejected), do: "Rejected"
   def format_status(:accepted), do: "Accepted"
+  def format_status(:ghosted), do: "Ghosted"
 
   def format_status(:pending), do: "Pending"
   def format_status(:scheduled), do: "Scheduled"
@@ -19,6 +20,7 @@ defmodule AccomplishWeb.JobApplicationHelpers do
   def status_color(:interviewing), do: "bg-yellow-600"
   def status_color(:offer), do: "bg-blue-600"
   def status_color(:rejected), do: "bg-red-600"
+  def status_color(:ghosted), do: "bg-zinc-600"
   def status_color(:accepted), do: "bg-purple-600"
 
   def status_color(:pending), do: "bg-yellow-600"
@@ -69,6 +71,13 @@ defmodule AccomplishWeb.JobApplicationHelpers do
         value: :accepted,
         icon: "hero-star",
         color: "text-purple-600",
+        shortcut: "6"
+      },
+      %{
+        label: "Ghosted",
+        value: :ghosted,
+        icon: "hero-face-frown",
+        color: "text-zinc-600",
         shortcut: "6"
       }
     ]

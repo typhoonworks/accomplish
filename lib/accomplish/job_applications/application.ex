@@ -11,7 +11,7 @@ defmodule Accomplish.JobApplications.Application do
   @required ~w(role location status)a
   @required_when_not_draft ~w(applied_at)a
 
-  @status_types ~w(draft applied interviewing offer accepted rejected)a
+  @status_types ~w(draft applied interviewing offer accepted rejected ghosted)a
   @location_types ~w(remote hybrid on_site)a
 
   @derive {JSON.Encoder,
