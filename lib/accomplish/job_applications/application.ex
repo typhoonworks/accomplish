@@ -7,7 +7,7 @@ defmodule Accomplish.JobApplications.Application do
   alias Accomplish.JobApplications.Company
   alias Accomplish.JobApplications.Stage
 
-  @permitted ~w(role location status applied_at last_updated_at source notes)a
+  @permitted ~w(role location status applied_at last_updated_at source job_description notes)a
   @required ~w(role location status)a
   @required_when_not_draft ~w(applied_at)a
 
@@ -24,6 +24,7 @@ defmodule Accomplish.JobApplications.Application do
              :applied_at,
              :last_updated_at,
              :source,
+             :job_description,
              :notes,
              :inserted_at,
              :updated_at
@@ -37,6 +38,7 @@ defmodule Accomplish.JobApplications.Application do
     field :applied_at, :utc_datetime
     field :last_updated_at, :utc_datetime
     field :source, :string
+    field :job_description, :string
     field :notes, :string
     field :stages_count, :integer, default: 0
 

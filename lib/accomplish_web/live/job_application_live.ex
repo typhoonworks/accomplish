@@ -190,6 +190,19 @@ defmodule AccomplishWeb.JobApplicationLive do
       </div>
 
       <div class="mt-12 space-y-2">
+        <h3 class="text-zinc-400">Job Description</h3>
+        <.shadow_input
+          field={@form[:job_description]}
+          type="textarea"
+          placeholder="Provide an overview of the job role..."
+          class="text-[14px] font-light hover:cursor-text"
+          socket={@socket}
+          phx-blur="save_field"
+          phx-value-field={@form[:job_description].field}
+        />
+      </div>
+
+      <div class="mt-12 space-y-2">
         <h3 class="text-zinc-400">Notes</h3>
         <.shadow_input
           field={@form[:notes]}
