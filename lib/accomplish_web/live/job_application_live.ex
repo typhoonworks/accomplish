@@ -525,7 +525,6 @@ defmodule AccomplishWeb.JobApplicationLive do
         JobApplications.change_application_form(application, params)
       end
 
-    IO.inspect(updated_changeset)
     {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
 
