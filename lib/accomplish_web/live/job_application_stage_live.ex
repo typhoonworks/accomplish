@@ -20,7 +20,7 @@ defmodule AccomplishWeb.JobApplicationStageLive do
           <:title>
             <div class="flex lg:items-center lg:gap-1">
               <.link href={~p"/job_application/#{@application.slug}/stages"} class="hidden lg:inline">
-                <span class="inline">{@application.role} at {@application.company_name}</span>
+                <span class="inline">{@application.role} at {@application.company.name}</span>
               </.link>
               <span class="hidden lg:inline-flex items-center text-zinc-400">
                 <.icon name="hero-chevron-right" class="size-3" />

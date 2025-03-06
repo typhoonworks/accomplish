@@ -16,7 +16,10 @@ defmodule Accomplish.JobApplicationsFixtures do
         role: "Senior Developer",
         status: :applied,
         applied_at: DateTime.utc_now(),
-        company_name: "Typhoon Works"
+        company: %{
+          name: "Typhoon Works",
+          website: "https://typhoon.works"
+        }
       })
 
     {:ok, job_application} = JobApplications.create_application(applicant, attrs)

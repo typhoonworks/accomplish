@@ -144,8 +144,8 @@ defmodule Accomplish.JobApplications do
     end
   end
 
-  def change_application_form(attrs \\ %{}) do
-    %Application{} |> Application.changeset(attrs)
+  def change_application_form(application, attrs \\ %{}) do
+    Application.changeset(application, attrs)
   end
 
   def change_stage_form(attrs \\ %{}) do
@@ -348,7 +348,7 @@ defmodule Accomplish.JobApplications do
   end
 
   defp generate_slug(application) do
-    [application.role, application.company_name]
+    [application.role, application.company.name]
     |> Slug.slugify()
     |> Slug.add_suffix(application.id)
   end
