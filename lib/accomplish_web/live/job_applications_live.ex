@@ -138,6 +138,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
                 start_date_field={@form[:applied_at]}
                 required={true}
               />
+
+              <.shadow_select_input
+                id="application-location-select"
+                field={@form[:location]}
+                prompt="Change job location type"
+                value={@form[:location].value}
+                options={options_for_application_location()}
+                on_select="update_application_form_location"
+              />
             </div>
 
             <.separator />
@@ -226,6 +235,10 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   def handle_event("update_application_form_status", %{"value" => value}, socket) do
     {:noreply, socket |> assign_application_form_status(value)}
+  end
+
+  def handle_event("update_application_form_location", %{"value" => value}, socket) do
+    {:noreply, socket |> assign_application_form_location(value)}
   end
 
   def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
@@ -509,6 +522,15 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
     updated_changeset =
       Ecto.Changeset.put_change(form.source, :status, status)
+
+    assign(socket, :form, to_form(updated_changeset))
+  end
+
+  defp assign_application_form_location(socket, location) do
+    form = socket.assigns.form
+
+    updated_changeset =
+      Ecto.Changeset.put_change(form.source, :location, location)
 
     assign(socket, :form, to_form(updated_changeset))
   end

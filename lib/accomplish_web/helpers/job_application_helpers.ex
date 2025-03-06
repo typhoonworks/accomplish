@@ -74,6 +74,32 @@ defmodule AccomplishWeb.JobApplicationHelpers do
     ]
   end
 
+  def options_for_application_location do
+    [
+      %{
+        label: "Remote",
+        value: :remote,
+        icon: "hero-wifi",
+        color: "text-zinc-50",
+        shortcut: "1"
+      },
+      %{
+        label: "Hybrid",
+        value: :hybrid,
+        icon: "hero-arrows-right-left",
+        color: "text-zinc-50",
+        shortcut: "2"
+      },
+      %{
+        label: "On-site",
+        value: :on_site,
+        icon: "hero-building-office",
+        color: "text-zinc-50",
+        shortcut: "3"
+      }
+    ]
+  end
+
   def options_for_stage_status do
     [
       %{

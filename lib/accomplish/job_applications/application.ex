@@ -7,11 +7,12 @@ defmodule Accomplish.JobApplications.Application do
   alias Accomplish.JobApplications.Company
   alias Accomplish.JobApplications.Stage
 
-  @permitted ~w(role status applied_at last_updated_at source notes)a
-  @required ~w(role status)a
+  @permitted ~w(role location status applied_at last_updated_at source notes)a
+  @required ~w(role location status)a
   @required_when_not_draft ~w(applied_at)a
 
   @status_types ~w(draft applied interviewing offer accepted rejected)a
+  @location_types ~w(remote hybrid on_site)a
 
   @derive {JSON.Encoder,
            only: [
@@ -31,6 +32,7 @@ defmodule Accomplish.JobApplications.Application do
   schema "job_applications" do
     field :slug, :string
     field :role, :string
+    field :location, Ecto.Enum, values: @location_types, default: :remote
     field :status, Ecto.Enum, values: @status_types, default: :applied
     field :applied_at, :utc_datetime
     field :last_updated_at, :utc_datetime
