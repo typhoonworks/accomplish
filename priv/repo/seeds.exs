@@ -50,7 +50,7 @@ IO.puts("Seeding Job Applications...")
 # ================================
 
 stripe_attrs = %{
-  company: %{name: "Stripe", website: "https://stripe.com"},
+  company: %{name: "Stripe", website_url: "https://stripe.com"},
   role: "Backend Engineer",
   status: :interviewing,
   applied_at: DateTime.new!(~D[2024-12-20], ~T[00:00:00], "Etc/UTC"),
@@ -92,7 +92,7 @@ end
 # ================================
 
 gitlab_attrs = %{
-  company: %{name: "GitLab", website: "https://gitlab.com"},
+  company: %{name: "GitLab", website_url: "https://gitlab.com"},
   role: "Frontend Engineer",
   status: :rejected,
   applied_at: DateTime.new!(~D[2024-11-10], ~T[00:00:00], "Etc/UTC"),
@@ -134,7 +134,7 @@ end
 # ================================
 
 shopify_attrs = %{
-  company: %{name: "Shopify", website: "https://shopify.com"},
+  company: %{name: "Shopify", website_url: "https://shopify.com"},
   role: "Full Stack Developer",
   status: :offer,
   applied_at: DateTime.new!(~D[2024-12-05], ~T[00:00:00], "Etc/UTC"),

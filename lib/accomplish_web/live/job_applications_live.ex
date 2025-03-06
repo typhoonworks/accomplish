@@ -173,6 +173,9 @@ defmodule AccomplishWeb.JobApplicationsLive do
             >
               Cancel
             </.shadow_button>
+            <.shadow_button type="button" variant="secondary" phx-click="import_job_from_url">
+              Import from URL
+            </.shadow_button>
             <.shadow_button type="submit" variant="primary" disabled={!@form.source.valid?}>
               Create application
             </.shadow_button>

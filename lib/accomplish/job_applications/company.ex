@@ -5,12 +5,12 @@ defmodule Accomplish.JobApplications.Company do
 
   @primary_key false
 
-  @permitted ~w(name website)a
+  @permitted ~w(name website_url)a
   @required ~w(name)a
 
   embedded_schema do
     field :name, :string
-    field :website, :string
+    field :website_url, :string
   end
 
   def changeset(company, attrs \\ %{}) do
@@ -21,10 +21,10 @@ defmodule Accomplish.JobApplications.Company do
   end
 
   defp maybe_validate_url(changeset) do
-    case get_field(changeset, :website) do
+    case get_field(changeset, :website_url) do
       nil -> changeset
       "" -> changeset
-      _ -> Validators.validate_url(changeset, :website, strict: false)
+      _ -> Validators.validate_url(changeset, :website_url, strict: false)
     end
   end
 end

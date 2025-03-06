@@ -18,7 +18,7 @@ defmodule Accomplish.JobApplicationsFixtures do
         applied_at: DateTime.utc_now(),
         company: %{
           name: "Typhoon Works",
-          website: "https://typhoon.works"
+          website_url: "https://typhoon.works"
         }
       })
 

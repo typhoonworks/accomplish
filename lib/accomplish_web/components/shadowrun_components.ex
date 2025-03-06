@@ -463,6 +463,27 @@ defmodule AccomplishWeb.ShadowrunComponents do
     """
   end
 
+  attr :id, :string, required: true
+  attr :class, :string, default: nil
+  attr :field, Phoenix.HTML.FormField, required: true
+  attr :placeholder, :string, default: "Enter a URL"
+  attr :form, :any, default: nil
+  attr :rest, :global, default: %{}, include: ~w(disabled readonly required autocomplete)
+
+  def shadow_url_input(assigns) do
+    ~H"""
+    <.live_component
+      module={AccomplishWeb.Shadowrun.UrlInput}
+      id={@id}
+      class={@class}
+      field={@field}
+      form={@form}
+      placeholder={@placeholder}
+      {@rest}
+    />
+    """
+  end
+
   attr :class, :string, default: nil
   attr :rest, :global
   slot :inner_block, required: true
