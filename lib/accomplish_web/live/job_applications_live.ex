@@ -3,7 +3,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Application
-  alias Accomplish.Validators
+  alias Accomplish.URLValidators
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
@@ -330,7 +330,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       {%{}, %{url: :string}}
       |> Ecto.Changeset.cast(%{url: url}, [:url])
       |> Ecto.Changeset.validate_required([:url])
-      |> Validators.validate_url(:url)
+      |> URLValidators.validate_url(:url)
       |> Map.put(:action, :validate)
 
     {:noreply, assign(socket, job_posting_form: to_form(changeset, as: :job_posting_form))}
@@ -340,7 +340,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
     changeset =
       {%{}, %{url: :string}}
       |> Ecto.Changeset.cast(%{url: url}, [:url])
-      |> Validators.validate_url(:url)
+      |> URLValidators.validate_url(:url)
 
     if changeset.valid? do
       %{

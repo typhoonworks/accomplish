@@ -93,7 +93,7 @@ defmodule Accomplish.JobApplications.Application do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
-    |> Validators.validate_url(:apply_url)
+    |> URLValidators.validate_url(:apply_url)
     |> validate_conditional_requirements()
     |> assoc_constraint(:applicant)
   end

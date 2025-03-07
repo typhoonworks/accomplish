@@ -4,7 +4,6 @@ defmodule Accomplish.Accounts.User do
   use Accomplish.Schema
   alias Accomplish.Accounts.ApiKey
   alias Accomplish.Accounts.NotificationSettings
-  alias Accomplish.Accounts.UserProfile
   alias Accomplish.OAuth
 
   @profile_fields ~w(
@@ -28,7 +27,6 @@ defmodule Accomplish.Accounts.User do
     has_many :api_keys, ApiKey
     has_many :oauth_identities, OAuth.Identity, foreign_key: :user_id
 
-    embeds_one :profile, UserProfile, on_replace: :update
     embeds_one :notification_settings, NotificationSettings, on_replace: :update
 
     timestamps(type: :utc_datetime)
@@ -78,7 +76,6 @@ defmodule Accomplish.Accounts.User do
     |> cast(attrs, @profile_fields)
     |> downcase_username()
     |> validate_username(opts)
-    |> cast_embed(:profile)
     |> maybe_set_full_name()
   end
 

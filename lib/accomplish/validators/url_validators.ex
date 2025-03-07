@@ -1,4 +1,4 @@
-defmodule Accomplish.Validators do
+defmodule Accomplish.URLValidators do
   @moduledoc """
   Provides reusable validation functions for schemas.
   """

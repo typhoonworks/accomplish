@@ -33,7 +33,7 @@ defmodule Accomplish.OAuth.AccessGrant do
     |> validate_required(@required)
     |> validate_length(:token, min: 32)
     |> validate_expiration()
-    |> Validators.validate_url(:redirect_uri)
+    |> URLValidators.validate_url(:redirect_uri)
     |> Scopes.validate_scopes(:scopes)
     |> unique_constraint(:token)
     |> assoc_constraint(:user)
