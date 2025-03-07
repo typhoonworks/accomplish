@@ -541,7 +541,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  def handle_info(%{id: _id, field: field, value: value, form: form} = msg, socket) do
+  def handle_info(%{id: _id, field: field, value: value, form: form}, socket) do
     params =
       if String.contains?(form.name, "company") do
         %{"field" => to_string(field), "value" => value, "nested" => "company"}
