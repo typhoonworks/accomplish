@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.JobApplicationLive do
+defmodule AccomplishWeb.JobApplicationsLive.Application do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications

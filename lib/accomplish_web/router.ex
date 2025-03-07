@@ -88,10 +88,10 @@ defmodule AccomplishWeb.Router do
         {AccomplishWeb.Plugs.Navigation, :track_history}
       ] do
       live "/mission_control", MissionControlLive, :show
-      live "/job_applications", JobApplicationsLive, :index
-      live "/job_application/:slug/overview", JobApplicationLive, :overview
-      live "/job_application/:slug/stages", JobApplicationLive, :stages
-      live "/job_application/:application_slug/stage/:slug", JobApplicationStageLive, :show
+      live "/job_applications", JobApplicationsLive.Applications, :index
+      live "/job_application/:slug/overview", JobApplicationsLive.Application, :overview
+      live "/job_application/:slug/stages", JobApplicationsLive.Application, :stages
+      live "/job_application/:application_slug/stage/:slug", JobApplicationLive.Stage, :show
     end
 
     live_session :require_authenticated_user_without_tracking,
