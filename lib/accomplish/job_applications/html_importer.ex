@@ -1,51 +1,69 @@
 defmodule Accomplish.JobApplications.HTMLImporter do
+  @moduledoc false
+
   require Logger
   import Accomplish.ConfigHelpers
 
   @model "claude-3-5-haiku-20241022"
 
   @system_message """
-  You are an AI specialized in parsing job posting data and returning structured fields for creating a “draft job application” record. The data you return will be used to populate a database entity (Accomplish.JobApplications.Application).
+    You are an AI specialized in parsing job posting data and returning structured fields for creating a “draft job application” record. The data you return will be used to populate a database entity (Accomplish.JobApplications.Application).
 
-  You must extract or infer these fields from the user-provided job posting content:
+    You must extract or infer these fields from the user-provided job posting content:
 
-  1) role
-     - Example: "Intermediate Fullstack Engineer, Plan: Product Planning (Vue and Ruby)"
+    1) role
+       - Example: "Intermediate Fullstack Engineer, Plan: Product Planning (Vue and Ruby)"
 
-  2) company (an embedded object containing):
-     - name, e.g. “GitLab”
-     - website, e.g. “gitlab.com”
+    2) company (an embedded object containing):
+       - name, e.g. “GitLab”
+       - website, e.g. “gitlab.com”
 
-  3) apply_url
-     - The URL from any “Apply For This Job” link or button in the posting.
+    3) apply_url
+       - The URL from any “Apply For This Job” link or button in the posting.
 
-  4) source
-     - The original URL used to access this job posting.
+    4) source
+       - The original URL used to access this job posting.
 
-  5) employment_type
-     - For example, "Full Time" mapped to "full_time".
-     - Possible values: "full_time", "part_time", "contractor", "employer_of_record", "internship".
+    5) employment_type
+       - For example, "Full Time" mapped to "full_time".
+       - Possible values: "full_time", "part_time", "contractor", "employer_of_record", "internship".
 
-  6) location
-     - Prefer "remote", "hybrid", or "on_site".
-     - If the job is obviously remote, use “remote.”
+    6) location
+       - Prefer "remote", "hybrid", or "on_site".
+       - If the job is obviously remote, use “remote.”
 
-  7) job_description (Rich Text → Markdown)
-     - The main role/responsibilities text. All original formatting and links should remain intact where possible.
+    7) job_description (Rich Text → Markdown)
+       - The main role/responsibilities text. All original formatting and links should remain intact where possible.
 
-  8) compensation_details (Rich Text → Markdown)
-     - Salary range, benefits, or other compensation info.
+    8) compensation_details (Rich Text → Markdown)
+       - Salary range, benefits, or other compensation info.
 
-  ### Additional Requirements:
-  - Return all text fields as Markdown if they contain formatting, links, or bullet points.
-  - If any required field is missing, leave it blank or null.
-  - Do not add extra fields besides the ones above.
-  - Follow instructions closely:
-    - The user will provide raw HTML or text from the job posting.
-    - You must parse out relevant data or infer from context.
-    - If the role’s location or type is unclear, do your best guess or return empty.
+    ### Additional Requirements:
+    - Return all text fields as Markdown if they contain formatting, links, or bullet points.
+    - If any required field is missing, leave it blank or null.
+    - Do not add extra fields besides the ones above.
+    - Follow instructions closely:
+      - The user will provide raw HTML or text from the job posting.
+      - You must parse out relevant data or infer from context.
+      - If the role’s location or type is unclear, do your best guess or return empty.
 
-  You are not generating extra commentary; only structured data.
+    Return only a raw **valid JSON object**, without extra formatting, comments, or explanations.
+  """
+
+  @prefill_message """
+    {
+      "apply_url":,
+      "company": {
+        "name":,
+        "website":
+      },
+      "compensation_details":,
+      "employment_type":,
+      "job_description":,
+      "location":,
+      "role":,
+      "source":
+    }
   """
 
   @doc """
@@ -73,10 +91,17 @@ defmodule Accomplish.JobApplications.HTMLImporter do
     Source: #{source_url}
     """
 
-    messages = [%{role: "user", content: prompt_message}]
+    messages = [
+      %{role: "user", content: String.trim(prompt_message)},
+      %{role: "user", content: String.trim(@prefill_message)}
+    ]
 
     with {:ok, response} <-
-           Anthropix.chat(client, model: @model, system: @system_message, messages: messages),
+           Anthropix.chat(client,
+             model: @model,
+             system: String.trim(@system_message),
+             messages: messages
+           ),
          {:ok, result} <- extract_result(response) do
       {:ok, result}
     else
@@ -87,7 +112,7 @@ defmodule Accomplish.JobApplications.HTMLImporter do
   end
 
   defp extract_result(%{"content" => [%{"text" => text} | _]}) when is_binary(text) do
-    case JSON.decode(text) do
+    case JSON.decode(clean_json(text)) do
       {:ok, decoded} -> {:ok, decoded}
       error -> error
     end
@@ -96,5 +121,12 @@ defmodule Accomplish.JobApplications.HTMLImporter do
   defp extract_result(other) do
     Logger.error("Unexpected response structure: #{inspect(other)}")
     {:error, :unexpected_response}
+  end
+
+  def clean_json(text) do
+    text
+    |> String.trim()
+    |> String.replace(~r/^```json\s*/m, "")
+    |> String.replace(~r/\s*```$/m, "")
   end
 end

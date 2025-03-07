@@ -3,6 +3,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
 
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Application
+  alias Accomplish.Validators
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
@@ -173,7 +174,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
             >
               Cancel
             </.shadow_button>
-            <.shadow_button type="button" variant="secondary" phx-click="import_job_from_url">
+            <.shadow_button type="button" variant="secondary" phx-click="open_import_dialog">
               Import from URL
             </.shadow_button>
             <.shadow_button type="submit" variant="primary" disabled={!@form.source.valid?}>
@@ -182,6 +183,66 @@ defmodule AccomplishWeb.JobApplicationsLive do
           </div>
         </.dialog_footer>
       </.shadow_form>
+    </.dialog>
+
+    <.dialog
+      id="import-job-url-dialog"
+      position={:center}
+      on_cancel={hide_modal("import-job-url-dialog")}
+      class="w-full max-w-md"
+    >
+      <.dialog_header>
+        <.dialog_title class="text-sm text-zinc-200 font-light">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-link" class="size-4" />
+            <p>Import Job from URL</p>
+          </div>
+        </.dialog_title>
+        <.dialog_description>
+          Paste a job listing URL to import the details automatically
+        </.dialog_description>
+      </.dialog_header>
+
+      <.form
+        for={@job_posting_form}
+        id="job-posting-form"
+        phx-submit="import_from_url"
+        phx-change="validate_job_url"
+        class="space-y-4"
+      >
+        <.dialog_content id="import-url-content">
+          <div class="flex flex-col gap-4 py-2">
+            <.shadow_input
+              id="job-posting-url-input"
+              type="url"
+              class="text-zinc-300 text-xs"
+              field={@job_posting_form[:url]}
+              placeholder="https://example.com/jobs/12345"
+              required={true}
+            />
+          </div>
+        </.dialog_content>
+
+        <.dialog_footer>
+          <div class="flex justify-end gap-2">
+            <.shadow_button
+              type="button"
+              variant="secondary"
+              phx-click={hide_dialog("import-job-url-dialog")}
+            >
+              Cancel
+            </.shadow_button>
+            <.shadow_button
+              type="submit"
+              variant="primary"
+              phx-disable-with="Importing..."
+              disabled={!@job_posting_form.source.valid?}
+            >
+              Import
+            </.shadow_button>
+          </div>
+        </.dialog_footer>
+      </.form>
     </.dialog>
 
     <.stage_dialog form={@stage_form} socket={@socket} />
@@ -205,6 +266,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
         {status, Enum.filter(applications, &(&1.status == status))}
       end
 
+    # Create proper changeset for the job posting form
+    job_posting_changeset =
+      {%{}, %{url: :string}}
+      |> Ecto.Changeset.cast(%{url: ""}, [:url])
+      |> Ecto.Changeset.validate_required([:url])
+
     socket =
       socket
       |> assign(:page_title, "Job Applications")
@@ -213,6 +280,7 @@ defmodule AccomplishWeb.JobApplicationsLive do
       |> assign(:filter, filter)
       |> assign_new_form()
       |> assign(:stage_form, to_form(JobApplications.change_stage_form()))
+      |> assign(:job_posting_form, to_form(job_posting_changeset, as: :job_posting_form))
       |> assign(:applications_by_status, applications_by_status)
       |> assign(:statuses, statuses)
       |> assign(:has_applications, applications != [])
@@ -234,6 +302,70 @@ defmodule AccomplishWeb.JobApplicationsLive do
        to: "##{modal_id}",
        attr: "phx-show-modal"
      })}
+  end
+
+  def handle_event("open_import_dialog", _params, socket) do
+    job_posting_changeset =
+      {%{}, %{url: :string}}
+      |> Ecto.Changeset.cast(%{url: ""}, [:url])
+      |> Ecto.Changeset.validate_required([:url])
+
+    job_posting_form = to_form(job_posting_changeset, as: :job_posting_form)
+
+    {:noreply,
+     socket
+     |> assign(:job_posting_form, job_posting_form)
+     |> push_event("js-exec", %{
+       to: "#new-job-application",
+       attr: "phx-hide-modal"
+     })
+     |> push_event("js-exec", %{
+       to: "#import-job-url-dialog",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event("validate_job_url", %{"job_posting_form" => %{"url" => url}}, socket) do
+    changeset =
+      {%{}, %{url: :string}}
+      |> Ecto.Changeset.cast(%{url: url}, [:url])
+      |> Ecto.Changeset.validate_required([:url])
+      |> Validators.validate_url(:url)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, job_posting_form: to_form(changeset, as: :job_posting_form))}
+  end
+
+  def handle_event("import_from_url", %{"job_posting_form" => %{"url" => url}}, socket) do
+    changeset =
+      {%{}, %{url: :string}}
+      |> Ecto.Changeset.cast(%{url: url}, [:url])
+      |> Validators.validate_url(:url)
+
+    if changeset.valid? do
+      %{
+        job_posting_url: url,
+        applicant_id: socket.assigns.current_user.id
+      }
+      |> AccomplishWeb.Workers.CreateJobApplicationFromUrl.new()
+      |> Oban.insert()
+
+      socket =
+        socket
+        |> put_flash(:info, "Job import started. You'll be notified when it's ready.")
+        |> push_event("js-exec", %{
+          to: "#import-job-url-dialog",
+          attr: "phx-hide-modal"
+        })
+
+      {:noreply, socket}
+    else
+      {:noreply,
+       assign(socket,
+         job_posting_form:
+           to_form(changeset |> Map.put(:action, :validate), as: :job_posting_form)
+       )}
+    end
   end
 
   def handle_event("update_application_form_status", %{"value" => value}, socket) do

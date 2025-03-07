@@ -1,4 +1,6 @@
 defmodule Accomplish.ConfigHelpers do
+  @moduledoc false
+
   @type config_type :: :str | :int | :bool | :json
 
   @doc """
@@ -15,9 +17,8 @@ defmodule Accomplish.ConfigHelpers do
   end
 
   def get_env(var, default, type) do
-    with {:ok, val} <- System.fetch_env(var) do
-      convert_type(val, type)
-    else
+    case System.fetch_env(var) do
+      {:ok, val} -> convert_type(val, type)
       :error -> default
     end
   end
