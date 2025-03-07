@@ -17,6 +17,6 @@ defmodule Accomplish.JobApplications.Company do
     company
     |> cast(attrs, @permitted)
     |> validate_required(@required)
-    |> Validators.validate_url(:website_url, strict: false)
+    |> URLValidators.validate_url(:website_url, strict: false)
   end
 end

@@ -19,7 +19,7 @@ defmodule AccomplishWeb.Workers.CreateJobApplicationFromUrl do
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.HTMLExtractor
   alias Accomplish.JobApplications.HTMLImporter
-  alias Accomplish.Validators
+  alias Accomplish.URLValidators
 
   require Logger
 
@@ -33,7 +33,7 @@ defmodule AccomplishWeb.Workers.CreateJobApplicationFromUrl do
         },
         attempt: attempt
       }) do
-    with :ok <- Validators.validate_url_string(job_posting_url, strict: true),
+    with :ok <- URLValidators.validate_url_string(job_posting_url, strict: true),
          {:ok, user} <- get_user(applicant_id),
          extraction_result <- HTMLExtractor.extract(job_posting_url),
          {:ok, content} <- handle_extraction_result(extraction_result),
