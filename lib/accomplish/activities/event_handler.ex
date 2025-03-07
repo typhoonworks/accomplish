@@ -26,7 +26,10 @@ defmodule Accomplish.Activities.EventHandler do
   # =============================
 
   def handle_info({_, %Events.NewJobApplication{} = event}, state) do
-    log_activity(event.application.applicant_id, event.name, event.application)
+    log_activity(event.application.applicant_id, event.name, event.application,
+      metadata: %{status: event.application.status}
+    )
+
     {:noreply, state}
   end
 
@@ -80,7 +83,7 @@ defmodule Accomplish.Activities.EventHandler do
   # LOGGING ACTIVITY
   # =============================
 
-  defp log_activity(actor_id, action, entity, opts \\ []) do
+  defp log_activity(actor_id, action, entity, opts) do
     metadata = Keyword.get(opts, :metadata, %{})
     occurred_at = Keyword.get(opts, :occurred_at, DateTime.utc_now())
     context = Keyword.get(opts, :context, nil)
