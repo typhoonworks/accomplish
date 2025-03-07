@@ -38,17 +38,19 @@ defmodule Accomplish.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:anthropix, "~> 0.6"},
       {:assent, "~> 0.3.0"},
       {:bandit, "~> 1.5"},
       {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dotenv_parser, "~> 2.0", only: [:dev, :test]},
       {:dns_cluster, "~> 0.1.1"},
       {:ecto_sql, "~> 3.10"},
       {:ecto_soft_delete, "~> 2.0"},
       {:excellent_migrations, "~> 0.1", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test, runtime: false},
       {:finch, "~> 0.13"},
-      {:floki, ">= 0.30.0", only: :test},
+      {:floki, ">= 0.30.0"},
       {:gettext, "~> 0.26"},
       {:goal, "~> 1.1"},
       {:heroicons,

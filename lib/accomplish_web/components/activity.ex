@@ -7,6 +7,10 @@ defmodule AccomplishWeb.Components.Activity do
   import AccomplishWeb.TimeHelpers
 
   def activity(assigns) do
+    assigns =
+      assigns
+      |> assign_new(:activity_status, fn -> assigns[:activity].metadata["status"] end)
+
     ~H"""
     <li id={@id} class="relative pb-8 group last:pb-0">
       <span
@@ -19,9 +23,12 @@ defmodule AccomplishWeb.Components.Activity do
         <div>
           <span class={[
             "flex size-8 items-center justify-center rounded-full  ring-1 ring-zinc-50",
-            activity_color(@activity.action)
+            activity_color(@activity.action, @activity_status)
           ]}>
-            <.icon name={activity_icon(@activity.action)} class="size-4 text-zinc-50" />
+            <.icon
+              name={activity_icon(@activity.action, @activity_status)}
+              class="size-4 text-zinc-50"
+            />
           </span>
         </div>
         <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
@@ -37,6 +44,16 @@ defmodule AccomplishWeb.Components.Activity do
         </div>
       </div>
     </li>
+    """
+  end
+
+  defp activity_message(
+         %{action: "job_application.created", activity: %{metadata: %{"status" => "draft"}}} =
+           assigns
+       ) do
+    ~H"""
+    Created draft application to <span class="text-zinc-50">{@activity.entity.role}</span>
+    at <span class="text-zinc-50">{@activity.entity.company.name}</span>
     """
   end
 
@@ -93,10 +110,11 @@ defmodule AccomplishWeb.Components.Activity do
     """
   end
 
-  defp activity_color("job_application.created"), do: "bg-green-600"
-  defp activity_color("job_application.updated"), do: "bg-blue-600"
-  defp activity_color("job_application.stage_updated"), do: "bg-zinc-600"
-  defp activity_color(_), do: "bg-zinc-900"
+  defp activity_color("job_application.created", "draft"), do: "bg-zinc-900"
+  defp activity_color("job_application.created", _status), do: "bg-green-600"
+  defp activity_color("job_application.updated", _status), do: "bg-blue-600"
+  defp activity_color("job_application.stage_updated", _status), do: "bg-zinc-600"
+  defp activity_color(_action, _status), do: "bg-zinc-900"
 
   @activity_icons %{
     "job_application.created" => "hero-paper-airplane-solid",
@@ -105,7 +123,11 @@ defmodule AccomplishWeb.Components.Activity do
     "job_application.stage_deleted" => "hero-square-3-stack-3d-solid"
   }
 
-  defp activity_icon(event) do
+  defp activity_icon("job_application.created", "draft") do
+    "hero-user-solid"
+  end
+
+  defp activity_icon(event, _status) do
     Map.get(@activity_icons, event, "hero-user-solid")
   end
 

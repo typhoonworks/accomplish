@@ -1,4 +1,4 @@
-defmodule Accomplish.Activities.Worker do
+defmodule Accomplish.Workers.LogActivity do
   @moduledoc false
 
   use Oban.Worker, queue: :default

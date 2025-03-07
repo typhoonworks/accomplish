@@ -13,6 +13,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :location, :string, null: false
       add :status, :string, null: false
       add :employment_type, :string
+      add :apply_url, :string
       add :applied_at, :utc_datetime
       add :last_updated_at, :utc_datetime
       add :source, :string

@@ -16,8 +16,14 @@ import Config
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
-if System.get_env("PHX_SERVER") do
+import Accomplish.ConfigHelpers
+
+if get_env("PHX_SERVER", false, :bool) do
   config :accomplish, AccomplishWeb.Endpoint, server: true
+end
+
+if config_env() == :dev do
+  DotenvParser.load_file(".env")
 end
 
 if config_env() == :prod do
@@ -28,12 +34,12 @@ if config_env() == :prod do
       For example: ecto://USER:PASS@HOST/DATABASE
       """
 
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+  maybe_ipv6 = if get_env("ECTO_IPV6", false, :bool), do: [:inet6], else: []
 
   config :accomplish, Accomplish.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    pool_size: get_env("POOL_SIZE", 10, :int),
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -48,10 +54,10 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
-  port = String.to_integer(System.get_env("PORT") || "4000")
+  host = get_env("PHX_HOST", "example.com", :str)
+  port = get_env("PORT", 4000, :int)
 
-  config :accomplish, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+  config :accomplish, :dns_cluster_query, get_env("DNS_CLUSTER_QUERY")
 
   config :accomplish, AccomplishWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

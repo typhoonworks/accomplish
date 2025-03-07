@@ -7,7 +7,7 @@ defmodule Accomplish.JobApplications.Application do
   alias Accomplish.JobApplications.Company
   alias Accomplish.JobApplications.Stage
 
-  @permitted ~w(role location status applied_at last_updated_at source employment_type job_description compensation_details notes)a
+  @permitted ~w(role location status applied_at apply_url last_updated_at source employment_type job_description compensation_details notes)a
   @required ~w(role location status)a
   @required_when_not_draft ~w(applied_at)a
 
@@ -22,6 +22,7 @@ defmodule Accomplish.JobApplications.Application do
              :role,
              :company,
              :status,
+             :apply_url,
              :applied_at,
              :last_updated_at,
              :source,
@@ -39,6 +40,7 @@ defmodule Accomplish.JobApplications.Application do
     field :location, Ecto.Enum, values: @location_types, default: :remote
     field :status, Ecto.Enum, values: @status_types, default: :applied
     field :employment_type, Ecto.Enum, values: @employment_types, default: nil
+    field :apply_url, :string
     field :applied_at, :utc_datetime
     field :last_updated_at, :utc_datetime
     field :source, :string
@@ -91,6 +93,7 @@ defmodule Accomplish.JobApplications.Application do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
+    |> Validators.validate_url(:apply_url)
     |> validate_conditional_requirements()
     |> assoc_constraint(:applicant)
   end
