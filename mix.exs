@@ -42,6 +42,7 @@ defmodule Accomplish.MixProject do
       {:bandit, "~> 1.5"},
       {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dotenv_parser, "~> 2.0", only: [:dev, :test]},
       {:dns_cluster, "~> 0.1.1"},
       {:ecto_sql, "~> 3.10"},
       {:ecto_soft_delete, "~> 2.0"},

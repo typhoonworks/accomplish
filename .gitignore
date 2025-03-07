@@ -46,6 +46,7 @@ plausible-report.xml
 
 # Secrets
 /config/.env.exs
+.env
 
 # Rust CLI build artifacts
 /cli/target/
