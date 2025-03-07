@@ -109,6 +109,47 @@ defmodule AccomplishWeb.JobApplicationHelpers do
     ]
   end
 
+  def options_for_employment_type do
+    [
+      %{
+        label: "No employment type",
+        value: nil,
+        color: "text-zinc-500",
+        shortcut: "0"
+      },
+      %{
+        label: "Full-Time",
+        value: :full_time,
+        color: "text-zinc-600",
+        shortcut: "1"
+      },
+      %{
+        label: "Part-Time",
+        value: :part_time,
+        color: "text-zinc-600",
+        shortcut: "2"
+      },
+      %{
+        label: "Contractor",
+        value: :contractor,
+        color: "text-zinc-600",
+        shortcut: "3"
+      },
+      %{
+        label: "Employer of Record",
+        value: :employer_of_record,
+        color: "text-zinc-600",
+        shortcut: "4"
+      },
+      %{
+        label: "Internship",
+        value: :internship,
+        color: "text-zinc-600",
+        shortcut: "5"
+      }
+    ]
+  end
+
   def options_for_stage_status do
     [
       %{
