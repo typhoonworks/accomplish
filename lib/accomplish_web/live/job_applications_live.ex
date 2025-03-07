@@ -471,7 +471,12 @@ defmodule AccomplishWeb.JobApplicationsLive do
   end
 
   defp handle_notification(%{name: "job_application.updated"} = event, socket) do
-    {:noreply, replace_application(socket, event.application, event.diff)}
+    user = socket.assigns.current_user
+
+    application =
+      JobApplications.get_application!(user, event.application.id, [:current_stage, :stages])
+
+    {:noreply, replace_application(socket, application, event.diff)}
   end
 
   defp handle_notification(_, socket), do: {:noreply, socket}
