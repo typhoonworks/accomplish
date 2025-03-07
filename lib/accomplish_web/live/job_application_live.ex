@@ -139,9 +139,16 @@ defmodule AccomplishWeb.JobApplicationLive do
           phx-value-field={@form[:role].field}
         />
         <p class="text-zinc-300 text-lg">{@application.company.name}</p>
-        <a href={@application.company.website} target="_blank" class="text-zinc-300 text-xs underline">
-          {@application.company.website}
-        </a>
+
+        <.inputs_for :let={company_f} field={@form[:company]}>
+          <.shadow_url_input
+            id="company-website-input"
+            class="text-zinc-300 text-xs"
+            field={company_f[:website_url]}
+            placeholder="Enter company website URL"
+            form={company_f}
+          />
+        </.inputs_for>
       </div>
 
       <div class="flex justify-start gap-2 my-2">
@@ -392,7 +399,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   def handle_event("save_stage", %{"stage" => stage_params}, socket) do
     application = socket.assigns.application
 
-    case Accomplish.JobApplications.add_stage(application, stage_params) do
+    case JobApplications.add_stage(application, stage_params) do
       {:ok, _stage, _application} ->
         changeset = JobApplications.change_stage_form(%{})
 
@@ -490,17 +497,35 @@ defmodule AccomplishWeb.JobApplicationLive do
     case form.name do
       "application" ->
         updated_changeset =
-          Accomplish.JobApplications.change_application_form(%Application{}, params)
+          JobApplications.change_application_form(%Application{}, params)
 
         {:noreply, assign(socket, form: to_form(updated_changeset))}
 
       "stage" ->
-        updated_changeset = Accomplish.JobApplications.change_stage_form(params)
+        updated_changeset = JobApplications.change_stage_form(params)
         {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
 
       _ ->
         {:noreply, socket}
     end
+  end
+
+  def handle_info(%{id: _id, field: field, value: value, form: form}, socket) do
+    params =
+      form.params
+      |> Map.put(to_string(field), value)
+      |> Map.delete("_persistent_id")
+
+    application = socket.assigns.application
+
+    updated_changeset =
+      if String.contains?(form.name, "company") do
+        JobApplications.change_application_form(application, %{"company" => params})
+      else
+        JobApplications.change_application_form(application, params)
+      end
+
+    {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
 
   def handle_info({JobApplications, event}, socket) do

@@ -43,19 +43,19 @@ defmodule Accomplish.JobApplicationsTest do
           role: "Software Engineer",
           status: :applied,
           applied_at: DateTime.utc_now(),
-          company: %{name: "Acme Corp", website: "https://acme.com"}
+          company: %{name: "Acme Corp", website_url: "https://acme.com"}
         },
         %{
           role: "Backend Engineer",
           status: :interviewing,
           applied_at: DateTime.utc_now(),
-          company: %{name: "Globex", website: "https://globex.com"}
+          company: %{name: "Globex", website_url: "https://globex.com"}
         },
         %{
           role: "Frontend Engineer",
           status: :rejected,
           applied_at: DateTime.utc_now(),
-          company: %{name: "Hooli", website: "https://hooli.com"}
+          company: %{name: "Hooli", website_url: "https://hooli.com"}
         }
       ]
 
@@ -92,7 +92,7 @@ defmodule Accomplish.JobApplicationsTest do
         role: "Software Engineer",
         status: :applied,
         applied_at: DateTime.utc_now(),
-        company: %{name: "Tech Corp", website: "https://techcorp.com"}
+        company: %{name: "Tech Corp", website_url: "https://techcorp.com"}
       }
 
       {:ok, job_application} =
@@ -101,7 +101,7 @@ defmodule Accomplish.JobApplicationsTest do
       assert job_application.role == "Software Engineer"
       assert job_application.status == :applied
       assert job_application.company.name == "Tech Corp"
-      assert job_application.company.website == "https://techcorp.com"
+      assert job_application.company.website_url == "https://techcorp.com"
       assert job_application.applicant_id == applicant.id
     end
 

@@ -58,7 +58,6 @@ defmodule Accomplish.JobApplications.Application do
   def changeset(application, attrs) do
     application
     |> cast(attrs, @permitted)
-    |> cast_embed(:company)
     |> cast_embed(:company, with: &Company.changeset/2, required: true)
     |> common_validations()
   end
