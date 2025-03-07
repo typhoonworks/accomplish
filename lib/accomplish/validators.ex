@@ -6,6 +6,42 @@ defmodule Accomplish.Validators do
   import Ecto.Changeset
 
   @doc """
+  Validates a URL string directly, outside of a changeset context.
+
+  Returns :ok if valid, or {:error, reason} if invalid.
+
+  ## Options
+
+    * `:strict` - If `true`, checks if the host resolves via DNS. Defaults to `true`.
+
+  ## Examples
+
+      iex> validate_url_string("https://example.com")
+      :ok
+
+      iex> validate_url_string("missing-scheme.com")
+      {:error, "URL is missing a scheme (e.g. https)"}
+  """
+  def validate_url_string(url, opts \\ []) do
+    strict = Keyword.get(opts, :strict, true)
+
+    case parse_url(url) do
+      {:ok, host} ->
+        if strict do
+          case :inet.gethostbyname(Kernel.to_charlist(host)) do
+            {:ok, _} -> :ok
+            {:error, _} -> {:error, "Invalid host: unable to resolve domain"}
+          end
+        else
+          :ok
+        end
+
+      {:error, reason} ->
+        {:error, "URL #{reason}"}
+    end
+  end
+
+  @doc """
   Validates that a field contains a valid URL.
 
   ## Options

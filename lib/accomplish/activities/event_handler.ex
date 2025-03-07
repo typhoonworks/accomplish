@@ -98,7 +98,7 @@ defmodule Accomplish.Activities.EventHandler do
       "metadata" => metadata,
       "occurred_at" => occurred_at
     }
-    |> Accomplish.Activities.Worker.new()
+    |> Accomplish.Workers.LogActivity.new()
     |> Oban.insert()
   end
 end

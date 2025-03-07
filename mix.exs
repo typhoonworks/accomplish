@@ -50,7 +50,7 @@ defmodule Accomplish.MixProject do
       {:excellent_migrations, "~> 0.1", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test, runtime: false},
       {:finch, "~> 0.13"},
-      {:floki, ">= 0.30.0", only: :test},
+      {:floki, ">= 0.30.0"},
       {:gettext, "~> 0.26"},
       {:goal, "~> 1.1"},
       {:heroicons,
