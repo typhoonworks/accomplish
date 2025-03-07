@@ -206,6 +206,21 @@ defmodule AccomplishWeb.JobApplicationLive do
             <p>Change job location type</p>
           </.tooltip_content>
         </.tooltip>
+
+        <.tooltip>
+          <.shadow_select_input
+            id={"lemployment_type_select_#{@form.id}_overview"}
+            field={@form[:employment_type]}
+            prompt="Set employment type"
+            value={@form[:employment_type].value}
+            options={options_for_employment_type()}
+            on_select="save_field"
+            variant="transparent"
+          />
+          <.tooltip_content side="bottom">
+            <p>Change employment type</p>
+          </.tooltip_content>
+        </.tooltip>
       </div>
 
       <div class="mt-12 space-y-2">
@@ -219,6 +234,31 @@ defmodule AccomplishWeb.JobApplicationLive do
                 field={@form[:job_description]}
                 type="textarea"
                 placeholder="Provide an overview of the job role..."
+                class="text-[14px] font-light hover:cursor-text"
+                socket={@socket}
+                phx-blur="save_field"
+                phx-value-field={@form[:job_description].field}
+              />
+            </.accordion_content>
+          </.accordion_item>
+        </.accordion>
+      </div>
+
+      <div class="mt-12 space-y-2">
+        <.accordion>
+          <.accordion_item>
+            <.accordion_trigger group="compensation-details" class="text-zinc-400 text-sm" open={true}>
+              <h3 class="text-zinc-400">Salary & Compensation</h3>
+            </.accordion_trigger>
+            <.accordion_content
+              id="ompensation-details-content"
+              group="compensation-details"
+              class="pt-2"
+            >
+              <.shadow_input
+                field={@form[:compensation_details]}
+                type="textarea"
+                placeholder="Outline salary range, bonuses, equity, and other compensation details..."
                 class="text-[14px] font-light hover:cursor-text"
                 socket={@socket}
                 phx-blur="save_field"

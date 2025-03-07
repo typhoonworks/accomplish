@@ -347,6 +347,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         value -> value
       end
     end)
+    |> assign_new(:placeholder, fn -> "Select" end)
     |> assign(
       :selected,
       Enum.find(assigns.options, fn option ->
@@ -365,10 +366,14 @@ defmodule AccomplishWeb.ShadowrunComponents do
         <.dropdown_menu>
           <.dropdown_menu_trigger id={"#{@id}-select-dropdown-trigger"} class="group">
             <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant={@variant}>
-              <%= if Map.has_key?(@selected, :icon) do %>
-                <.icon name={@selected.icon} class={Enum.join(["size-4", @selected.color], " ")} />
+              <%= if @selected.value == nil do %>
+                <span>{@prompt}</span>
+              <% else %>
+                <%= if Map.has_key?(@selected, :icon) do %>
+                  <.icon name={@selected.icon} class={Enum.join(["size-4", @selected.color], " ")} />
+                <% end %>
+                <span>{@selected.label}</span>
               <% end %>
-              <span>{@selected.label}</span>
             </.shadow_button>
           </.dropdown_menu_trigger>
 

@@ -7,12 +7,13 @@ defmodule Accomplish.JobApplications.Application do
   alias Accomplish.JobApplications.Company
   alias Accomplish.JobApplications.Stage
 
-  @permitted ~w(role location status applied_at last_updated_at source job_description notes)a
+  @permitted ~w(role location status applied_at last_updated_at source employment_type job_description compensation_details notes)a
   @required ~w(role location status)a
   @required_when_not_draft ~w(applied_at)a
 
   @status_types ~w(draft applied interviewing offer accepted rejected ghosted)a
   @location_types ~w(remote hybrid on_site)a
+  @employment_types ~w(full_time part_time contractor employer_of_record internship)a
 
   @derive {JSON.Encoder,
            only: [
@@ -24,7 +25,9 @@ defmodule Accomplish.JobApplications.Application do
              :applied_at,
              :last_updated_at,
              :source,
+             :employment_type,
              :job_description,
+             :compensation_details,
              :notes,
              :inserted_at,
              :updated_at
@@ -35,10 +38,12 @@ defmodule Accomplish.JobApplications.Application do
     field :role, :string
     field :location, Ecto.Enum, values: @location_types, default: :remote
     field :status, Ecto.Enum, values: @status_types, default: :applied
+    field :employment_type, Ecto.Enum, values: @employment_types, default: nil
     field :applied_at, :utc_datetime
     field :last_updated_at, :utc_datetime
     field :source, :string
     field :job_description, :string
+    field :compensation_details, :string
     field :notes, :string
     field :stages_count, :integer, default: 0
 
