@@ -4,7 +4,9 @@
   }
 
   a {
-    color: theme("colors.blue.600");
+    color: theme("colors.zinc.50");
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   ul,

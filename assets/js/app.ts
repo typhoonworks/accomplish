@@ -12,6 +12,7 @@ import { getHooks } from "live_svelte";
 import * as Components from "../svelte/**/*.svelte";
 
 // Import custom hooks
+import AccordionContent from "./hooks/accordion_content";
 import AudioMp3 from "./hooks/audio_mp3";
 import CodeInput from "./hooks/code_input";
 import ContextMenu from "./hooks/context_menu";
@@ -23,6 +24,7 @@ import UrlInputAutoFocus from "./hooks/url_input_autofocus";
 sendTimezoneToServer();
 
 const hooks = {
+  AccordionContent,
   AudioMp3,
   CodeInput,
   ContextMenu,

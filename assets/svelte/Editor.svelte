@@ -90,7 +90,7 @@
           placeholder,
         }),
         Link.configure({
-          openOnClick: false,
+          openOnClick: true,
           autolink: true,
         }),
       ],

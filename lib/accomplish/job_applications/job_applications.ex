@@ -104,6 +104,7 @@ defmodule Accomplish.JobApplications do
   end
 
   def update_application(%Application{} = application, attrs) do
+    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
     old_status = application.status
 
     updated_attrs = Application.ensure_applied_at(attrs, application)

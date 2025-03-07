@@ -7,6 +7,7 @@ defmodule AccomplishWeb.JobApplicationLive do
   alias Accomplish.Activities
 
   import AccomplishWeb.Layout
+  import AccomplishWeb.StringHelpers
   import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.Shadowrun.Accordion
   import AccomplishWeb.Shadowrun.StackedList
@@ -32,7 +33,9 @@ defmodule AccomplishWeb.JobApplicationLive do
               <span class="hidden lg:inline-flex items-center text-zinc-400">
                 <.icon name="hero-chevron-right" class="size-3" />
               </span>
-              <span class="inline">{@application.role} at {@application.company.name}</span>
+              <span class="inline">
+                {truncate(@application.role, length: 20)} at {@application.company.name}
+              </span>
             </div>
           </:title>
           <:actions>
@@ -208,10 +211,10 @@ defmodule AccomplishWeb.JobApplicationLive do
       <div class="mt-12 space-y-2">
         <.accordion>
           <.accordion_item>
-            <.accordion_trigger class="text-zinc-400 text-sm" open={true}>
+            <.accordion_trigger group="job-description" class="text-zinc-400 text-sm" open={true}>
               <h3 class="text-zinc-400">Job Description</h3>
             </.accordion_trigger>
-            <.accordion_content class="pt-2">
+            <.accordion_content id="job-description-content" group="job-description" class="pt-2">
               <.shadow_input
                 field={@form[:job_description]}
                 type="textarea"
@@ -229,10 +232,14 @@ defmodule AccomplishWeb.JobApplicationLive do
       <div class="mt-12 space-y-2">
         <.accordion>
           <.accordion_item>
-            <.accordion_trigger class="text-zinc-400 text-sm" open={true}>
+            <.accordion_trigger
+              group="job-application-notes"
+              class="text-zinc-400 text-sm"
+              open={true}
+            >
               <h3 class="text-zinc-400">Notes</h3>
             </.accordion_trigger>
-            <.accordion_content class="pt-2">
+            <.accordion_content id="job-application-notes" group="job-application-notes" class="pt-2">
               <.shadow_input
                 field={@form[:notes]}
                 type="textarea"

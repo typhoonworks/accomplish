@@ -25,14 +25,14 @@ defmodule AccomplishWeb.Shadowrun.Accordion do
     """
   end
 
-  attr :group, :string, default: nil
+  attr :group, :string, required: true
   attr :class, :string, default: nil
   attr :open, :boolean, default: false
   slot :inner_block, required: true
 
   def accordion_trigger(assigns) do
     ~H"""
-    <details name={@group} class="group/accordion peer/accordion" open={@open}>
+    <details id={"accordion-" <> @group} class="group/accordion peer/accordion" open={@open}>
       <summary class={[
         "flex w-full items-center justify-between cursor-pointer",
         @class
@@ -58,12 +58,19 @@ defmodule AccomplishWeb.Shadowrun.Accordion do
     """
   end
 
+  attr :id, :string, required: true
+  attr :group, :string, required: true
   attr :class, :string, default: nil
   slot :inner_block, required: true
 
   def accordion_content(assigns) do
     ~H"""
-    <div class="overflow-hidden transition-[max-height] duration-300 peer-open/accordion:max-h-[500px] max-h-0">
+    <div
+      id={@id}
+      data-details-id={"accordion-" <> @group}
+      phx-hook="AccordionContent"
+      class="overflow-hidden transition-all duration-300"
+    >
       <div class={@class}>
         {render_slot(@inner_block)}
       </div>
