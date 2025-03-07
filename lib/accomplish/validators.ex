@@ -26,18 +26,8 @@ defmodule Accomplish.Validators do
     strict = Keyword.get(opts, :strict, true)
 
     case parse_url(url) do
-      {:ok, host} ->
-        if strict do
-          case :inet.gethostbyname(Kernel.to_charlist(host)) do
-            {:ok, _} -> :ok
-            {:error, _} -> {:error, "Invalid host: unable to resolve domain"}
-          end
-        else
-          :ok
-        end
-
-      {:error, reason} ->
-        {:error, "URL #{reason}"}
+      {:ok, host} -> validate_host(host, strict)
+      {:error, reason} -> {:error, "URL #{reason}"}
     end
   end
 
@@ -74,6 +64,15 @@ defmodule Accomplish.Validators do
       %URI{host: host} -> {:ok, host}
     end
   end
+
+  defp validate_host(host, true) do
+    case :inet.gethostbyname(Kernel.to_charlist(host)) do
+      {:ok, _} -> :ok
+      {:error, _} -> {:error, "Invalid host: unable to resolve domain"}
+    end
+  end
+
+  defp validate_host(_host, false), do: :ok
 
   defp validate_parsed_url({:ok, _host}, _field, _opts, false), do: []
 
