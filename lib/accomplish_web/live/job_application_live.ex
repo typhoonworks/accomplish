@@ -138,9 +138,16 @@ defmodule AccomplishWeb.JobApplicationLive do
           phx-blur="save_field"
           phx-value-field={@form[:role].field}
         />
-        <p class="text-zinc-300 text-lg">{@application.company.name}</p>
-
         <.inputs_for :let={company_f} field={@form[:company]}>
+          <.shadow_input
+            field={company_f[:name]}
+            placeholder="Company name"
+            class="text-lg tracking-tighter hover:cursor-text"
+            phx-blur="save_field"
+            phx-value-field={@form[:name].field}
+            phx-value-nested="company"
+          />
+
           <.shadow_url_input
             id="company-website-input"
             class="text-zinc-300 text-xs"
@@ -443,22 +450,39 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  def handle_event("save_field", %{"field" => field_name, "value" => value}, socket) do
-    form = socket.assigns.form
+  def handle_event(
+        "save_field",
+        %{"field" => _field, "value" => _value, "nested" => "company"} = params,
+        socket
+      ) do
+    update_field(socket, params)
+  end
 
-    field_name =
-      case String.to_existing_atom(field_name) do
-        atom when is_atom(atom) -> atom
-        _ -> nil
+  def handle_event(
+        "save_field",
+        %{"field" => field_name, "value" => value, "nested" => nested},
+        socket
+      ) do
+    form = socket.assigns.form
+    application = socket.assigns.application
+
+    updated_changeset =
+      case nested do
+        "stage" ->
+          JobApplications.change_stage_form(Map.put(form.params || %{}, field_name, value))
+
+        _ ->
+          JobApplications.change_application_form(
+            application,
+            Map.put(form.params || %{}, field_name, value)
+          )
       end
 
-    case form[field_name] do
-      %Phoenix.HTML.FormField{field: actual_field} ->
-        update_field(socket, actual_field, value)
+    {:noreply, assign(socket, form: to_form(updated_changeset))}
+  end
 
-      _ ->
-        {:noreply, socket}
-    end
+  def handle_event("save_field", params, socket) do
+    update_field(socket, params)
   end
 
   def handle_event(
@@ -497,12 +521,19 @@ defmodule AccomplishWeb.JobApplicationLive do
     case form.name do
       "application" ->
         updated_changeset =
-          JobApplications.change_application_form(%Application{}, params)
+          JobApplications.change_application_form(
+            socket.assigns.application,
+            Map.merge(socket.assigns.form.params || %{}, params)
+          )
 
         {:noreply, assign(socket, form: to_form(updated_changeset))}
 
       "stage" ->
-        updated_changeset = JobApplications.change_stage_form(params)
+        updated_changeset =
+          JobApplications.change_stage_form(
+            Map.merge(socket.assigns.stage_form.params || %{}, params)
+          )
+
         {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
 
       _ ->
@@ -510,22 +541,15 @@ defmodule AccomplishWeb.JobApplicationLive do
     end
   end
 
-  def handle_info(%{id: _id, field: field, value: value, form: form}, socket) do
+  def handle_info(%{id: _id, field: field, value: value, form: form} = msg, socket) do
     params =
-      form.params
-      |> Map.put(to_string(field), value)
-      |> Map.delete("_persistent_id")
-
-    application = socket.assigns.application
-
-    updated_changeset =
       if String.contains?(form.name, "company") do
-        JobApplications.change_application_form(application, %{"company" => params})
+        %{"field" => to_string(field), "value" => value, "nested" => "company"}
       else
-        JobApplications.change_application_form(application, params)
+        %{"field" => to_string(field), "value" => value}
       end
 
-    {:noreply, assign(socket, form: to_form(updated_changeset))}
+    update_field(socket, params)
   end
 
   def handle_info({JobApplications, event}, socket) do
@@ -641,18 +665,21 @@ defmodule AccomplishWeb.JobApplicationLive do
     stream(socket, :activities, activities)
   end
 
-  defp update_field(socket, field, value) do
+  defp update_field(socket, %{"field" => field, "value" => value} = params) do
     application = socket.assigns.application
+    form = socket.assigns.form
 
-    case JobApplications.update_application(application, %{field => value}) do
+    changes =
+      if Map.get(params, "nested") == "company" do
+        %{"company" => Map.put(form.params["company"] || %{}, field, value)}
+      else
+        %{field => value}
+      end
+
+    case JobApplications.update_application(application, changes) do
       {:ok, updated_application} ->
-        form = JobApplications.change_application_form(updated_application)
-
-        socket =
-          socket
-          |> assign(form: to_form(form))
-
-        {:noreply, socket}
+        new_form = JobApplications.change_application_form(updated_application)
+        {:noreply, assign(socket, form: to_form(new_form))}
 
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
