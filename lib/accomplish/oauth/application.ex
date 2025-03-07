@@ -61,7 +61,7 @@ defmodule Accomplish.OAuth.Application do
   defp common_validations(changeset) do
     changeset
     |> validate_length(:name, min: 3, max: 100)
-    |> Validators.validate_url(:redirect_uri)
+    |> URLValidators.validate_url(:redirect_uri)
     |> Scopes.validate_scopes(:scopes)
   end
 end

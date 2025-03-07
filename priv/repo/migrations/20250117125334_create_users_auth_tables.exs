@@ -15,7 +15,6 @@ defmodule Accomplish.Repo.Migrations.CreateUsersAuthTables do
       # Personal fields
       add :first_name, :string
       add :last_name, :string
-      add :profile, :map, default: %{}, null: false
 
       # Setttings
       add :preference_settings, :map, default: %{}, null: false

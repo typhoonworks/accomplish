@@ -31,6 +31,7 @@ defmodule Accomplish.DataCase do
       import Accomplish.ActivitiesFixtures
       import Accomplish.JobApplicationsFixtures
       import Accomplish.OAuthFixtures
+      import Accomplish.ProfilesFixtures
       import Accomplish.RepositoriesFixtures
     end
   end

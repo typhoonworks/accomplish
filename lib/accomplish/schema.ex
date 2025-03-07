@@ -20,7 +20,7 @@ defmodule Accomplish.Schema do
       import Ecto.Changeset
 
       alias Ecto.Multi
-      alias Accomplish.Validators
+      alias Accomplish.URLValidators
     end
   end
 end
