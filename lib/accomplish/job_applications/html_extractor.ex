@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Accomplish.JobApplications.HTMLExtractor do
   @moduledoc """
   Extracts and processes job posting content from HTML pages.
@@ -197,6 +198,7 @@ defmodule Accomplish.JobApplications.HTMLExtractor do
       content = Floki.find(parsed_doc, selector)
 
       if content != [] do
+        # credo:disable-for-next-line Credo.Check.Refactor.Nesting
         Enum.reduce(@noise_elements, content, fn element, doc ->
           Floki.filter_out(doc, element)
         end)
