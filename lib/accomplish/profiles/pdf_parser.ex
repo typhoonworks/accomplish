@@ -1,4 +1,4 @@
-defmodule Accomplish.Profiles.PDFImporter do
+defmodule Accomplish.Profiles.PDFParser do
   @moduledoc """
   Service for parsing resume/CV PDFs and extracting structured profile data.
 
