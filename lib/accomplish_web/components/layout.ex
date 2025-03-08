@@ -48,6 +48,7 @@ defmodule AccomplishWeb.Layout do
   attr :page_drawer?, :boolean, default: false
   attr :drawer_open, :boolean, default: true
   slot :title
+  slot :menu
   slot :views
   slot :actions
 
@@ -71,6 +72,7 @@ defmodule AccomplishWeb.Layout do
             <h2 class="text-[13px] text-zinc-50">
               {@page_title || render_slot(@title)}
             </h2>
+            {render_slot(@menu)}
             <!-- Desktop actions: inline with title -->
             <div class="hidden lg:flex lg:ml-4">
               {render_slot(@views)}

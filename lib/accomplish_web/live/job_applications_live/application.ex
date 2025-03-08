@@ -5,11 +5,15 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
   alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.Stage
   alias Accomplish.Activities
+  alias Accomplish.CoverLetters.Generator
 
   import AccomplishWeb.Layout
   import AccomplishWeb.StringHelpers
   import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.Shadowrun.Accordion
+  import AccomplishWeb.Shadowrun.Dialog
+  import AccomplishWeb.Shadowrun.DropdownMenu
+  import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.Shadowrun.Tooltip
 
@@ -38,6 +42,46 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
               </span>
             </div>
           </:title>
+          <:menu>
+            <.dropdown_menu>
+              <.dropdown_menu_trigger id={"#{@application.id}-dropdown-trigger"} class="group">
+                <.shadow_button type="button" variant="transparent">
+                  <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
+                </.shadow_button>
+              </.dropdown_menu_trigger>
+              <.dropdown_menu_content>
+                <.menu class="w-56 text-zinc-300 bg-zinc-800">
+                  <.menu_group>
+                    <.menu_item class="text-sm">
+                      <button
+                        type="button"
+                        phx-click="open_cover_letter_dialog"
+                        class="flex items-center gap-2"
+                      >
+                        <.lucide_icon name="sparkles" class="size-4 text-zinc-400" />
+                        <span>Generate cover letter</span>
+                      </button>
+                      <.menu_shortcut>⌘G</.menu_shortcut>
+                    </.menu_item>
+                    <.menu_separator />
+                    <.menu_item class="text-sm">
+                      <button
+                        type="button"
+                        phx-click="delete_application"
+                        phx-value-id={@application.id}
+                        class="flex items-center gap-2"
+                      >
+                        <.lucide_icon name="trash-2" class="size-4 text-zinc-400" />
+                        <span>Delete application</span>
+                      </button>
+                      <.menu_shortcut>⌘D</.menu_shortcut>
+                    </.menu_item>
+                  </.menu_group>
+                </.menu>
+              </.dropdown_menu_content>
+            </.dropdown_menu>
+          </:menu>
+
           <:views>
             <.nav_button
               icon="file-text"
@@ -127,6 +171,32 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
     </.layout>
 
     <.stage_dialog :if={@live_action == :stages} form={@stage_form} socket={@socket} />
+
+    <.dialog
+      id="cover-letter-dialog"
+      position={:center}
+      on_cancel={hide_dialog("cover-letter-dialog")}
+      class="w-full max-w-4xl max-h-[90vh] overflow-hidden"
+    >
+      <.dialog_header>
+        <.dialog_title class="text-sm text-zinc-200 font-light">
+          <div class="flex items-center gap-2">
+            <.lucide_icon name="file-text" class="size-4 text-zinc-400" />
+            <p>Cover Letter</p>
+          </div>
+        </.dialog_title>
+        <.dialog_description>
+          Create a personalized cover letter for your application.
+        </.dialog_description>
+      </.dialog_header>
+
+      <.live_component
+        :if={@show_cover_letter_dialog}
+        module={AccomplishWeb.Components.CoverLetterGenerator}
+        id="cover-letter-generator"
+        application={@application}
+      />
+    </.dialog>
     """
   end
 
@@ -262,7 +332,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
                 class="text-[14px] font-light hover:cursor-text"
                 socket={@socket}
                 phx-blur="save_field"
-                phx-value-field={@form[:job_description].field}
+                phx-value-field={@form[:compensation_details].field}
               />
             </.accordion_content>
           </.accordion_item>
@@ -363,6 +433,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
         |> assign(page_title: "#{application.role} • Overview")
         |> assign(application: application)
         |> assign(stages_count: application.stages_count)
+        |> assign(show_cover_letter_dialog: false)
         |> assign_form(application)
         |> stream_activities(application)
         |> subscribe_to_notifications_topic()
@@ -380,6 +451,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
         |> assign(page_title: "#{application.role} • Stages")
         |> assign(application: application)
         |> assign(stages_count: application.stages_count)
+        |> assign(show_cover_letter_dialog: false)
         |> assign_form(application)
         |> assign_new_stage_form(%{application_id: application.id})
         |> assign_statuses()
@@ -391,6 +463,16 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
 
       {:ok, socket}
     end
+  end
+
+  def handle_event("open_cover_letter_dialog", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_cover_letter_dialog, true)
+     |> push_event("js-exec", %{
+       to: "#cover-letter-dialog",
+       attr: "phx-show-modal"
+     })}
   end
 
   def handle_event(
@@ -564,6 +646,72 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
     end
   end
 
+  def handle_event("delete_application", %{"id" => id}, socket) do
+    case JobApplications.delete_application(id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Job application deleted successfully.")
+         |> push_navigate(to: ~p"/job_applications")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete job application.")}
+    end
+  end
+
+  def handle_info({_anthropix_pid, {:data, %{"type" => event_type} = payload}}, socket) do
+    handle_anthropix_event(event_type, payload, socket)
+  end
+
+  # Handle errors or connection issues
+  def handle_info({:stream_error, error}, socket) do
+    send_update(AccomplishWeb.Components.CoverLetterGenerator,
+      id: "cover-letter-generator",
+      error: error
+    )
+
+    {:noreply, socket}
+  end
+
+  # Handle legacy message formats for compatibility
+  def handle_info({:stream_content, content}, socket) when is_binary(content) do
+    send_update(AccomplishWeb.Components.CoverLetterGenerator,
+      id: "cover-letter-generator",
+      content: content
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:complete_generation}, socket) do
+    send_update(AccomplishWeb.Components.CoverLetterGenerator,
+      id: "cover-letter-generator",
+      complete: true
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:start_cover_letter_generation, _application_id}, socket) do
+    application = socket.assigns.application
+    user = socket.assigns.current_user
+
+    # Start the cover letter generation process
+    Generator.generate_streaming(self(), user, application)
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:close_cover_letter_dialog}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_cover_letter_dialog, false)
+     |> push_event("js-exec", %{
+       to: "#cover-letter-dialog",
+       attr: "phx-hide-modal"
+     })}
+  end
+
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
     params = Map.put(form.params || %{}, to_string(field), date)
 
@@ -649,6 +797,96 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
   end
 
   defp handle_notification(_, socket), do: {:noreply, socket}
+
+  def handle_anthropix_event("message_start", _payload, socket) do
+    # Beginning of the message - no content yet
+    # %{
+    #   "message" => %{
+    #     "content" => [],
+    #     "id" => "msg_018ZPaNt3RFbUHtbFY8wXWVJ",
+    #     "model" => "claude-3-5-haiku-20241022",
+    #     "role" => "assistant",
+    #     "stop_reason" => nil,
+    #     "stop_sequence" => nil,
+    #     "type" => "message",
+    #     "usage" => %{
+    #       "cache_creation_input_tokens" => 0,
+    #       "cache_read_input_tokens" => 0,
+    #       "input_tokens" => 1119,
+    #       "output_tokens" => 1
+    #     }
+    #   },
+    #   "type" => "message_start"
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("content_block_start", _payload, socket) do
+    # Beginning of a content block - no text content yet
+    # %{
+    #   "content_block" => %{
+    #     "type" => "text"
+    #   },
+    #   "index" => 0,
+    #   "type" => "content_block_start"
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("content_block_delta", payload, socket) do
+    # Actual text content chunks arrive here
+    # %{
+    #   "delta" => %{
+    #     "text" => "Dear Hiring Manager,"
+    #   },
+    #   "index" => 0,
+    #   "type" => "content_block_delta"
+    # }
+    if Map.has_key?(payload, "delta") and Map.has_key?(payload["delta"], "text") do
+      text_chunk = payload["delta"]["text"]
+
+      send_update(AccomplishWeb.Components.CoverLetterGenerator,
+        id: "cover-letter-generator",
+        content: text_chunk
+      )
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("content_block_stop", _payload, socket) do
+    # End of a content block
+    # %{
+    #   "index" => 0,
+    #   "type" => "content_block_stop"
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("message_delta", _payload, socket) do
+    # Message metadata updates, including stop reason
+    # %{
+    #   "delta" => %{"stop_reason" => "end_turn", "stop_sequence" => nil},
+    #   "type" => "message_delta",
+    #   "usage" => %{"output_tokens" => 366}
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("message_stop", _payload, socket) do
+    # End of message - signal completion
+    # %{
+    #   "type" => "message_stop"
+    # }
+    send_update(AccomplishWeb.Components.CoverLetterGenerator,
+      id: "cover-letter-generator",
+      complete: true
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event(_event, _payload, socket), do: {:noreply, socket}
 
   defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
