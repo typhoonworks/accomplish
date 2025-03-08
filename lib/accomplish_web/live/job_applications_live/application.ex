@@ -799,36 +799,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
      })}
   end
 
-  def handle_info({:stream_error, error}, socket) do
-    # Forward the error to the LiveComponent
-    send_update(AccomplishWeb.Components.CoverLetterGenerator,
-      id: "cover-letter-generator",
-      error: error
-    )
-
-    {:noreply, socket}
-  end
-
-  def handle_info({:stream_content, content}, socket) do
-    # This will be forwarded to the live component
-    send_update(AccomplishWeb.Components.CoverLetterGenerator,
-      id: "cover-letter-generator",
-      content: content
-    )
-
-    {:noreply, socket}
-  end
-
-  def handle_info({:complete_generation}, socket) do
-    # This will be forwarded to the live component
-    send_update(AccomplishWeb.Components.CoverLetterGenerator,
-      id: "cover-letter-generator",
-      complete: true
-    )
-
-    {:noreply, socket}
-  end
-
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
     params = Map.put(form.params || %{}, to_string(field), date)
 
