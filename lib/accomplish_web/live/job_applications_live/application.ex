@@ -663,96 +663,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
     handle_anthropix_event(event_type, payload, socket)
   end
 
-  def handle_anthropix_event("message_start", _payload, socket) do
-    # Beginning of the message - no content yet
-    # %{
-    #   "message" => %{
-    #     "content" => [],
-    #     "id" => "msg_018ZPaNt3RFbUHtbFY8wXWVJ",
-    #     "model" => "claude-3-5-haiku-20241022",
-    #     "role" => "assistant",
-    #     "stop_reason" => nil,
-    #     "stop_sequence" => nil,
-    #     "type" => "message",
-    #     "usage" => %{
-    #       "cache_creation_input_tokens" => 0,
-    #       "cache_read_input_tokens" => 0,
-    #       "input_tokens" => 1119,
-    #       "output_tokens" => 1
-    #     }
-    #   },
-    #   "type" => "message_start"
-    # }
-    {:noreply, socket}
-  end
-
-  def handle_anthropix_event("content_block_start", _payload, socket) do
-    # Beginning of a content block - no text content yet
-    # %{
-    #   "content_block" => %{
-    #     "type" => "text"
-    #   },
-    #   "index" => 0,
-    #   "type" => "content_block_start"
-    # }
-    {:noreply, socket}
-  end
-
-  def handle_anthropix_event("content_block_delta", payload, socket) do
-    # Actual text content chunks arrive here
-    # %{
-    #   "delta" => %{
-    #     "text" => "Dear Hiring Manager,"
-    #   },
-    #   "index" => 0,
-    #   "type" => "content_block_delta"
-    # }
-    if Map.has_key?(payload, "delta") and Map.has_key?(payload["delta"], "text") do
-      text_chunk = payload["delta"]["text"]
-
-      send_update(AccomplishWeb.Components.CoverLetterGenerator,
-        id: "cover-letter-generator",
-        content: text_chunk
-      )
-    end
-
-    {:noreply, socket}
-  end
-
-  def handle_anthropix_event("content_block_stop", _payload, socket) do
-    # End of a content block
-    # %{
-    #   "index" => 0,
-    #   "type" => "content_block_stop"
-    # }
-    {:noreply, socket}
-  end
-
-  def handle_anthropix_event("message_delta", _payload, socket) do
-    # Message metadata updates, including stop reason
-    # %{
-    #   "delta" => %{"stop_reason" => "end_turn", "stop_sequence" => nil},
-    #   "type" => "message_delta",
-    #   "usage" => %{"output_tokens" => 366}
-    # }
-    {:noreply, socket}
-  end
-
-  def handle_anthropix_event("message_stop", _payload, socket) do
-    # End of message - signal completion
-    # %{
-    #   "type" => "message_stop"
-    # }
-    send_update(AccomplishWeb.Components.CoverLetterGenerator,
-      id: "cover-letter-generator",
-      complete: true
-    )
-
-    {:noreply, socket}
-  end
-
-  def handle_anthropix_event(_event, _payload, socket), do: {:noreply, socket}
-
   # Handle errors or connection issues
   def handle_info({:stream_error, error}, socket) do
     send_update(AccomplishWeb.Components.CoverLetterGenerator,
@@ -887,6 +797,96 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
   end
 
   defp handle_notification(_, socket), do: {:noreply, socket}
+
+  def handle_anthropix_event("message_start", _payload, socket) do
+    # Beginning of the message - no content yet
+    # %{
+    #   "message" => %{
+    #     "content" => [],
+    #     "id" => "msg_018ZPaNt3RFbUHtbFY8wXWVJ",
+    #     "model" => "claude-3-5-haiku-20241022",
+    #     "role" => "assistant",
+    #     "stop_reason" => nil,
+    #     "stop_sequence" => nil,
+    #     "type" => "message",
+    #     "usage" => %{
+    #       "cache_creation_input_tokens" => 0,
+    #       "cache_read_input_tokens" => 0,
+    #       "input_tokens" => 1119,
+    #       "output_tokens" => 1
+    #     }
+    #   },
+    #   "type" => "message_start"
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("content_block_start", _payload, socket) do
+    # Beginning of a content block - no text content yet
+    # %{
+    #   "content_block" => %{
+    #     "type" => "text"
+    #   },
+    #   "index" => 0,
+    #   "type" => "content_block_start"
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("content_block_delta", payload, socket) do
+    # Actual text content chunks arrive here
+    # %{
+    #   "delta" => %{
+    #     "text" => "Dear Hiring Manager,"
+    #   },
+    #   "index" => 0,
+    #   "type" => "content_block_delta"
+    # }
+    if Map.has_key?(payload, "delta") and Map.has_key?(payload["delta"], "text") do
+      text_chunk = payload["delta"]["text"]
+
+      send_update(AccomplishWeb.Components.CoverLetterGenerator,
+        id: "cover-letter-generator",
+        content: text_chunk
+      )
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("content_block_stop", _payload, socket) do
+    # End of a content block
+    # %{
+    #   "index" => 0,
+    #   "type" => "content_block_stop"
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("message_delta", _payload, socket) do
+    # Message metadata updates, including stop reason
+    # %{
+    #   "delta" => %{"stop_reason" => "end_turn", "stop_sequence" => nil},
+    #   "type" => "message_delta",
+    #   "usage" => %{"output_tokens" => 366}
+    # }
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event("message_stop", _payload, socket) do
+    # End of message - signal completion
+    # %{
+    #   "type" => "message_stop"
+    # }
+    send_update(AccomplishWeb.Components.CoverLetterGenerator,
+      id: "cover-letter-generator",
+      complete: true
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_anthropix_event(_event, _payload, socket), do: {:noreply, socket}
 
   defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
