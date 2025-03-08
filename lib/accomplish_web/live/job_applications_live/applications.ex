@@ -22,7 +22,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
         <.page_header page_title="Job Applications">
-          <:actions>
+          <:views>
             <.nav_button
               icon="archive"
               text="All"
@@ -41,7 +41,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
               href={~p"/job_applications?filter=draft"}
               active={@filter == "draft"}
             />
-          </:actions>
+          </:views>
         </.page_header>
       </:page_header>
 

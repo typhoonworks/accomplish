@@ -38,7 +38,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
               </span>
             </div>
           </:title>
-          <:actions>
+          <:views>
             <.nav_button
               icon="file-text"
               text="Overview"
@@ -52,7 +52,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
               active={@live_action == :stages}
             />
             <.nav_button icon="files" text="Documents" href="#" active={@live_action == :documents} />
-          </:actions>
+          </:views>
         </.page_header>
       </:page_header>
 

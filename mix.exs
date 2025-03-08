@@ -10,6 +10,7 @@ defmodule Accomplish.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      rustler_crates: rustler_crates(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
@@ -73,6 +74,7 @@ defmodule Accomplish.MixProject do
       {:phoenix_live_view, "~> 1.0.0"},
       {:postgrex, ">= 0.0.0"},
       {:req, "~> 0.5.0"},
+      {:rustler, "~> 0.36.1", runtime: false},
       {:salad_ui, "~> 0.14"},
       {:swoosh, "~> 1.5"},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
@@ -110,6 +112,16 @@ defmodule Accomplish.MixProject do
         "tailwind accomplish --minify",
         "cmd --cd assets node build.js --deploy",
         "phx.digest"
+      ]
+    ]
+  end
+
+  defp rustler_crates do
+    [
+      pdf_extractor: [
+        path: "native/pdf_extractor",
+        mode: :release,
+        features: []
       ]
     ]
   end

@@ -20,7 +20,7 @@ defmodule AccomplishWeb.ResumeLive do
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
         <.page_header page_title="Resume">
-          <:actions>
+          <:views>
             <.nav_button
               icon="file-text"
               text="Overview"
@@ -39,6 +39,11 @@ defmodule AccomplishWeb.ResumeLive do
               href={~p"/resume/education"}
               active={@live_action == :education}
             />
+          </:views>
+          <:actions>
+            <.shadow_button phx-click="import_resume" variant="transparent" class="text-xs">
+              <.icon name="hero-plus" class="size-3" /> Import Resume
+            </.shadow_button>
           </:actions>
         </.page_header>
       </:page_header>
