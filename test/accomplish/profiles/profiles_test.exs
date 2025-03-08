@@ -22,14 +22,13 @@ defmodule Accomplish.ProfilesTest do
       location: "Remote",
       skills: ["Elixir", "Phoenix", "PostgreSQL", "GraphQL"]
     }
-    @invalid_attrs %{headline: nil}
+    @invalid_attrs %{website_url: "invalid-url"}
 
     setup do
       %{user: user_fixture()}
     end
 
     test "get_profile_by_user/1 returns the profile for a given user", %{user: user} do
-      assert nil == Profiles.get_profile_by_user(user.id)
       profile = profile_fixture(user)
       assert %Profile{} = fetched_profile = Profiles.get_profile_by_user(user.id)
       assert profile.id == fetched_profile.id

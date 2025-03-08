@@ -36,7 +36,7 @@ attrs = %{
 
 IO.puts("Creating initial user...")
 
-{:ok, %{user: user, profile: _profile}} =
+{:ok, user} =
   Accounts.register_user(
     %{
       email: "jack@me.local",

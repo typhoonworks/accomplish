@@ -65,18 +65,26 @@ defmodule Accomplish.Accounts do
   ## User registration
 
   @doc """
-  Registers a user and creates an associated profile.
+    Registers a user and creates an associated profile.
 
-  If the user is successfully created, a profile is also created within the same transaction.
+    If the user is successfully created, it returns `{:ok, user}`.
 
-  ## Examples
+    If user creation fails, it returns `{:error, changeset}`, similar to `Repo.insert/2`.
 
-      iex> register_user(%{field: value})
-      {:ok, %{user: %User{}, profile: %Profiles.Profile{}}}
+    If profile creation fails, it returns `{:error, reason}`.
 
-      iex> register_user(%{field: bad_value})
-      {:error, :user, %Ecto.Changeset{}, %{}} # User creation fails
+    ## Examples
+
+        iex> register_user(%{field: value})
+        {:ok, %User{}}
+
+        iex> register_user(%{field: bad_value})
+        {:error, %Ecto.Changeset{}} # User creation fails
+
+        iex> register_user(%{valid_user_but_profile_fails: true})
+        {:error, reason} # Profile creation fails
   """
+
   def register_user(attrs, opts \\ []) do
     Multi.new()
     |> Multi.insert(:user, User.registration_changeset(%User{}, attrs, opts))
@@ -87,6 +95,11 @@ defmodule Accomplish.Accounts do
       end
     end)
     |> Repo.transaction()
+    |> case do
+      {:ok, %{user: user}} -> {:ok, user}
+      {:error, :user, changeset, _changes} -> {:error, changeset}
+      {:error, :profile, reason, _changes} -> {:error, reason}
+    end
   end
 
   @doc """

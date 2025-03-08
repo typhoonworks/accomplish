@@ -87,7 +87,7 @@ defmodule Accomplish.AccountsTest do
     test "registers users with a hashed password" do
       email = unique_user_email()
 
-      {:ok, %{user: user, profile: _profile}} =
+      {:ok, user} =
         Accounts.register_user(valid_user_attributes(email: email))
 
       assert user.email == email

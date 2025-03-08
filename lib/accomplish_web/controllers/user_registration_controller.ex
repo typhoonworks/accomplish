@@ -15,7 +15,7 @@ defmodule AccomplishWeb.UserRegistrationController do
 
   def create(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
-      {:ok, %{user: user, profile: _profile}} ->
+      {:ok, user} ->
         {:ok, _} =
           Accounts.deliver_user_confirmation_instructions(
             user,

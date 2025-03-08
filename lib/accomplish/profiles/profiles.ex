@@ -202,7 +202,11 @@ defmodule Accomplish.Profiles do
     query =
       from e in Experience,
         where: e.profile_id == ^profile.id,
-        order_by: [desc: e.start_date]
+        order_by: [
+          desc: e.start_date,
+          asc_nulls_first: e.end_date,
+          desc: e.end_date
+        ]
 
     Repo.all(query)
   end
@@ -300,7 +304,11 @@ defmodule Accomplish.Profiles do
     query =
       from e in Education,
         where: e.profile_id == ^profile.id,
-        order_by: [desc: e.start_date]
+        order_by: [
+          desc: e.start_date,
+          asc_nulls_first: e.end_date,
+          desc: e.end_date
+        ]
 
     Repo.all(query)
   end

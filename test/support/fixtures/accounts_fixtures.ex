@@ -17,7 +17,7 @@ defmodule Accomplish.AccountsFixtures do
   end
 
   def user_fixture(attrs \\ %{}) do
-    {:ok, %{user: user, profile: _profile}} =
+    {:ok, user} =
       attrs
       |> valid_user_attributes()
       |> Accomplish.Accounts.register_user()

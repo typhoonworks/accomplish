@@ -343,7 +343,7 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
   defp other_month?(day, current_date),
     do: Date.beginning_of_month(day) != Date.beginning_of_month(current_date)
 
-  defp selected_date?(day, nil), do: false
+  defp selected_date?(_day, nil), do: false
   defp selected_date?(day, %Date{} = selected_date), do: day == selected_date
 
   defp selected_date?(day, %DateTime{} = selected_date),
