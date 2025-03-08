@@ -29,22 +29,18 @@ fn extract_text_nif<'a>(env: Env<'a>, pdf_data: Binary, include_metadata: bool) 
                 HashMap::new()
             };
 
-            // Build a map: %{ text: "...", metadata: %{...} }
             let output_map = map_new(env)
                 .map_put("text", text).unwrap()
                 .map_put("metadata", metadata_map).unwrap();
 
-            // Return {:ok, ^map}
             Ok((atoms::ok(), output_map).encode(env))
         }
         Err(err_msg) => {
-            // Return {:error, :extraction_error, "..."}
             Ok((atoms::error(), atoms::extraction_error(), err_msg).encode(env))
         }
     }
 }
 
-/// Extract only PDF metadata
 #[rustler::nif(schedule = "DirtyCpu")]
 fn extract_metadata_nif<'a>(env: Env<'a>, pdf_data: Binary) -> NifResult<Term<'a>> {
     let bytes = pdf_data.as_slice();
@@ -63,22 +59,7 @@ fn extract_text_from_pdf(pdf_bytes: &[u8]) -> Result<String, String> {
     let extracted_text = pdf_extract::extract_text_from_mem(pdf_bytes)
         .map_err(|e| format!("PDF text extraction failed: {}", e))?;
 
-    // Post-process the text to remove unwanted spaces within words
-    let fixed_text = fix_spacing(extracted_text);
-
-    Ok(fixed_text)
-}
-
-fn fix_spacing(text: String) -> String {
-    // Use regex to identify and fix common patterns of incorrect spacing
-    // Example: replace "p roduct" with "product"
-    // This is a simplified version - you'll need proper regex
-
-    // For now, a simple approach to demonstrate
-    text.replace(" p ", "p")
-        .replace(" q ", "q")
-        .replace("ap p ", "app")
-        // Add more replacements as needed
+    Ok(extracted_text)
 }
 
 fn extract_metadata_from_pdf(pdf_bytes: &[u8]) -> Result<HashMap<String, String>, String> {
@@ -121,12 +102,5 @@ fn extract_metadata_from_pdf(pdf_bytes: &[u8]) -> Result<HashMap<String, String>
 fn bytes_to_string(data: &[u8]) -> String {
     String::from_utf8_lossy(data).to_string()
 }
-
-// -------------------------------------------------------------------------
-// New-Style Rustler Init (No Deprecation Warning)
-// -------------------------------------------------------------------------
-// The key is that we do NOT pass an explicit second argument listing NIFs.
-// Rustler 0.36+ will automatically discover all `#[rustler::nif]` functions
-// in this module. This removes the "deprecated constant" warning entirely.
 
 rustler::init!("Elixir.Accomplish.PDFExtractor");

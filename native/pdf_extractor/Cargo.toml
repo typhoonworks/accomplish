@@ -13,8 +13,3 @@ crate-type = ["cdylib"]
 lopdf = "0.35.0"
 pdf-extract = "0.8.2"
 rustler = "0.36.1"
-
-[profile.release]
-lto = true
-codegen-units = 1
-opt-level = 3
