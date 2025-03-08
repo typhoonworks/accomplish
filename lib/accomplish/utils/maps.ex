@@ -4,6 +4,8 @@ defmodule Accomplish.Utils.Maps do
   @doc """
   Converts map keys from strings to atoms, ensuring existing atoms are used.
   """
+  def atomize_keys(%{__struct__: _} = struct), do: struct
+
   def atomize_keys(%{} = map) do
     map
     |> Enum.map(fn {k, v} ->

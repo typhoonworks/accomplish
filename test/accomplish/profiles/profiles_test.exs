@@ -11,9 +11,9 @@ defmodule Accomplish.ProfilesTest do
       bio: "I'm a software engineer with 5+ years of experience.",
       headline: "Software Engineer",
       location: "San Francisco, CA",
-      website: "https://example.com",
-      github: "https://github.com/example",
-      linkedin: "https://linkedin.com/in/example",
+      website_url: "https://example.com",
+      github_handle: "https://github.com/example",
+      linkedin_handle: "https://linkedin.com/in/example",
       skills: ["Elixir", "Phoenix", "PostgreSQL"]
     }
     @update_attrs %{
@@ -62,12 +62,12 @@ defmodule Accomplish.ProfilesTest do
 
       assert fetched_profile.id == profile.id
       assert fetched_profile.bio == profile.bio
-      assert fetched_profile.github == profile.github
+      assert fetched_profile.github_handle == profile.github_handle
       assert fetched_profile.headline == profile.headline
-      assert fetched_profile.linkedin == profile.linkedin
+      assert fetched_profile.linkedin_handle == profile.linkedin_handle
       assert fetched_profile.location == profile.location
       assert fetched_profile.skills == profile.skills
-      assert fetched_profile.website == profile.website
+      assert fetched_profile.website_url == profile.website_url
     end
 
     test "get_profile!/2 preloads associations", %{user: user} do

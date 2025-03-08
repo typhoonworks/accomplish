@@ -25,9 +25,9 @@ defmodule Accomplish.ProfilesFixtures do
           "Experienced software engineer with a passion for building high-quality applications.",
         skills: ["Elixir", "Ruby", "GraphQL"],
         location: "Lisbon, Portugal",
-        website: "https://example.com",
-        github: "jacksparrow",
-        linkedin_url: "jacksparrow"
+        website_url: "https://example.com",
+        github_handle: "jacksparrow",
+        linkedin_handle: "jacksparrow"
       })
 
     {:ok, profile} = Profiles.upsert_profile(user, attrs)

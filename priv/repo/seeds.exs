@@ -53,10 +53,10 @@ profile_attrs = %{
   headline: "Senior Software Engineer",
   bio: "Passionate about building scalable applications and mentoring developers.",
   location: "Lisbon, Portugal",
-  github: "roddev",
-  linkedin: "rod-profile",
-  website: "https://rod.dev",
-  skills: ["Elixir", "Ruby", "GraphQL", "Phoenix", "Vue.js"]
+  github_handle: "roddev",
+  linkedin_handle: "rod-profile",
+  website_url: "https://rod.dev",
+  skills: ["Elixir", "Ruby", "GraphQL", "Phoenix", "Terraform"]
 }
 
 {:ok, profile} = Profiles.create_profile(user, profile_attrs)

@@ -11,9 +11,9 @@ defmodule Accomplish.Repo.Migrations.CreateProfiles do
       add :bio, :text
       add :headline, :string
       add :location, :string
-      add :website, :string
-      add :github, :string
-      add :linkedin, :string
+      add :website_url, :string
+      add :github_handle, :string
+      add :linkedin_handle, :string
       add :skills, {:array, :string}, default: []
 
       timestamps(type: :utc_datetime)

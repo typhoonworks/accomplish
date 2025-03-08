@@ -85,7 +85,7 @@ defmodule AccomplishWeb.ResumeLive do
           <.shadow_url_input
             id="profile-website-input"
             class="text-zinc-300 text-xs"
-            field={@profile_form[:website]}
+            field={@profile_form[:website_url]}
             placeholder="Enter your website URL"
             form={@profile_form}
           />
@@ -97,7 +97,7 @@ defmodule AccomplishWeb.ResumeLive do
           <.shadow_github_input
             id="github-handle-input"
             class="text-zinc-300 text-xs"
-            field={@profile_form[:github]}
+            field={@profile_form[:github_handle]}
             placeholder="Enter GitHub username"
             form={@profile_form}
           />
@@ -109,7 +109,7 @@ defmodule AccomplishWeb.ResumeLive do
           <.shadow_linkedin_input
             id="linkedin-handle-input"
             class="text-zinc-300 text-xs"
-            field={@profile_form[:linkedin]}
+            field={@profile_form[:linkedin_handle]}
             placeholder="Enter LinkedIn username"
             form={@profile_form}
           />
@@ -243,7 +243,7 @@ defmodule AccomplishWeb.ResumeLive do
          |> assign(profile: updated_profile)
          |> assign(profile_form: form)}
 
-      {:error, changeset} ->
+      {:error, _changeset} ->
         {:noreply, socket}
     end
   end
