@@ -48,6 +48,7 @@ defmodule AccomplishWeb.Layout do
   attr :page_drawer?, :boolean, default: false
   attr :drawer_open, :boolean, default: true
   slot :title
+  slot :views
   slot :actions
 
   def page_header(assigns) do
@@ -72,11 +73,12 @@ defmodule AccomplishWeb.Layout do
             </h2>
             <!-- Desktop actions: inline with title -->
             <div class="hidden lg:flex lg:ml-4">
-              {render_slot(@actions)}
+              {render_slot(@views)}
             </div>
           </div>
           <!-- Right side controls: always in the top row -->
           <div class="flex items-center gap-x-4">
+            {render_slot(@actions)}
             <button
               type="button"
               class="-m-2.5 p-2.5 text-zinc-400 hover:text-zinc-500 hidden lg:block"
@@ -111,7 +113,7 @@ defmodule AccomplishWeb.Layout do
         </div>
         <!-- Mobile actions: show below top row -->
         <div class="lg:hidden mt-2 flex flex-row border-t border-zinc-700 py-1 px-4 sm:px-6 lg:px-8">
-          {render_slot(@actions)}
+          {render_slot(@views)}
         </div>
       </div>
     </header>

@@ -28,9 +28,9 @@ defmodule AccomplishWeb.JobApplicationLive.Stage do
               <span class="inline">{@stage.title}</span>
             </div>
           </:title>
-          <:actions>
+          <:views>
             <.nav_button icon="files" text="Documents" href="#" active={@live_action == :documents} />
-          </:actions>
+          </:views>
         </.page_header>
       </:page_header>
 
