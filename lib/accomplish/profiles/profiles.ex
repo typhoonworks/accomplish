@@ -243,9 +243,10 @@ defmodule Accomplish.Profiles do
       {:error, %Ecto.Changeset{}}
   """
   def add_education(profile, attrs) do
-    %Education{}
-    |> Education.changeset(Map.put(attrs, :profile_id, profile.id))
-    |> Repo.insert()
+    attrs = atomize_keys(attrs)
+    changeset = Education.create_changeset(profile, attrs)
+
+    Repo.insert(changeset)
   end
 
   @doc """

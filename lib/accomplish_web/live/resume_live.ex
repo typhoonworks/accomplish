@@ -41,20 +41,20 @@ defmodule AccomplishWeb.ResumeLive do
             />
           </:actions>
         </.page_header>
-
-        <div class="mt-8 w-full">
-          <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
-            <%= case @live_action do %>
-              <% :overview -> %>
-                {render_overview(assigns)}
-              <% :experience -> %>
-                {render_experience(assigns)}
-              <% :education -> %>
-                {render_education(assigns)}
-            <% end %>
-          </div>
-        </div>
       </:page_header>
+
+      <div class="mt-8 w-full">
+        <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
+          <%= case @live_action do %>
+            <% :overview -> %>
+              {render_overview(assigns)}
+            <% :experience -> %>
+              {render_experience(assigns)}
+            <% :education -> %>
+              {render_education(assigns)}
+          <% end %>
+        </div>
+      </div>
     </.layout>
     """
   end
@@ -205,6 +205,7 @@ defmodule AccomplishWeb.ResumeLive do
                     <.shadow_date_picker
                       label="Start date"
                       id={"experience-#{experience.id}-start-date"}
+                      resource_id={experience.id}
                       form={@experience_forms[experience.id]}
                       start_date_field={@experience_forms[experience.id][:start_date]}
                       required={true}
@@ -219,6 +220,7 @@ defmodule AccomplishWeb.ResumeLive do
                     <.shadow_date_picker
                       label="End date"
                       id={"experience-#{experience.id}-end-date"}
+                      resource_id={experience.id}
                       form={@experience_forms[experience.id]}
                       start_date_field={@experience_forms[experience.id][:end_date]}
                       required={true}
@@ -232,11 +234,12 @@ defmodule AccomplishWeb.ResumeLive do
                   <.tooltip>
                     <.shadow_select_input
                       id={"employment_type_select-#{experience.id}"}
+                      resource_id={experience.id}
                       field={@experience_forms[experience.id][:employment_type]}
                       prompt="Set employment type"
                       value={@experience_forms[experience.id][:employment_type].value}
                       options={options_for_employment_type()}
-                      on_select="save_field"
+                      on_select="save_experience_field"
                       variant="transparent"
                     />
                     <.tooltip_content side="bottom">
@@ -453,6 +456,7 @@ defmodule AccomplishWeb.ResumeLive do
                     <.shadow_date_picker
                       label="Start date"
                       id={"education-#{education.id}-start-date"}
+                      resource_id={education.id}
                       form={@education_forms[education.id]}
                       start_date_field={@education_forms[education.id][:start_date]}
                       required={true}
@@ -467,6 +471,7 @@ defmodule AccomplishWeb.ResumeLive do
                     <.shadow_date_picker
                       label="End date"
                       id={"education-#{education.id}-end-date"}
+                      resource_id={education.id}
                       form={@education_forms[education.id]}
                       start_date_field={@education_forms[education.id][:end_date]}
                       required={true}
@@ -741,6 +746,15 @@ defmodule AccomplishWeb.ResumeLive do
     {:noreply, assign(socket, new_experience_form: to_form(changeset))}
   end
 
+  def handle_event("validate_education", %{"education" => params}, socket) do
+    changeset =
+      %Education{}
+      |> Profiles.change_education(params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, new_education_form: to_form(changeset))}
+  end
+
   def handle_event("update_experience_employment_type", %{"value" => value}, socket) do
     form = socket.assigns.new_experience_form
 
@@ -778,12 +792,60 @@ defmodule AccomplishWeb.ResumeLive do
     end
   end
 
+  def handle_event("save_education", %{"education" => params}, socket) do
+    profile = socket.assigns.profile
+
+    case Profiles.add_education(profile, params) do
+      {:ok, education} ->
+        education_forms =
+          Map.put(
+            socket.assigns.education_forms,
+            education.id,
+            to_form(Profiles.change_education(education))
+          )
+
+        socket =
+          socket
+          |> assign(education_forms: education_forms)
+          |> stream_insert(:educations, education)
+          |> push_event("js-exec", %{
+            to: "#new-education-modal",
+            attr: "phx-hide-modal"
+          })
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, new_education_form: to_form(changeset))}
+    end
+  end
+
+  def handle_event(
+        "save_experience_field",
+        %{"field" => field, "value" => value, "id" => id},
+        socket
+      ) do
+    experience = Profiles.get_experience!(id)
+    changes = %{field => value}
+    update_experience_field(socket, experience, changes)
+  end
+
+  def handle_event(
+        "save_education_field",
+        %{"field" => field, "value" => value, "id" => id},
+        socket
+      ) do
+    education = Profiles.get_education!(id)
+    changes = %{field => value}
+    update_education_field(socket, education, changes)
+  end
+
   def handle_info({:update_profile_skills, skills}, socket) do
     changes = %{skills: skills}
     update_profile_field(socket, changes)
   end
 
-  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
+  def handle_info(%{id: _id, resource_id: nil, date: date, form: form, field: field}, socket) do
     params = Map.put(form.params || %{}, to_string(field), date)
 
     case form.name do
@@ -794,6 +856,26 @@ defmodule AccomplishWeb.ResumeLive do
       "education" ->
         updated_changeset = Profiles.change_education(%Education{}, params)
         {:noreply, assign(socket, new_education_form: to_form(updated_changeset))}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_info(
+        %{id: _id, resource_id: resource_id, date: date, form: form, field: field},
+        socket
+      ) do
+    params = Map.put(form.params || %{}, to_string(field), date)
+
+    case form.name do
+      "experience" ->
+        experience = Profiles.get_experience!(resource_id)
+        update_experience_field(socket, experience, params)
+
+      "education" ->
+        education = Profiles.get_education!(resource_id)
+        update_education_field(socket, education, params)
 
       _ ->
         {:noreply, socket}
@@ -819,6 +901,46 @@ defmodule AccomplishWeb.ResumeLive do
          socket
          |> assign(profile: updated_profile)
          |> assign(profile_form: form)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
+  def update_experience_field(socket, experience, changes) do
+    case Profiles.update_experience(experience, changes) do
+      {:ok, updated_experience} ->
+        form =
+          updated_experience
+          |> Profiles.change_experience()
+          |> to_form()
+
+        experience_forms = Map.put(socket.assigns.experience_forms, experience.id, form)
+
+        {:noreply,
+         socket
+         |> assign(experience_forms: experience_forms)
+         |> stream_insert(:experiences, updated_experience)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
+  def update_education_field(socket, education, changes) do
+    case Profiles.update_education(education, changes) do
+      {:ok, updated_education} ->
+        form =
+          updated_education
+          |> Profiles.change_education()
+          |> to_form()
+
+        education_forms = Map.put(socket.assigns.education_forms, education.id, form)
+
+        {:noreply,
+         socket
+         |> assign(education_forms: education_forms)
+         |> stream_insert(:educations, updated_education)}
 
       {:error, _changeset} ->
         {:noreply, socket}

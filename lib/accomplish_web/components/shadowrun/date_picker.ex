@@ -254,6 +254,7 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
 
       send(self(), %{
         id: socket.assigns.id,
+        resource_id: socket.assigns.resource_id,
         field: socket.assigns.start_date_field.field,
         date: socket.assigns.selected_date,
         form: socket.assigns.form
@@ -342,6 +343,12 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
   defp other_month?(day, current_date),
     do: Date.beginning_of_month(day) != Date.beginning_of_month(current_date)
 
+  defp selected_date?(day, nil), do: false
+  defp selected_date?(day, %Date{} = selected_date), do: day == selected_date
+
+  defp selected_date?(day, %DateTime{} = selected_date),
+    do: selected_date?(day, DateTime.to_date(selected_date))
+
   defp selected_date?(day, selected_date) do
     case selected_date do
       nil -> false
@@ -361,13 +368,13 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
   defp format_selected_date(%Date{} = date), do: Calendar.strftime(date, "%b %d")
 
   defp format_selected_date(%DateTime{} = datetime),
-    do: Calendar.strftime(DateTime.to_date(datetime), "%b %d")
+    do: format_selected_date(DateTime.to_date(datetime))
 
   defp format_selected_date_with_year(nil), do: nil
+  defp format_selected_date_with_year(%Date{} = date), do: Calendar.strftime(date, "%b %d")
 
-  defp format_selected_date_with_year(date) do
-    Calendar.strftime(DateTime.to_date(date), "%b %d, %Y")
-  end
+  defp format_selected_date_with_year(%DateTime{} = datetime),
+    do: format_selected_date_with_year(DateTime.to_date(datetime))
 
   defp format_form_error({_key, {msg, _type}}), do: msg
   defp format_form_error({msg, _type}), do: msg

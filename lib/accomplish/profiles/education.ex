@@ -36,6 +36,12 @@ defmodule Accomplish.Profiles.Education do
     timestamps()
   end
 
+  def create_changeset(profile, attrs) do
+    %__MODULE__{}
+    |> changeset(attrs)
+    |> put_assoc(:profile, profile)
+  end
+
   def changeset(profile, attrs) do
     profile
     |> cast(attrs, @permitted)
