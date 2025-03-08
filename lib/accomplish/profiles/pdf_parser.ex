@@ -104,7 +104,28 @@ defmodule Accomplish.Profiles.PDFParser do
   """
 
   @doc """
-  Processes a resume PDF and extracts structured profile information.
+  Processes a resume PDF file path and extracts structured profile information.
+
+  ## Parameters
+    - file_path: Path to the PDF file
+
+  ## Returns
+    - `{:ok, structured_data}` with extracted profile, experiences, and education
+    - `{:error, reason}` on failure
+  """
+  def extract_from_file(file_path) do
+    case File.read(file_path) do
+      {:ok, pdf_binary} ->
+        extract_from_binary(pdf_binary)
+
+      {:error, reason} ->
+        Logger.error("Failed to read resume file: #{inspect(reason)}")
+        {:error, {:file_read_error, reason}}
+    end
+  end
+
+  @doc """
+  Processes a resume PDF binary and extracts structured profile information.
 
   ## Parameters
     - pdf_binary: Raw binary content of the PDF file
@@ -113,11 +134,10 @@ defmodule Accomplish.Profiles.PDFParser do
     - `{:ok, structured_data}` with extracted profile, experiences, and education
     - `{:error, reason}` on failure
   """
-  def extract_profile_data(pdf_binary) when is_binary(pdf_binary) do
-    with {:ok, %{"metadata" => _metadata, "text" => text_content}} <-
-           PDFExtractor.extract_text(pdf_binary),
-         {:ok, structured_data} <- parse_with_llm(text_content) do
-      process_dates(structured_data)
+  def extract_from_binary(pdf_binary) when is_binary(pdf_binary) do
+    with {:ok, %{"text" => text_content}} <- PDFExtractor.extract_text(pdf_binary),
+         {:ok, structured_data} <- extract_from_text(text_content) do
+      {:ok, structured_data}
     else
       {:error, reason} ->
         Logger.error("Resume extraction failed: #{inspect(reason)}")
@@ -126,22 +146,23 @@ defmodule Accomplish.Profiles.PDFParser do
   end
 
   @doc """
-  Processes a resume PDF file and extracts structured profile information.
+  Processes plain text content from a resume and extracts structured profile information.
 
   ## Parameters
-    - file_path: Path to the PDF file
+    - text_content: Text content of the resume
 
   ## Returns
-    - Same returns as `extract_profile_data/1`
+    - `{:ok, structured_data}` with extracted profile, experiences, and education
+    - `{:error, reason}` on failure
   """
-  def extract_profile_data_from_file(file_path) do
-    case File.read(file_path) do
-      {:ok, pdf_binary} ->
-        extract_profile_data(pdf_binary)
-
+  def extract_from_text(text_content) when is_binary(text_content) do
+    with {:ok, raw_data} <- parse_with_llm(text_content),
+         {:ok, processed_data} <- process_dates(raw_data) do
+      {:ok, processed_data}
+    else
       {:error, reason} ->
-        Logger.error("Failed to read resume file: #{inspect(reason)}")
-        {:error, {:file_read_error, reason}}
+        Logger.error("Failed to extract profile data from text: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 

@@ -8,6 +8,8 @@ defmodule AccomplishWeb.ResumeLive do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
 
+  alias Accomplish.Workers.ProcessResume
+
   import AccomplishWeb.JobApplicationHelpers
 
   import AccomplishWeb.Shadowrun.Dialog
@@ -61,6 +63,74 @@ defmodule AccomplishWeb.ResumeLive do
         </div>
       </div>
     </.layout>
+    # Add this to the render/1 function in ResumeLive, right after the stage_dialog component
+    <.dialog
+      id="import-resume-dialog"
+      position={:center}
+      on_cancel={hide_modal("import-resume-dialog")}
+      class="w-full max-w-md"
+    >
+      <.dialog_header>
+        <.dialog_title class="text-sm text-zinc-200 font-light">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-document-text" class="size-4" />
+            <p>Import Resume</p>
+          </div>
+        </.dialog_title>
+        <.dialog_description>
+          Upload your resume PDF to automatically import your profile information.
+          <span class="text-red-400">This will overwrite existing profile data.</span>
+        </.dialog_description>
+      </.dialog_header>
+
+      <.form
+        for={@resume_upload_form}
+        id="resume-upload-form"
+        phx-submit="import_resume_file"
+        phx-change="validate_resume_file"
+        class="space-y-4"
+      >
+        <.dialog_content id="import-resume-content">
+          <div class="flex flex-col gap-4 py-2">
+            <.live_file_input
+              upload={@uploads.resume}
+              class="block w-full text-sm text-zinc-400
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-md file:border-0
+              file:text-xs file:font-light
+              file:bg-zinc-700 file:text-zinc-200
+              hover:file:bg-zinc-600"
+            />
+
+            <div :if={Enum.any?(@uploads.resume.errors)} class="text-red-500 text-xs">
+              <%= for {_ref, error} <- @uploads.resume.errors do %>
+                <p>{error_to_string(error)}</p>
+              <% end %>
+            </div>
+          </div>
+        </.dialog_content>
+
+        <.dialog_footer>
+          <div class="flex justify-end gap-2">
+            <.shadow_button
+              type="button"
+              variant="secondary"
+              phx-click={hide_dialog("import-resume-dialog")}
+            >
+              Cancel
+            </.shadow_button>
+            <.shadow_button
+              type="submit"
+              variant="primary"
+              phx-disable-with="Uploading..."
+              disabled={@uploads.resume.entries == []}
+            >
+              Import
+            </.shadow_button>
+          </div>
+        </.dialog_footer>
+      </.form>
+    </.dialog>
     """
   end
 
@@ -632,7 +702,16 @@ defmodule AccomplishWeb.ResumeLive do
     """
   end
 
-  def mount(_params, _session, %{assigns: %{live_action: :overview}} = socket) do
+  def mount(params, session, socket) do
+    socket =
+      socket
+      |> assign_uploads()
+      |> assign(:resume_upload_form, to_form(%{"file" => nil}))
+
+    mount_action(params, session, socket)
+  end
+
+  defp mount_action(_params, _session, %{assigns: %{live_action: :overview}} = socket) do
     user = socket.assigns.current_user
     profile = Profiles.get_profile_by_user(user.id)
     profile_changeset = Profiles.change_profile(profile)
@@ -648,7 +727,7 @@ defmodule AccomplishWeb.ResumeLive do
     {:ok, socket}
   end
 
-  def mount(_params, _session, %{assigns: %{live_action: :experience}} = socket) do
+  defp mount_action(_params, _session, %{assigns: %{live_action: :experience}} = socket) do
     user = socket.assigns.current_user
     profile = Profiles.get_profile_by_user(user.id)
     experiences = Profiles.list_experiences(profile)
@@ -672,7 +751,7 @@ defmodule AccomplishWeb.ResumeLive do
     {:ok, socket}
   end
 
-  def mount(_params, _session, %{assigns: %{live_action: :education}} = socket) do
+  defp mount_action(_params, _session, %{assigns: %{live_action: :education}} = socket) do
     user = socket.assigns.current_user
     profile = Profiles.get_profile_by_user(user.id)
     educations = Profiles.list_educations(profile)
@@ -879,6 +958,57 @@ defmodule AccomplishWeb.ResumeLive do
     end
   end
 
+  def handle_event("import_resume", _params, socket) do
+    resume_upload_form = to_form(%{"file" => nil})
+
+    {:noreply,
+     socket
+     |> assign(:resume_upload_form, resume_upload_form)
+     |> push_event("js-exec", %{
+       to: "#import-resume-dialog",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event("validate_resume_file", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("import_resume_file", _params, socket) do
+    consume_uploaded_entries(socket, :resume, fn %{path: path}, _entry ->
+      case Accomplish.PDFExtractor.extract_text_from_file(path) do
+        {:ok, %{"text" => text_content}} ->
+          %{
+            user_id: socket.assigns.current_user.id,
+            resume_text: text_content
+          }
+          |> ProcessResume.new()
+          |> Oban.insert()
+
+          {:ok, :processed}
+
+        {:error, reason} ->
+          {:error, "Failed to extract text from PDF: #{inspect(reason)}"}
+      end
+    end)
+
+    case uploaded_entries(socket, :resume) do
+      {[_entry], []} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Resume uploaded successfully. Processing in progress...")
+         |> push_event("js-exec", %{
+           to: "#import-resume-dialog",
+           attr: "phx-hide-modal"
+         })}
+
+      _ ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Error uploading resume. Please try again.")}
+    end
+  end
+
   def handle_info({:update_profile_skills, skills}, socket) do
     changes = %{skills: skills}
     update_profile_field(socket, changes)
@@ -985,4 +1115,19 @@ defmodule AccomplishWeb.ResumeLive do
         {:noreply, socket}
     end
   end
+
+  defp assign_uploads(socket) do
+    socket
+    |> allow_upload(:resume,
+      accept: ~w(.pdf),
+      max_entries: 1,
+      # 10MB
+      max_file_size: 10_000_000
+    )
+  end
+
+  defp error_to_string(:too_large), do: "File is too large"
+  defp error_to_string(:too_many_files), do: "Too many files"
+  defp error_to_string(:not_accepted), do: "Unacceptable file type"
+  defp error_to_string(error), do: "Error: #{inspect(error)}"
 end
