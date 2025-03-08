@@ -17,6 +17,9 @@ defmodule AccomplishWeb.ResumeLive do
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.Tooltip
 
+  @pubsub Accomplish.PubSub
+  @notifications_topic "notifications:events"
+
   def render(assigns) do
     ~H"""
     <.layout current_user={@current_user} current_path={@current_path}>
@@ -705,6 +708,7 @@ defmodule AccomplishWeb.ResumeLive do
   def mount(params, session, socket) do
     socket =
       socket
+      |> subscribe_to_notifications_topic()
       |> assign_uploads()
       |> assign(:resume_upload_form, to_form(%{"file" => nil}))
 
@@ -1056,6 +1060,61 @@ defmodule AccomplishWeb.ResumeLive do
     update_profile_field(socket, changes)
   end
 
+  def handle_info({Profiles, event}, socket) do
+    handle_notification(event, socket)
+  end
+
+  defp handle_notification(%{name: "profile.imported"} = event, socket) do
+    profile = event.profile
+
+    case socket.assigns.live_action do
+      :overview ->
+        profile_changeset = Profiles.change_profile(profile)
+
+        {:noreply,
+         socket
+         |> assign(profile: profile)
+         |> assign(profile_form: to_form(profile_changeset))
+         |> put_flash(:info, "Profile successfully imported from resume.")}
+
+      :experience ->
+        experiences = event.experiences
+
+        experience_forms =
+          experiences
+          |> Enum.map(fn experience ->
+            {experience.id, to_form(Profiles.change_experience(experience))}
+          end)
+          |> Map.new()
+
+        {:noreply,
+         socket
+         |> assign(profile: profile)
+         |> assign(experience_forms: experience_forms)
+         |> stream(:experiences, [], reset: true)
+         |> stream(:experiences, experiences)
+         |> put_flash(:info, "Work experience successfully imported from resume.")}
+
+      :education ->
+        educations = event.educations
+
+        education_forms =
+          educations
+          |> Enum.map(fn education ->
+            {education.id, to_form(Profiles.change_education(education))}
+          end)
+          |> Map.new()
+
+        {:noreply,
+         socket
+         |> assign(profile: profile)
+         |> assign(education_forms: education_forms)
+         |> stream(:educations, [], reset: true)
+         |> stream(:educations, educations)
+         |> put_flash(:info, "Education successfully imported from resume.")}
+    end
+  end
+
   def update_profile_field(socket, changes) do
     profile = socket.assigns.profile
 
@@ -1114,6 +1173,15 @@ defmodule AccomplishWeb.ResumeLive do
       {:error, _changeset} ->
         {:noreply, socket}
     end
+  end
+
+  defp subscribe_to_notifications_topic(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket),
+      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
+
+    socket
   end
 
   defp assign_uploads(socket) do
