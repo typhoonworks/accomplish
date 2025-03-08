@@ -86,7 +86,8 @@ experience_attrs_list = [
     end_date: ~D[2021-07-01],
     description:
       "Sailed the Elixir seas, craftin’ APIs and microservices to plunder data from the depths o’ the digital ocean.",
-    location: "Tortuga, Caribbean Code Isles"
+    location: "Tortuga, Caribbean Code Isles",
+    workplace_type: "remote"
   },
   %{
     company: "Sparrow’s Tech Armada",
@@ -94,7 +95,8 @@ experience_attrs_list = [
     start_date: ~D[2021-08-01],
     description:
       "Leadin’ a fierce band o’ coders to forge scalable, rum-fueled event-driven systems, outsmartin’ storms and rival fleets.",
-    location: "The Black Pearl, Roamin’ the Cloud Seas"
+    location: "The Black Pearl, Roamin’ the Cloud Seas",
+    workplace_type: "hybrid"
   }
 ]
 

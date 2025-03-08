@@ -194,16 +194,16 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
 
         <.tooltip>
           <.shadow_select_input
-            id={"location_select_#{@form.id}_overview"}
-            field={@form[:location]}
-            prompt="Change job location type"
-            value={@form[:location].value}
-            options={options_for_application_location()}
+            id={"workplace_type_select_#{@form.id}_overview"}
+            field={@form[:workplace_type]}
+            prompt="Change workplace type"
+            value={@form[:workplace_type].value}
+            options={options_for_workplace_type()}
             on_select="save_field"
             variant="transparent"
           />
           <.tooltip_content side="bottom">
-            <p>Change job location type</p>
+            <p>Set workplace type</p>
           </.tooltip_content>
         </.tooltip>
 

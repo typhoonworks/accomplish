@@ -10,7 +10,7 @@ defmodule Accomplish.Repo.Migrations.CreateJobApplications do
       add :slug, :string
       add :role, :string, null: false
       add :company, :map, default: %{}, null: false
-      add :location, :string, null: false
+      add :workplace_type, :string, null: false
       add :status, :string, null: false
       add :employment_type, :string
       add :apply_url, :string

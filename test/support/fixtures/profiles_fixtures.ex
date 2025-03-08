@@ -76,7 +76,7 @@ defmodule Accomplish.ProfilesFixtures do
         description: "Leading development of new features and mentoring junior developers.",
         start_date: ~D[2023-01-01],
         end_date: nil,
-        location: "Remote"
+        workplace_type: "Remote"
       })
 
     {:ok, experience} = Profiles.add_experience(profile, attrs)

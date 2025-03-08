@@ -83,7 +83,7 @@ defmodule AccomplishWeb.JobApplicationHelpers do
     ]
   end
 
-  def options_for_application_location do
+  def options_for_workplace_type do
     [
       %{
         label: "Remote",

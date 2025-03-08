@@ -23,14 +23,20 @@ defmodule Accomplish.Profiles.PDFParser do
   2) bio (short professional summary)
   3) location (city, state/country)
   4) skills (array of skills)
+  5) github_handle (GitHub username, extract from URLs like https://github.com/username)
+  6) linkedin_handle (LinkedIn username, extract from URLs like https://linkedin.com/in/username)
+  7) website_url (Personal website URL, ensure it includes http:// or https://)
+  8) interests (Professional or personal interests and hobbies, with formatting preserved)
 
   For each work experience, extract:
   1) company (company name)
   2) role (job title)
-  3) employment_type (full_time, part_time, contractor, internship)
-  4) start_date (YYYY-MM format)
-  5) end_date (YYYY-MM format, or "present")
-  6) description (bullet points of responsibilities/achievements)
+  3) employment_type (full_time, part_time, contractor, employer_of_record, internship)
+  4) workplace_type (remote, on_site, hybrid)
+  5) start_date (YYYY-MM format)
+  6) end_date (YYYY-MM format, or "present")
+  7) description (bullet points of responsibilities/achievements)
+  8) location (city, state/country where job was performed)
 
   For each education entry, extract:
   1) school (institution name)
@@ -38,6 +44,7 @@ defmodule Accomplish.Profiles.PDFParser do
   3) field_of_study (major or field)
   4) start_date (YYYY-MM format)
   5) end_date (YYYY-MM format)
+  6) description (any additional information about the education)
 
   Return valid JSON with the following structure:
   {
@@ -45,16 +52,22 @@ defmodule Accomplish.Profiles.PDFParser do
       "headline": string,
       "bio": string,
       "location": string,
-      "skills": array of strings
+      "skills": array of strings,
+      "github_handle": string,
+      "linkedin_handle": string,
+      "website_url": string,
+      "interests": string
     },
     "experiences": [
       {
         "company": string,
         "role": string,
         "employment_type": string,
+        "workplace_type": string,
         "start_date": string,
         "end_date": string,
-        "description": string
+        "description": string,
+        "location": string
       }
     ],
     "education": [
@@ -63,14 +76,25 @@ defmodule Accomplish.Profiles.PDFParser do
         "degree": string,
         "field_of_study": string,
         "start_date": string,
-        "end_date": string
+        "end_date": string,
+        "description": string
       }
     ]
   }
 
+  For extracting handles and URLs:
+  - Extract the github_handle from GitHub URLs (e.g., https://github.com/username → "username")
+  - Extract the linkedin_handle from LinkedIn URLs (e.g., https://linkedin.com/in/username → "username")
+  - For website_url, include the full URL with protocol (http:// or https://)
+  - If handles or URLs aren't explicitly found, look for patterns like "github.com/username" in text
+
+  For workplace_type:
+  - Identify as "remote", "on_site", or "hybrid" based on context clues
+  - Look for terms like "Remote", "Work from home", "On-site", "In-office", "Hybrid"
+
   Normalize dates to YYYY-MM format. Convert "present" or "current" to null for end_date.
   If any required field is missing, leave it null or empty array.
-  Keep the text formatting (bullet points, paragraphs) in descriptions.
+  Keep the text formatting (bullet points, paragraphs) in descriptions and interests.
   """
 
   @prefill_message """
@@ -79,16 +103,22 @@ defmodule Accomplish.Profiles.PDFParser do
       "headline": "",
       "bio": "",
       "location": "",
-      "skills": []
+      "skills": [],
+      "github_handle": "",
+      "linkedin_handle": "",
+      "website_url": "",
+      "interests": ""
     },
     "experiences": [
       {
         "company": "",
         "role": "",
         "employment_type": "",
+        "workplace_type": "",
         "start_date": "",
         "end_date": "",
-        "description": ""
+        "description": "",
+        "location": ""
       }
     ],
     "education": [
@@ -97,7 +127,8 @@ defmodule Accomplish.Profiles.PDFParser do
         "degree": "",
         "field_of_study": "",
         "start_date": "",
-        "end_date": ""
+        "end_date": "",
+        "description": ""
       }
     ]
   }

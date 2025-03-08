@@ -216,7 +216,19 @@ defmodule AccomplishWeb.ResumeLive do
           phx-value-field={@profile_form[:bio].field}
         />
       </div>
-      <div class="mt-12">
+      <div class="mt-12 space-y-2">
+        <h3 class="text-zinc-400">Interests</h3>
+        <.shadow_input
+          field={@profile_form[:interests]}
+          type="textarea"
+          placeholder="Share your hobbies, interests, and passions outside of work..."
+          class="text-[14px] font-light hover:cursor-text"
+          socket={@socket}
+          phx-blur="save_profile_field"
+          phx-value-field={@profile_form[:interests].field}
+        />
+      </div>
+      <div class="mt-12 space-y-2">
         <.live_component
           module={AccomplishWeb.Components.SkillSelector}
           id="profile-skills"
@@ -322,6 +334,21 @@ defmodule AccomplishWeb.ResumeLive do
                     />
                     <.tooltip_content side="bottom">
                       <p>Change employment type</p>
+                    </.tooltip_content>
+                  </.tooltip>
+                  <.tooltip>
+                    <.shadow_select_input
+                      id={"workplace_type_select-#{experience.id}"}
+                      resource_id={experience.id}
+                      field={@experience_forms[experience.id][:workplace_type]}
+                      prompt="Set workplace type"
+                      value={@experience_forms[experience.id][:workplace_type].value}
+                      options={options_for_workplace_type()}
+                      on_select="save_experience_field"
+                      variant="transparent"
+                    />
+                    <.tooltip_content side="bottom">
+                      <p>Change workplace type</p>
                     </.tooltip_content>
                   </.tooltip>
                 </div>
@@ -442,6 +469,16 @@ defmodule AccomplishWeb.ResumeLive do
                   value={@new_experience_form[:employment_type].value}
                   options={options_for_employment_type()}
                   on_select="update_experience_employment_type"
+                />
+              </div>
+              <div class="relative">
+                <.shadow_select_input
+                  id="workplace_type_select-new-experience"
+                  field={@new_experience_form[:workplace_type]}
+                  prompt="Set workplace type"
+                  value={@new_experience_form[:workplace_type].value}
+                  options={options_for_workplace_type()}
+                  on_select="update_experience_workplace_type"
                 />
               </div>
             </div>

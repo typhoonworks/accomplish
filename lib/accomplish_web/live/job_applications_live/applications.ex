@@ -141,12 +141,12 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
               />
 
               <.shadow_select_input
-                id="application-location-select"
-                field={@form[:location]}
-                prompt="Change job location type"
-                value={@form[:location].value}
-                options={options_for_application_location()}
-                on_select="update_application_form_location"
+                id="application-workplace-type-select"
+                field={@form[:workplace_type]}
+                prompt="Change workplace type"
+                value={@form[:workplace_type].value}
+                options={options_for_workplace_type()}
+                on_select="update_application_form_workplace_type"
               />
             </div>
 
@@ -372,8 +372,8 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, socket |> assign_application_form_status(value)}
   end
 
-  def handle_event("update_application_form_location", %{"value" => value}, socket) do
-    {:noreply, socket |> assign_application_form_location(value)}
+  def handle_event("update_application_form_workplace_type", %{"value" => value}, socket) do
+    {:noreply, socket |> assign_application_form_workplace_type(value)}
   end
 
   def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
@@ -666,11 +666,11 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     assign(socket, :form, to_form(updated_changeset))
   end
 
-  defp assign_application_form_location(socket, location) do
+  defp assign_application_form_workplace_type(socket, workplace_type) do
     form = socket.assigns.form
 
     updated_changeset =
-      Ecto.Changeset.put_change(form.source, :location, location)
+      Ecto.Changeset.put_change(form.source, :workplace_type, workplace_type)
 
     assign(socket, :form, to_form(updated_changeset))
   end

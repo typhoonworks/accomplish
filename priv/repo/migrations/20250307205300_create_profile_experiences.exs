@@ -10,6 +10,7 @@ defmodule Accomplish.Repo.Migrations.CreateProfileExperiences do
       add :profile_id, references(:profiles, type: :uuid, on_delete: :delete_all), null: false
       add :company, :string
       add :employment_type, :string
+      add :workplace_type, :string
       add :role, :string
       add :start_date, :date
       add :end_date, :date
