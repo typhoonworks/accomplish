@@ -489,6 +489,50 @@ defmodule AccomplishWeb.ShadowrunComponents do
     """
   end
 
+  attr :id, :string, required: true
+  attr :class, :string, default: nil
+  attr :field, Phoenix.HTML.FormField, required: true
+  attr :placeholder, :string, default: "Enter GitHub username"
+  attr :form, :any, default: nil
+  attr :rest, :global, default: %{}, include: ~w(disabled readonly required autocomplete)
+
+  def shadow_github_input(assigns) do
+    ~H"""
+    <.live_component
+      module={AccomplishWeb.Shadowrun.SocialHandleInput}
+      id={@id}
+      class={@class}
+      field={@field}
+      form={@form}
+      platform={:github}
+      placeholder={@placeholder}
+      {@rest}
+    />
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :class, :string, default: nil
+  attr :field, Phoenix.HTML.FormField, required: true
+  attr :placeholder, :string, default: "Enter LinkedIn username"
+  attr :form, :any, default: nil
+  attr :rest, :global, default: %{}, include: ~w(disabled readonly required autocomplete)
+
+  def shadow_linkedin_input(assigns) do
+    ~H"""
+    <.live_component
+      module={AccomplishWeb.Shadowrun.SocialHandleInput}
+      id={@id}
+      class={@class}
+      field={@field}
+      form={@form}
+      platform={:linkedin}
+      placeholder={@placeholder}
+      {@rest}
+    />
+    """
+  end
+
   attr :class, :string, default: nil
   attr :rest, :global
   slot :inner_block, required: true

@@ -10,6 +10,8 @@ defmodule Accomplish.Profiles do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
 
+  import Accomplish.Utils.Maps, only: [atomize_keys: 1]
+
   # ========================
   # Profile Functions
   # ========================
@@ -79,10 +81,30 @@ defmodule Accomplish.Profiles do
       iex> update_profile(profile, %{headline: nil})
       {:error, %Ecto.Changeset{}}
   """
-  def update_profile(profile, attrs) do
+  def update_profile(%Profile{} = profile, attrs) do
+    attrs = atomize_keys(attrs)
+
     profile
     |> Profile.update_changeset(attrs)
     |> Repo.update()
+  end
+
+  @spec change_profile(
+          {map(),
+           %{
+             optional(atom()) =>
+               atom()
+               | {:array | :assoc | :embed | :in | :map | :parameterized | :supertype | :try,
+                  any()}
+           }}
+          | %{
+              :__struct__ => atom() | %{:__changeset__ => any(), optional(any()) => any()},
+              optional(atom()) => any()
+            }
+        ) :: Ecto.Changeset.t()
+  def change_profile(profile \\ %Profile{}, attrs \\ %{}) do
+    profile
+    |> Profile.changeset(attrs)
   end
 
   @doc """

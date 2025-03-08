@@ -7,7 +7,7 @@ defmodule Accomplish.Profiles.Profile do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
 
-  @permitted ~w(bio headline location website github linkedin skills)a
+  @permitted ~w(bio headline location website_url github_handle linkedin_handle skills)a
   @required ~w(headline)a
 
   @derive {JSON.Encoder,
@@ -16,9 +16,9 @@ defmodule Accomplish.Profiles.Profile do
              :bio,
              :headline,
              :location,
-             :website,
-             :github,
-             :linkedin,
+             :website_url,
+             :github_handle,
+             :linkedin_handle,
              :skills,
              :inserted_at,
              :updated_at
@@ -28,9 +28,9 @@ defmodule Accomplish.Profiles.Profile do
     field :bio, :string
     field :headline, :string
     field :location, :string
-    field :website, :string
-    field :github, :string
-    field :linkedin, :string
+    field :website_url, :string
+    field :github_handle, :string
+    field :linkedin_handle, :string
     field :skills, {:array, :string}, default: []
 
     belongs_to :user, User
@@ -54,7 +54,7 @@ defmodule Accomplish.Profiles.Profile do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
-    |> URLValidators.validate_url(:website)
+    |> URLValidators.validate_url(:website_url, strict: false)
     |> assoc_constraint(:user)
   end
 end

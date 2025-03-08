@@ -1,8 +1,8 @@
-defmodule AccomplishWeb.Shadowrun.UrlInput do
+defmodule AccomplishWeb.Shadowrun.SocialHandleInput do
   @moduledoc false
 
   use Phoenix.LiveComponent
-  import AccomplishWeb.CoreComponents
+  import AccomplishWeb.ShadowrunComponents
   alias Phoenix.LiveView.JS
 
   @impl true
@@ -11,7 +11,7 @@ defmodule AccomplishWeb.Shadowrun.UrlInput do
     assigns = Map.put(assigns, :has_value, has_value)
 
     ~H"""
-    <div class="url-input">
+    <div class="social-handle-input">
       <input type="hidden" name={@field.name} id={"#{@id}_#{@field.id}"} value={@field.value} />
 
       <div class="relative group">
@@ -31,21 +31,22 @@ defmodule AccomplishWeb.Shadowrun.UrlInput do
               {@field.value}
             </span>
             <a
-              href={fix_url(@field.value)}
+              href={social_profile_url(@platform, @field.value)}
               target="_blank"
               rel="noopener noreferrer"
               class="text-zinc-500 self-center"
             >
-              <.icon
-                name="hero-arrow-top-right-on-square-mini"
-                class="size-3 inline-block align-middle"
-              />
+              <%= if @platform == :github do %>
+                <.lucide_icon name="github" class="size-3 inline-block align-middle" />
+              <% else %>
+                <.lucide_icon name="linkedin" class="size-3 inline-block align-middle" />
+              <% end %>
             </a>
           </div>
         <% else %>
           <div id={"#{@id}"} phx-hook="UrlInputAutoFocus" phx-update="ignore">
             <input
-              type="url"
+              type="text"
               id={"#{@id}_input"}
               phx-blur="save-value"
               phx-keydown="handle-keydown"
@@ -116,7 +117,7 @@ defmodule AccomplishWeb.Shadowrun.UrlInput do
   end
 
   defp update_field_value(socket, value) do
-    normalized_value = normalize_url(value)
+    normalized_value = extract_handle(value, socket.assigns.platform)
     socket = assign(socket, value: normalized_value)
 
     send(self(), %{
@@ -129,19 +130,45 @@ defmodule AccomplishWeb.Shadowrun.UrlInput do
     socket
   end
 
-  defp normalize_url(""), do: ""
-  defp normalize_url(nil), do: ""
+  defp extract_handle("", _platform), do: ""
+  defp extract_handle(nil, _platform), do: ""
 
-  defp normalize_url(url) do
-    if String.starts_with?(url, ["http://", "https://"]) do
-      url
-    else
-      "https://#{url}"
+  defp extract_handle(input, :github) do
+    cond do
+      String.match?(input, ~r{^(?:https?://)?github\.com/([^/]+)/?.*$}) ->
+        Regex.run(~r{^(?:https?://)?github\.com/([^/]+)/?.*$}, input, capture: :all_but_first)
+        |> List.first()
+
+      String.starts_with?(input, "@") ->
+        String.replace_prefix(input, "@", "")
+
+      true ->
+        input
     end
   end
 
-  defp fix_url(url) do
-    normalize_url(url)
+  defp extract_handle(input, :linkedin) do
+    cond do
+      String.match?(input, ~r{^(?:https?://)?(?:www\.)?linkedin\.com/in/([^/]+)/?.*$}) ->
+        Regex.run(~r{^(?:https?://)?(?:www\.)?linkedin\.com/in/([^/]+)/?.*$}, input,
+          capture: :all_but_first
+        )
+        |> List.first()
+
+      String.starts_with?(input, "@") ->
+        String.replace_prefix(input, "@", "")
+
+      true ->
+        input
+    end
+  end
+
+  defp social_profile_url(:github, handle) do
+    "https://github.com/#{handle}"
+  end
+
+  defp social_profile_url(:linkedin, handle) do
+    "https://www.linkedin.com/in/#{handle}"
   end
 
   defp format_error({_key, {msg, _type}}), do: msg

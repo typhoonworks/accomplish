@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.JobApplicationLive do
+defmodule AccomplishWeb.JobApplicationsLive.Application do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
@@ -360,6 +360,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     with {:ok, socket, application} <- fetch_application(socket, slug, []) do
       socket =
         socket
+        |> assign(page_title: "#{application.role} • Overview")
         |> assign(application: application)
         |> assign(stages_count: application.stages_count)
         |> assign_form(application)
@@ -376,6 +377,7 @@ defmodule AccomplishWeb.JobApplicationLive do
     with {:ok, socket, application} <- fetch_application(socket, slug, preloads) do
       socket =
         socket
+        |> assign(page_title: "#{application.role} • Stages")
         |> assign(application: application)
         |> assign(stages_count: application.stages_count)
         |> assign_form(application)
