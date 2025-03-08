@@ -57,3 +57,6 @@ plausible-report.xml
 # Ignore ssr build for svelte.
 /priv/svelte/
 .DS_Store
+
+# Rust binary artifacts
+/target/

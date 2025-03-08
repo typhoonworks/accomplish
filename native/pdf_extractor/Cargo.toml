@@ -1,0 +1,20 @@
+[package]
+name = "pdf_extractor"
+version = "0.1.0"
+authors = ["Rui Freitas <rodloboz@hey.com>"]
+edition = "2021"
+
+[lib]
+name = "pdf_extractor"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+lopdf = "0.35.0"
+pdf-extract = "0.8.2"
+rustler = "0.36.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
