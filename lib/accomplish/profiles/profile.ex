@@ -8,7 +8,7 @@ defmodule Accomplish.Profiles.Profile do
   alias Accomplish.Profiles.Education
 
   @permitted ~w(bio headline location website_url github_handle linkedin_handle skills)a
-  @required ~w(headline)a
+  @required []
 
   @derive {JSON.Encoder,
            only: [

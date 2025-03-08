@@ -6,6 +6,7 @@ defmodule Accomplish.Accounts do
   use Accomplish.Context
 
   alias Accomplish.Accounts.{User, UserToken, UserNotifier, ApiKey}
+  alias Accomplish.Profiles
 
   ## Database getters
 
@@ -64,21 +65,28 @@ defmodule Accomplish.Accounts do
   ## User registration
 
   @doc """
-  Registers a user.
+  Registers a user and creates an associated profile.
+
+  If the user is successfully created, a profile is also created within the same transaction.
 
   ## Examples
 
       iex> register_user(%{field: value})
-      {:ok, %User{}}
+      {:ok, %{user: %User{}, profile: %Profiles.Profile{}}}
 
       iex> register_user(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+      {:error, :user, %Ecto.Changeset{}, %{}} # User creation fails
   """
   def register_user(attrs, opts \\ []) do
-    %User{}
-    |> User.registration_changeset(attrs, opts)
-    |> Repo.insert()
+    Multi.new()
+    |> Multi.insert(:user, User.registration_changeset(%User{}, attrs, opts))
+    |> Multi.run(:profile, fn _repo, %{user: user} ->
+      case Profiles.upsert_profile(user, %{}) do
+        {:ok, profile} -> {:ok, profile}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
+    |> Repo.transaction()
   end
 
   @doc """

@@ -7,8 +7,8 @@ defmodule Accomplish.Profiles.Education do
 
   import Accomplish.DateValidators, only: [validate_start_date_before_end_date: 1]
 
-  @permitted ~w(profile_id school degree field_of_study start_date end_date description)a
-  @required ~w(profile_id school degree field_of_study start_date)a
+  @permitted ~w(school degree field_of_study start_date end_date description)a
+  @required ~w(school degree field_of_study start_date)a
 
   @derive {JSON.Encoder,
            only: [

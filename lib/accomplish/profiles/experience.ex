@@ -7,8 +7,8 @@ defmodule Accomplish.Profiles.Experience do
 
   import Accomplish.DateValidators, only: [validate_start_date_before_end_date: 1]
 
-  @permitted ~w(profile_id company employment_type role start_date end_date description location)a
-  @required ~w(profile_id company role start_date)a
+  @permitted ~w(company employment_type role start_date end_date description location)a
+  @required ~w(company role start_date description)a
 
   @employment_types ~w(full_time part_time contractor employer_of_record internship)a
 
@@ -38,6 +38,12 @@ defmodule Accomplish.Profiles.Experience do
     belongs_to :profile, Profile
 
     timestamps()
+  end
+
+  def create_changeset(profile, attrs) do
+    %__MODULE__{}
+    |> changeset(attrs)
+    |> put_assoc(:profile, profile)
   end
 
   def changeset(profile, attrs) do

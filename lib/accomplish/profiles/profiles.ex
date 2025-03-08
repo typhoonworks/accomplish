@@ -145,9 +145,10 @@ defmodule Accomplish.Profiles do
       {:error, %Ecto.Changeset{}}
   """
   def add_experience(profile, attrs) do
-    %Experience{}
-    |> Experience.changeset(Map.put(attrs, :profile_id, profile.id))
-    |> Repo.insert()
+    attrs = atomize_keys(attrs)
+    changeset = Experience.create_changeset(profile, attrs)
+
+    Repo.insert(changeset)
   end
 
   @doc """

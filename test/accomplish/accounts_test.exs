@@ -86,7 +86,10 @@ defmodule Accomplish.AccountsTest do
 
     test "registers users with a hashed password" do
       email = unique_user_email()
-      {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
+
+      {:ok, %{user: user, profile: _profile}} =
+        Accounts.register_user(valid_user_attributes(email: email))
+
       assert user.email == email
       assert is_binary(user.hashed_password)
       assert is_nil(user.confirmed_at)

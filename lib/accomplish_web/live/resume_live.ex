@@ -5,6 +5,8 @@ defmodule AccomplishWeb.ResumeLive do
 
   alias Accomplish.Accounts
   alias Accomplish.Profiles
+  alias Accomplish.Profiles.Experience
+  alias Accomplish.Profiles.Education
 
   import AccomplishWeb.JobApplicationHelpers
 
@@ -276,7 +278,7 @@ defmodule AccomplishWeb.ResumeLive do
                 id={"experience-#{experience.id}-description"}
                 field={@experience_forms[experience.id][:description]}
                 type="textarea"
-                placeholder="Describe your responsibilities, achievements, and the technologies you worked with..."
+                placeholder="List your dev highlights – achievements, impact, and tech you used..."
                 class="text-sm font-light hover:cursor-text"
                 socket={@socket}
                 phx-blur="save_experience_field"
@@ -349,6 +351,16 @@ defmodule AccomplishWeb.ResumeLive do
                   form={@new_experience_form}
                   start_date_field={@new_experience_form[:end_date]}
                   required={false}
+                />
+              </div>
+              <div class="relative">
+                <.shadow_select_input
+                  id="employment_type_select-new-experience"
+                  field={@new_experience_form[:employment_type]}
+                  prompt="Set employment type"
+                  value={@new_experience_form[:employment_type].value}
+                  options={options_for_employment_type()}
+                  on_select="update_experience_employment_type"
                 />
               </div>
             </div>
@@ -642,6 +654,7 @@ defmodule AccomplishWeb.ResumeLive do
     socket =
       socket
       |> assign(page_title: "Resume • Experience")
+      |> assign(profile: profile)
       |> assign(new_experience_form: to_form(changeset))
       |> assign(experience_forms: experience_forms)
       |> stream(:experiences, experiences)
@@ -665,6 +678,7 @@ defmodule AccomplishWeb.ResumeLive do
     socket =
       socket
       |> assign(page_title: "Resume • Education")
+      |> assign(profile: profile)
       |> assign(new_education_form: to_form(changeset))
       |> assign(education_forms: education_forms)
       |> stream(:educations, educations)
@@ -718,9 +732,72 @@ defmodule AccomplishWeb.ResumeLive do
      })}
   end
 
+  def handle_event("validate_experience", %{"experience" => params}, socket) do
+    changeset =
+      %Experience{}
+      |> Profiles.change_experience(params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, new_experience_form: to_form(changeset))}
+  end
+
+  def handle_event("update_experience_employment_type", %{"value" => value}, socket) do
+    form = socket.assigns.new_experience_form
+
+    updated_changeset =
+      Ecto.Changeset.put_change(form.source, :employment_type, value)
+
+    {:noreply, assign(socket, :new_experience_form, to_form(updated_changeset))}
+  end
+
+  def handle_event("save_experience", %{"experience" => params}, socket) do
+    profile = socket.assigns.profile
+
+    case Profiles.add_experience(profile, params) do
+      {:ok, experience} ->
+        experience_forms =
+          Map.put(
+            socket.assigns.experience_forms,
+            experience.id,
+            to_form(Profiles.change_experience(experience))
+          )
+
+        socket =
+          socket
+          |> assign(experience_forms: experience_forms)
+          |> stream_insert(:experiences, experience)
+          |> push_event("js-exec", %{
+            to: "#new-experience-modal",
+            attr: "phx-hide-modal"
+          })
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, new_experience_form: to_form(changeset))}
+    end
+  end
+
   def handle_info({:update_profile_skills, skills}, socket) do
     changes = %{skills: skills}
     update_profile_field(socket, changes)
+  end
+
+  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
+    params = Map.put(form.params || %{}, to_string(field), date)
+
+    case form.name do
+      "experience" ->
+        updated_changeset = Profiles.change_experience(%Experience{}, params)
+        {:noreply, assign(socket, new_experience_form: to_form(updated_changeset))}
+
+      "education" ->
+        updated_changeset = Profiles.change_education(%Education{}, params)
+        {:noreply, assign(socket, new_education_form: to_form(updated_changeset))}
+
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   def handle_info(%{id: _id, field: field, value: value, form: _form}, socket) do

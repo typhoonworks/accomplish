@@ -36,7 +36,7 @@ attrs = %{
 
 IO.puts("Creating initial user...")
 
-{:ok, user} =
+{:ok, %{user: user, profile: _profile}} =
   Accounts.register_user(
     %{
       email: "jack@me.local",
@@ -60,7 +60,7 @@ profile_attrs = %{
   skills: ["Elixir", "Rum", "Phoenix", "Plundering APIs", "Git Storms"]
 }
 
-{:ok, profile} = Profiles.create_profile(user, profile_attrs)
+{:ok, profile} = Profiles.upsert_profile(user, profile_attrs)
 
 IO.puts("Adding Education for the user...")
 
