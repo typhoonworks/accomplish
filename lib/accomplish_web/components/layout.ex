@@ -313,10 +313,10 @@ defmodule AccomplishWeb.Layout do
           </.sidebar_item>
           <.sidebar_item>
             <.sidebar_link
-              href="#"
-              icon="hero-folder-open-solid"
-              text="Documents"
-              active={@current_path == "/documents"}
+              href={~p"/resume/overview"}
+              icon="hero-document-text-solid"
+              text="Resume"
+              active={Regex.match?(~r"^/resume/(overview|experience|education)$", @current_path)}
             />
           </.sidebar_item>
         </.sidebar_group>

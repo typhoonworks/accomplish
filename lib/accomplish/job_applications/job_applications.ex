@@ -9,6 +9,8 @@ defmodule Accomplish.JobApplications do
   alias Accomplish.JobApplications.Events
   alias Accomplish.Slug
 
+  import Accomplish.Utils.Maps, only: [atomize_keys: 1]
+
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
   @events_topic "events:all"
@@ -72,7 +74,7 @@ defmodule Accomplish.JobApplications do
   end
 
   def create_application(applicant, attrs) do
-    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
+    attrs = atomize_keys(attrs)
     changeset = Application.create_changeset(applicant, attrs)
 
     Ecto.Multi.new()
@@ -104,7 +106,7 @@ defmodule Accomplish.JobApplications do
   end
 
   def update_application(%Application{} = application, attrs) do
-    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
+    attrs = atomize_keys(attrs)
     old_status = application.status
 
     updated_attrs = Application.ensure_applied_at(attrs, application)
@@ -162,7 +164,7 @@ defmodule Accomplish.JobApplications do
   end
 
   def add_stage(application, attrs) do
-    attrs = Accomplish.Utils.Maps.key_to_atom(attrs)
+    attrs = atomize_keys(attrs)
     stage_changeset = Stage.create_changeset(application, attrs)
 
     Ecto.Multi.new()

@@ -54,7 +54,7 @@ defmodule Accomplish.Profiles.Profile do
   defp common_validations(changeset) do
     changeset
     |> validate_required(@required)
-    |> URLValidators.validate_url(:website)
+    |> URLValidators.validate_url(:website, strict: false)
     |> assoc_constraint(:user)
   end
 end
