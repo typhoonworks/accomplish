@@ -62,7 +62,7 @@ defmodule Accomplish.MixProject do
        compile: false,
        depth: 1},
       {:live_svelte, "~> 0.15.0"},
-      {:lucide_live_view, "~> 0.1.0"},
+      {:lucide_live_view, github: "typhoonworks/lucide_live_view", branch: "main"},
       {:oban, "~> 2.19"},
       {:oban_web, "~> 2.11"},
       {:open_api_spex, "~> 3.21"},

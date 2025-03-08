@@ -66,7 +66,6 @@ defmodule AccomplishWeb.ResumeLive do
         </div>
       </div>
     </.layout>
-    # Add this to the render/1 function in ResumeLive, right after the stage_dialog component
     <.dialog
       id="import-resume-dialog"
       position={:center}
@@ -358,11 +357,11 @@ defmodule AccomplishWeb.ResumeLive do
                 <.dropdown_menu>
                   <.dropdown_menu_trigger id={"#{experience.id}-dropdown-trigger"} class="group">
                     <.shadow_button type="button" variant="transparent">
-                      <.icon name="hero-ellipsis-horizontal" class="size-4 text-zinc-400" />
+                      <.lucide_icon name="ellipsis" class="size-4 text-zinc-400" />
                     </.shadow_button>
                   </.dropdown_menu_trigger>
                   <.dropdown_menu_content>
-                    <.menu class="w-56 text-zinc-300 bg-zinc-900">
+                    <.menu class="w-56 text-zinc-300 bg-zinc-800">
                       <.menu_group>
                         <.menu_item class="text-sm">
                           <button
@@ -604,11 +603,11 @@ defmodule AccomplishWeb.ResumeLive do
                 <.dropdown_menu>
                   <.dropdown_menu_trigger id={"#{education.id}-dropdown-trigger"} class="group">
                     <.shadow_button type="button" variant="transparent">
-                      <.icon name="hero-ellipsis-horizontal" class="size-4 text-zinc-400" />
+                      <.lucide_icon name="ellipsis" class="size-4 text-zinc-400" />
                     </.shadow_button>
                   </.dropdown_menu_trigger>
                   <.dropdown_menu_content>
-                    <.menu class="w-56 text-zinc-300 bg-zinc-900">
+                    <.menu class="w-56 text-zinc-300 bg-zinc-800">
                       <.menu_group>
                         <.menu_item class="text-sm">
                           <button

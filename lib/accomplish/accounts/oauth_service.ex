@@ -36,7 +36,7 @@ defmodule Accomplish.Accounts.OAuthService do
   their OAuth identity are created in a single transaction.
   """
 
-  alias Accomplish.{Accounts, OAuth, Repo}
+  alias Accomplish.{Accounts, OAuth, Repo, Profiles}
   alias Ecto.Multi
 
   def find_or_create_user_from_oauth(provider, %{user: oauth_user} = auth) do
@@ -71,9 +71,13 @@ defmodule Accomplish.Accounts.OAuthService do
   defp create_user_with_oauth_identity(provider, %{user: oauth_user, token: token}) do
     result =
       Multi.new()
-      |> Ecto.Multi.run(:create_user, fn _repo, _context ->
+      |> Multi.run(:create_user, fn _repo, _context ->
         user_params = user_params(oauth_user)
         Accounts.create_user_from_oauth(user_params)
+      end)
+      |> Multi.run(:profile, fn _repo, %{create_user: user} ->
+        profile_params = extract_profile_params(oauth_user)
+        Profiles.upsert_profile(user, profile_params)
       end)
       |> Multi.run(:oauth_identity, fn _repo, %{create_user: user} ->
         attrs = %{
@@ -102,8 +106,43 @@ defmodule Accomplish.Accounts.OAuthService do
   defp user_params(oauth_user) do
     %{
       email: oauth_user["email"],
-      username: extract_username(oauth_user)
+      username: extract_username(oauth_user),
+      first_name: extract_first_name(oauth_user),
+      last_name: extract_last_name(oauth_user)
     }
+  end
+
+  defp extract_first_name(oauth_user) do
+    cond do
+      oauth_user["given_name"] ->
+        oauth_user["given_name"]
+
+      oauth_user["name"] && is_binary(oauth_user["name"]) ->
+        oauth_user["name"]
+        |> String.split(" ", trim: true)
+        |> List.first("")
+
+      true ->
+        nil
+    end
+  end
+
+  defp extract_last_name(oauth_user) do
+    cond do
+      oauth_user["family_name"] ->
+        oauth_user["family_name"]
+
+      oauth_user["name"] && is_binary(oauth_user["name"]) ->
+        names = String.split(oauth_user["name"], " ", trim: true)
+
+        case Enum.drop(names, 1) do
+          [] -> nil
+          rest -> Enum.join(rest, " ")
+        end
+
+      true ->
+        nil
+    end
   end
 
   defp extract_username(oauth_user) do
@@ -153,4 +192,37 @@ defmodule Accomplish.Accounts.OAuthService do
   end
 
   defp parse_scopes(scopes), do: scopes
+
+  defp extract_profile_params(oauth_user) do
+    github_handle = if oauth_user["login"], do: oauth_user["login"], else: nil
+
+    profile_params = %{}
+
+    profile_params =
+      if oauth_user["bio"],
+        do: Map.put(profile_params, :bio, oauth_user["bio"]),
+        else: profile_params
+
+    profile_params =
+      if oauth_user["company"],
+        do: Map.put(profile_params, :headline, oauth_user["company"]),
+        else: profile_params
+
+    profile_params =
+      if oauth_user["location"],
+        do: Map.put(profile_params, :location, oauth_user["location"]),
+        else: profile_params
+
+    profile_params =
+      if oauth_user["blog"] || oauth_user["website"],
+        do: Map.put(profile_params, :website_url, oauth_user["blog"] || oauth_user["website"]),
+        else: profile_params
+
+    profile_params =
+      if github_handle,
+        do: Map.put(profile_params, :github_handle, github_handle),
+        else: profile_params
+
+    profile_params
+  end
 end
