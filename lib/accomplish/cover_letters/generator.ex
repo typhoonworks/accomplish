@@ -51,6 +51,7 @@ defmodule Accomplish.CoverLetters.Generator do
     - :ok on successful generation
     - {:error, reason} on failure
   """
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def generate_streaming(pid, user, application) do
     Task.start(fn ->
       # Configure client and prepare request data
@@ -175,8 +176,7 @@ defmodule Accomplish.CoverLetters.Generator do
   defp format_experiences([]), do: "No work experience provided."
 
   defp format_experiences(experiences) do
-    experiences
-    |> Enum.map(fn exp ->
+    Enum.map_join(experiences, "\n\n", fn exp ->
       end_date = if exp.end_date, do: Date.to_string(exp.end_date), else: "Present"
 
       """
@@ -184,18 +184,15 @@ defmodule Accomplish.CoverLetters.Generator do
       #{exp.description || ""}
       """
     end)
-    |> Enum.join("\n\n")
   end
 
   defp format_educations([]), do: "No education provided."
 
   defp format_educations(educations) do
-    educations
-    |> Enum.map(fn edu ->
+    Enum.map_join(educations, "\n", fn edu ->
       end_date = if edu.end_date, do: Date.to_string(edu.end_date), else: "Present"
 
       "#{edu.degree} in #{edu.field_of_study} from #{edu.school} (#{Date.to_string(edu.start_date)} - #{end_date})"
     end)
-    |> Enum.join("\n")
   end
 end

@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.Components.CoverLetterGenerator do
+  @moduledoc false
+
   use Phoenix.LiveComponent
   import AccomplishWeb.ShadowrunComponents
   import AccomplishWeb.Shadowrun.Dialog
