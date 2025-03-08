@@ -60,8 +60,25 @@ fn extract_metadata_nif<'a>(env: Env<'a>, pdf_data: Binary) -> NifResult<Term<'a
 // -------------------------------------------------------------------------
 
 fn extract_text_from_pdf(pdf_bytes: &[u8]) -> Result<String, String> {
-    pdf_extract::extract_text_from_mem(pdf_bytes)
-        .map_err(|e| format!("PDF text extraction failed: {}", e))
+    let extracted_text = pdf_extract::extract_text_from_mem(pdf_bytes)
+        .map_err(|e| format!("PDF text extraction failed: {}", e))?;
+
+    // Post-process the text to remove unwanted spaces within words
+    let fixed_text = fix_spacing(extracted_text);
+
+    Ok(fixed_text)
+}
+
+fn fix_spacing(text: String) -> String {
+    // Use regex to identify and fix common patterns of incorrect spacing
+    // Example: replace "p roduct" with "product"
+    // This is a simplified version - you'll need proper regex
+
+    // For now, a simple approach to demonstrate
+    text.replace(" p ", "p")
+        .replace(" q ", "q")
+        .replace("ap p ", "app")
+        // Add more replacements as needed
 }
 
 fn extract_metadata_from_pdf(pdf_bytes: &[u8]) -> Result<HashMap<String, String>, String> {
