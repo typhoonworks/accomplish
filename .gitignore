@@ -60,3 +60,4 @@ plausible-report.xml
 
 # Rust binary artifacts
 /target/
+priv/native
