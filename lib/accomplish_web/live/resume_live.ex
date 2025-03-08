@@ -840,6 +840,40 @@ defmodule AccomplishWeb.ResumeLive do
     update_education_field(socket, education, changes)
   end
 
+  def handle_event("delete_experience", %{"id" => id}, socket) do
+    experience = Profiles.get_experience!(id)
+
+    case Profiles.remove_experience(experience) do
+      {:ok, _deleted_experience} ->
+        experience_forms = Map.delete(socket.assigns.experience_forms, id)
+
+        {:noreply,
+         socket
+         |> assign(experience_forms: experience_forms)
+         |> stream_delete(:experiences, experience)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("delete_education", %{"id" => id}, socket) do
+    education = Profiles.get_education!(id)
+
+    case Profiles.remove_education(education) do
+      {:ok, _deleted_education} ->
+        education_forms = Map.delete(socket.assigns.education_forms, id)
+
+        {:noreply,
+         socket
+         |> assign(education_forms: education_forms)
+         |> stream_delete(:educations, education)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
   def handle_info({:update_profile_skills, skills}, socket) do
     changes = %{skills: skills}
     update_profile_field(socket, changes)
