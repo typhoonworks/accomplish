@@ -39,9 +39,9 @@ IO.puts("Creating initial user...")
 {:ok, user} =
   Accounts.register_user(
     %{
-      email: "rod@me.local",
+      email: "jack@me.local",
       password: "password@123",
-      username: "rod"
+      username: "sparrow"
     },
     min_length: 3
   )
@@ -50,16 +50,57 @@ IO.puts("Creating Profile...")
 
 profile_attrs = %{
   user_id: user.id,
-  headline: "Senior Software Engineer",
-  bio: "Passionate about building scalable applications and mentoring developers.",
-  location: "Lisbon, Portugal",
-  github_handle: "roddev",
-  linkedin_handle: "rod-profile",
-  website_url: "https://rod.dev",
-  skills: ["Elixir", "Ruby", "GraphQL", "Phoenix", "Terraform"]
+  headline: "Senior Software Pirate",
+  bio:
+    "A wily coder sailin’ the Elixir currents, plunderin’ bugs and brewin’ rum-powered apps with me trusty Phoenix crew.",
+  location: "Tortuga, Caribbean Code Isles",
+  github_handle: "sparrow",
+  linkedin_handle: "sparrow",
+  website_url: "https://jacksparrow.io",
+  skills: ["Elixir", "Rum", "Phoenix", "Plundering APIs", "Git Storms"]
 }
 
-{:ok, profile} = Profiles.create_profile(user, profile_attrs)
+{:ok, profile} = Profiles.upsert_profile(user, profile_attrs)
+
+IO.puts("Adding Education for the user...")
+
+education_attrs = %{
+  school: "Port Royal Academy of Piratical Engineering",
+  degree: "Bachelor of the Black Arts",
+  field_of_study: "Computational Plundering",
+  start_date: ~D[2015-09-01],
+  end_date: ~D[2019-06-01],
+  description:
+    "Mastered the arts o’ distributed rum caches, data scurvy-structures, and algorithms fer outwittin’ the Royal Navy’s firewalls."
+}
+
+{:ok, _education} = Profiles.add_education(profile, education_attrs)
+
+IO.puts("Adding Experiences for the user...")
+
+experience_attrs_list = [
+  %{
+    company: "The Black Pearl Coding Co.",
+    role: "Junior Code Buccaneer",
+    start_date: ~D[2019-07-01],
+    end_date: ~D[2021-07-01],
+    description:
+      "Sailed the Elixir seas, craftin’ APIs and microservices to plunder data from the depths o’ the digital ocean.",
+    location: "Tortuga, Caribbean Code Isles"
+  },
+  %{
+    company: "Sparrow’s Tech Armada",
+    role: "Captain o’ the Dev Crew",
+    start_date: ~D[2021-08-01],
+    description:
+      "Leadin’ a fierce band o’ coders to forge scalable, rum-fueled event-driven systems, outsmartin’ storms and rival fleets.",
+    location: "The Black Pearl, Roamin’ the Cloud Seas"
+  }
+]
+
+for exp_attrs <- experience_attrs_list do
+  {:ok, _experience} = Profiles.add_experience(profile, exp_attrs)
+end
 
 IO.puts("Seeding Job Applications...")
 
@@ -85,7 +126,8 @@ job_applications = [
     - **Stock Options:** RSUs vested over 4 years
     - **Benefits:** Health, dental, 401k, learning stipend
     """,
-    notes: "Excited about their engineering culture and distributed systems work."
+    notes:
+      "Be this Stripe a treasure chest o’ coin and code? Their Elixir ways and distributed plunderin’ be callin’ to me pirate heart, savvy?"
   },
   %{
     company: %{name: "GitLab", website_url: "https://gitlab.com"},
@@ -108,7 +150,8 @@ job_applications = [
     - **Contract Duration:** 6 months with possible extension
     - **Perks:** Remote work, flexible hours
     """,
-    notes: "Looking for more Vue.js experience."
+    notes:
+      "A pox on ’em! They scuttled me chances at Vue.js glory. Methinks their loss be greater than mine own, arr!"
   },
   %{
     company: %{name: "Shopify", website_url: "https://shopify.com"},
@@ -132,14 +175,14 @@ job_applications = [
     - **Bonuses:** Annual performance bonus of up to 10%
     - **Perks:** Remote-friendly, home office stipend, learning budget
     """,
-    notes: "Excited about the offer!"
+    notes:
+      "Shiver me timbers, an offer from Shopify! A fine bounty o’ gold and code awaits—me compass points true to this prize, arr!"
   }
 ]
 
 for attrs <- job_applications do
   {:ok, job_app} = JobApplications.create_application(user, attrs)
 
-  # Add a couple of interview stages for each application
   stages = [
     %{
       title: "Resume Screening",

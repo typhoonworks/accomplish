@@ -22,14 +22,13 @@ defmodule Accomplish.ProfilesTest do
       location: "Remote",
       skills: ["Elixir", "Phoenix", "PostgreSQL", "GraphQL"]
     }
-    @invalid_attrs %{headline: nil}
+    @invalid_attrs %{website_url: "invalid-url"}
 
     setup do
       %{user: user_fixture()}
     end
 
     test "get_profile_by_user/1 returns the profile for a given user", %{user: user} do
-      assert nil == Profiles.get_profile_by_user(user.id)
       profile = profile_fixture(user)
       assert %Profile{} = fetched_profile = Profiles.get_profile_by_user(user.id)
       assert profile.id == fetched_profile.id
@@ -90,12 +89,10 @@ defmodule Accomplish.ProfilesTest do
       description: "Developed and maintained web applications using Elixir and Phoenix.",
       start_date: ~D[2020-01-01],
       end_date: ~D[2022-12-31],
-      is_current: false,
       location: "San Francisco, CA"
     }
     @update_exp_attrs %{
       role: "Senior Software Engineer",
-      is_current: true,
       end_date: nil
     }
     @invalid_exp_attrs %{company: nil, role: nil}
@@ -114,7 +111,6 @@ defmodule Accomplish.ProfilesTest do
       assert fetched_experience.company == experience.company
       assert fetched_experience.description == experience.description
       assert fetched_experience.end_date == experience.end_date
-      assert fetched_experience.is_current == experience.is_current
       assert fetched_experience.location == experience.location
       assert fetched_experience.profile_id == experience.profile_id
       assert fetched_experience.role == experience.role
@@ -130,7 +126,6 @@ defmodule Accomplish.ProfilesTest do
       assert experience.description == @valid_exp_attrs.description
       assert experience.start_date == @valid_exp_attrs.start_date
       assert experience.end_date == @valid_exp_attrs.end_date
-      assert experience.is_current == @valid_exp_attrs.is_current
       assert experience.location == @valid_exp_attrs.location
     end
 
@@ -145,7 +140,6 @@ defmodule Accomplish.ProfilesTest do
                Profiles.update_experience(experience, @update_exp_attrs)
 
       assert experience.role == @update_exp_attrs.role
-      assert experience.is_current == @update_exp_attrs.is_current
       assert experience.end_date == @update_exp_attrs.end_date
     end
 
@@ -161,7 +155,6 @@ defmodule Accomplish.ProfilesTest do
       assert reloaded_experience.company == experience.company
       assert reloaded_experience.description == experience.description
       assert reloaded_experience.end_date == experience.end_date
-      assert reloaded_experience.is_current == experience.is_current
       assert reloaded_experience.location == experience.location
       assert reloaded_experience.profile_id == experience.profile_id
       assert reloaded_experience.role == experience.role
@@ -186,7 +179,7 @@ defmodule Accomplish.ProfilesTest do
 
     test "list_experiences/1 returns all experiences for a profile", %{profile: profile} do
       experience = experience_fixture(profile)
-      current_experience = experience_fixture(profile, %{is_current: true, end_date: nil})
+      current_experience = experience_fixture(profile, %{end_date: nil})
       assert experiences = Profiles.list_experiences(profile)
       assert length(experiences) == 2
       assert List.first(experiences).id == current_experience.id
@@ -201,13 +194,11 @@ defmodule Accomplish.ProfilesTest do
       field_of_study: "Computer Science",
       start_date: ~D[2016-09-01],
       end_date: ~D[2020-05-31],
-      is_current: false,
       description: "Graduated with honors. Senior thesis on distributed systems."
     }
     @update_edu_attrs %{
       degree: "Master of Science",
       field_of_study: "Software Engineering",
-      is_current: true,
       end_date: nil
     }
     @invalid_edu_attrs %{school: nil, degree: nil}

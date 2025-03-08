@@ -23,6 +23,7 @@
 
   export let live;
   export let field;
+  export let resourceId;
   export let blurEvent;
 
   export let content;
@@ -65,8 +66,8 @@
 
   function pushUpdate() {
     const markdownOutput = editor.storage.markdown.getMarkdown();
-    if (live && blurEvent && field) {
-      live.pushEvent(blurEvent, { field: field, value: markdownOutput });
+    if (live && blurEvent) {
+      live.pushEvent(blurEvent, { id: resourceId, field: field, value: markdownOutput });
     }
   }
 

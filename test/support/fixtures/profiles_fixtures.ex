@@ -53,7 +53,6 @@ defmodule Accomplish.ProfilesFixtures do
         description: "Developed and maintained web applications using Elixir and Phoenix.",
         start_date: ~D[2020-01-01],
         end_date: ~D[2022-12-31],
-        is_current: false,
         location: "San Francisco, CA"
       })
 
@@ -77,7 +76,6 @@ defmodule Accomplish.ProfilesFixtures do
         description: "Leading development of new features and mentoring junior developers.",
         start_date: ~D[2023-01-01],
         end_date: nil,
-        is_current: true,
         location: "Remote"
       })
 
@@ -104,7 +102,6 @@ defmodule Accomplish.ProfilesFixtures do
         field_of_study: "Computer Science",
         start_date: ~D[2016-09-01],
         end_date: ~D[2020-05-31],
-        is_current: false,
         description: "Graduated with honors. Senior thesis on distributed systems."
       })
 
@@ -128,7 +125,6 @@ defmodule Accomplish.ProfilesFixtures do
         field_of_study: "Software Engineering",
         start_date: ~D[2023-09-01],
         end_date: nil,
-        is_current: true,
         description: "Focusing on advanced software architecture and design patterns."
       })
 

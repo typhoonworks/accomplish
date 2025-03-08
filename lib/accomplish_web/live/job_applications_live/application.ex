@@ -209,7 +209,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
 
         <.tooltip>
           <.shadow_select_input
-            id={"lemployment_type_select_#{@form.id}_overview"}
+            id={"employment_type_select_#{@form.id}_overview"}
             field={@form[:employment_type]}
             prompt="Set employment type"
             value={@form[:employment_type].value}

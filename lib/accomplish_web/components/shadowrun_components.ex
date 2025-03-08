@@ -289,6 +289,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         placeholder={@rest[:placeholder]}
         inputId={@id}
         socket={@socket}
+        resourceId={@rest[:"phx-value-id"] || @rest[:"phx-value-id"] || nil}
         field={@rest[:"phx-value-field"] || @rest[:"phx-value-field"] || nil}
         blurEvent={@rest[:"phx-blur"] || @rest[:"phx-blur"] || nil}
       />
@@ -330,6 +331,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
   attr :on_select, :any, default: nil, doc: "Event handler for selection"
   attr :variant, :string, default: "secondary", values: ["primary", "secondary", "transparent"]
+  attr :resource_id, :any, default: nil, doc: "The resource ID for the select input"
 
   attr :phx_change_event, :string,
     default: nil,
@@ -393,6 +395,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
                 <%= for option <- @options do %>
                   <.menu_item
                     phx-click={JS.push(@on_select)}
+                    phx-value-id={@resource_id}
                     phx-value-field={@field_name}
                     phx-value-value={option.value}
                   >
@@ -434,6 +437,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
   @min_date Date.utc_today() |> Date.add(-365)
 
   attr :id, :string, required: true
+  attr :resource_id, :any, default: nil
   attr :label, :string, required: true
   attr :position, :string, default: "bottom", values: ~w(bottom left right top)
 
@@ -455,6 +459,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
       module={AccomplishWeb.Shadowrun.DatePicker}
       label={@label}
       id={@id}
+      resource_id={@resource_id}
       form={@rest[:form]}
       start_date_field={@start_date_field}
       required={@rest[:required]}

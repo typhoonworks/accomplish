@@ -89,19 +89,6 @@ defmodule Accomplish.Profiles do
     |> Repo.update()
   end
 
-  @spec change_profile(
-          {map(),
-           %{
-             optional(atom()) =>
-               atom()
-               | {:array | :assoc | :embed | :in | :map | :parameterized | :supertype | :try,
-                  any()}
-           }}
-          | %{
-              :__struct__ => atom() | %{:__changeset__ => any(), optional(any()) => any()},
-              optional(atom()) => any()
-            }
-        ) :: Ecto.Changeset.t()
   def change_profile(profile \\ %Profile{}, attrs \\ %{}) do
     profile
     |> Profile.changeset(attrs)
@@ -158,9 +145,10 @@ defmodule Accomplish.Profiles do
       {:error, %Ecto.Changeset{}}
   """
   def add_experience(profile, attrs) do
-    %Experience{}
-    |> Experience.changeset(Map.put(attrs, :profile_id, profile.id))
-    |> Repo.insert()
+    attrs = atomize_keys(attrs)
+    changeset = Experience.create_changeset(profile, attrs)
+
+    Repo.insert(changeset)
   end
 
   @doc """
@@ -214,9 +202,18 @@ defmodule Accomplish.Profiles do
     query =
       from e in Experience,
         where: e.profile_id == ^profile.id,
-        order_by: [desc: e.is_current, desc: e.start_date]
+        order_by: [
+          desc: e.start_date,
+          asc_nulls_first: e.end_date,
+          desc: e.end_date
+        ]
 
     Repo.all(query)
+  end
+
+  def change_experience(experience \\ %Experience{}, attrs \\ %{}) do
+    experience
+    |> Experience.changeset(attrs)
   end
 
   # ========================
@@ -250,9 +247,10 @@ defmodule Accomplish.Profiles do
       {:error, %Ecto.Changeset{}}
   """
   def add_education(profile, attrs) do
-    %Education{}
-    |> Education.changeset(Map.put(attrs, :profile_id, profile.id))
-    |> Repo.insert()
+    attrs = atomize_keys(attrs)
+    changeset = Education.create_changeset(profile, attrs)
+
+    Repo.insert(changeset)
   end
 
   @doc """
@@ -306,8 +304,17 @@ defmodule Accomplish.Profiles do
     query =
       from e in Education,
         where: e.profile_id == ^profile.id,
-        order_by: [desc: e.start_date]
+        order_by: [
+          desc: e.start_date,
+          asc_nulls_first: e.end_date,
+          desc: e.end_date
+        ]
 
     Repo.all(query)
+  end
+
+  def change_education(education \\ %Education{}, attrs \\ %{}) do
+    education
+    |> Education.changeset(attrs)
   end
 end
