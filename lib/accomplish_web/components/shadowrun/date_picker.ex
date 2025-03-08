@@ -358,7 +358,10 @@ defmodule AccomplishWeb.Shadowrun.DatePicker do
   end
 
   defp format_selected_date(nil), do: nil
-  defp format_selected_date(date), do: Calendar.strftime(DateTime.to_date(date), "%b %d")
+  defp format_selected_date(%Date{} = date), do: Calendar.strftime(date, "%b %d")
+
+  defp format_selected_date(%DateTime{} = datetime),
+    do: Calendar.strftime(DateTime.to_date(datetime), "%b %d")
 
   defp format_selected_date_with_year(nil), do: nil
 
