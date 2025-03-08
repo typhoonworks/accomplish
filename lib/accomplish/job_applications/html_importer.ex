@@ -28,7 +28,7 @@ defmodule Accomplish.JobApplications.HTMLImporter do
        - For example, "Full Time" mapped to "full_time".
        - Possible values: "full_time", "part_time", "contractor", "employer_of_record", "internship".
 
-    6) location
+    6) workplace_type
        - Prefer "remote", "hybrid", or "on_site".
        - If the job is obviously remote, use “remote.”
 
@@ -45,7 +45,7 @@ defmodule Accomplish.JobApplications.HTMLImporter do
     - Follow instructions closely:
       - The user will provide raw HTML or text from the job posting.
       - You must parse out relevant data or infer from context.
-      - If the role’s location or type is unclear, do your best guess or return empty.
+      - If the role’s workplace_type or type is unclear, do your best guess or return empty.
 
     Return only a raw **valid JSON object**, without extra formatting, comments, or explanations.
   """
@@ -60,7 +60,7 @@ defmodule Accomplish.JobApplications.HTMLImporter do
       "compensation_details":,
       "employment_type":,
       "job_description":,
-      "location":,
+      "workplace_type":,
       "role":,
       "source":
     }

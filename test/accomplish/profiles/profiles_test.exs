@@ -19,7 +19,7 @@ defmodule Accomplish.ProfilesTest do
     @update_attrs %{
       bio: "Updated bio with more details about my experience.",
       headline: "Senior Software Engineer",
-      location: "Remote",
+      location: "Lisbon, Portugal",
       skills: ["Elixir", "Phoenix", "PostgreSQL", "GraphQL"]
     }
     @invalid_attrs %{website_url: "invalid-url"}

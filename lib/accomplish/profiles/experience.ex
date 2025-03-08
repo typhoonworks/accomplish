@@ -7,16 +7,18 @@ defmodule Accomplish.Profiles.Experience do
 
   import Accomplish.DateValidators, only: [validate_start_date_before_end_date: 1]
 
-  @permitted ~w(company employment_type role start_date end_date description location)a
+  @permitted ~w(company employment_type role start_date end_date description workplace_type location)a
   @required ~w(company role start_date description)a
 
   @employment_types ~w(full_time part_time contractor employer_of_record internship)a
+  @workplace_types ~w(remote hybrid on_site)a
 
   @derive {JSON.Encoder,
            only: [
              :id,
              :company,
              :employment_type,
+             :workplace_type,
              :role,
              :start_date,
              :end_date,
@@ -29,6 +31,7 @@ defmodule Accomplish.Profiles.Experience do
   schema "profile_experiences" do
     field :company, :string
     field :employment_type, Ecto.Enum, values: @employment_types, default: nil
+    field :workplace_type, Ecto.Enum, values: @workplace_types, default: nil
     field :role, :string
     field :start_date, :date
     field :end_date, :date

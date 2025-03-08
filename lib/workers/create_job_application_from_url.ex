@@ -137,7 +137,7 @@ defmodule AccomplishWeb.Workers.CreateJobApplicationFromUrl do
       apply_url: job_details["apply_url"],
       job_description: job_details["job_description"],
       employment_type: job_details["employment_type"],
-      location: job_details["location"],
+      workplace_type: job_details["workplace_type"],
       compensation_details: job_details["compensation_details"]
     }
 
