@@ -325,6 +325,11 @@ defmodule AccomplishWeb.ResumeLive do
                 class="text-base tracking-tighter"
                 required
               />
+              <.shadow_input
+                field={@new_experience_form[:location]}
+                placeholder="City, Country"
+                class="text-sm tracking-tighter"
+              />
             </div>
 
             <div class="flex gap-4 mt-2">
@@ -349,18 +354,11 @@ defmodule AccomplishWeb.ResumeLive do
             </div>
 
             <.shadow_input
-              field={@new_experience_form[:location]}
-              placeholder="City, Country"
-              class="text-sm tracking-tighter"
-            />
-
-            <.shadow_input
               field={@new_experience_form[:description]}
               type="textarea"
-              placeholder="Describe your responsibilities, achievements, and the technologies you worked with..."
+              placeholder="List your dev highlights – achievements, impact, and tech you used..."
               class="text-sm font-light"
               socket={@socket}
-              rows={6}
             />
           </div>
         </.dialog_content>
@@ -391,8 +389,224 @@ defmodule AccomplishWeb.ResumeLive do
   defp render_education(assigns) do
     ~H"""
     <section class="max-w-3xl mx-auto px-6 lg:px-8 mt-24">
-      <div class="space-y-4"></div>
+      <div class="space-y-2 mb-8">
+        <h2 class="text-xl font-light text-zinc-100">Education</h2>
+        <.shadow_button
+          phx-click="open_new_education_modal"
+          variant="transparent"
+          class="text-zinc-300 text-xs"
+        >
+          <.icon name="hero-plus" class="size-3" /> Add education
+        </.shadow_button>
+      </div>
+
+      <div id="educations" phx-update="stream" class="space-y-6">
+        <%= for {id, education} <- @streams.educations do %>
+          <div id={id}>
+            <div class="flex justify-between items-start">
+              <div class="space-y-2 flex-1">
+                <.shadow_input
+                  id={"education-#{education.id}-degree"}
+                  field={@education_forms[education.id][:degree]}
+                  placeholder="Job degree"
+                  class="text-xl tracking-tighter hover:cursor-text"
+                  phx-blur="save_education_field"
+                  phx-value-field={@education_forms[education.id][:degree].field}
+                  phx-value-id={education.id}
+                />
+
+                <div>
+                  <.shadow_input
+                    id={"education-#{education.id}-school"}
+                    field={@education_forms[education.id][:school]}
+                    placeholder="School"
+                    class="text-base tracking-tighter hover:cursor-text"
+                    phx-blur="save_education_field"
+                    phx-value-field={@education_forms[education.id][:school].field}
+                    phx-value-id={education.id}
+                  />
+                  <.shadow_input
+                    id={"education-#{education.id}-field_of_study"}
+                    field={@education_forms[education.id][:field_of_study]}
+                    placeholder="Field of study"
+                    class="text-sm text-zinc-400 tracking-tighter hover:cursor-text mt-2"
+                    phx-blur="save_education_field"
+                    phx-value-field={@education_forms[education.id][:field_of_study].field}
+                    phx-value-id={education.id}
+                  />
+                </div>
+
+                <div class="flex justify-start gap-2">
+                  <.tooltip>
+                    <.shadow_date_picker
+                      label="Start date"
+                      id={"education-#{education.id}-start-date"}
+                      form={@education_forms[education.id]}
+                      start_date_field={@education_forms[education.id][:start_date]}
+                      required={true}
+                      variant="transparent"
+                    />
+
+                    <.tooltip_content side="bottom">
+                      <p>Start date</p>
+                    </.tooltip_content>
+                  </.tooltip>
+                  <.tooltip>
+                    <.shadow_date_picker
+                      label="End date"
+                      id={"education-#{education.id}-end-date"}
+                      form={@education_forms[education.id]}
+                      start_date_field={@education_forms[education.id][:end_date]}
+                      required={true}
+                      variant="transparent"
+                    />
+
+                    <.tooltip_content side="bottom">
+                      <p>End date</p>
+                    </.tooltip_content>
+                  </.tooltip>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <.dropdown_menu>
+                  <.dropdown_menu_trigger id={"#{education.id}-dropdown-trigger"} class="group">
+                    <.shadow_button type="button" variant="transparent">
+                      <.icon name="hero-ellipsis-horizontal" class="size-4 text-zinc-400" />
+                    </.shadow_button>
+                  </.dropdown_menu_trigger>
+                  <.dropdown_menu_content>
+                    <.menu class="w-56 text-zinc-300 bg-zinc-900">
+                      <.menu_group>
+                        <.menu_item class="text-sm">
+                          <button
+                            type="button"
+                            phx-click="delete_education"
+                            phx-value-id={education.id}
+                          >
+                            <span>Remove education</span>
+                          </button>
+                          <.menu_shortcut>⌘D</.menu_shortcut>
+                        </.menu_item>
+                      </.menu_group>
+                    </.menu>
+                  </.dropdown_menu_content>
+                </.dropdown_menu>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <.shadow_input
+                id={"education-#{education.id}-description"}
+                field={@education_forms[education.id][:description]}
+                type="textarea"
+                placeholder="Share your academic highlights – achievements, skills, and tech you explored..."
+                class="text-sm font-light hover:cursor-text"
+                socket={@socket}
+                phx-blur="save_education_field"
+                phx-value-field={@education_forms[education.id][:description].field}
+                phx-value-id={education.id}
+              />
+            </div>
+          </div>
+        <% end %>
+      </div>
     </section>
+
+    <.dialog
+      id="new-education-modal"
+      position={:upper_third}
+      on_cancel={hide_modal("new-education-modal")}
+      class="w-full max-w-xl"
+    >
+      <.dialog_header>
+        <.dialog_title class="text-sm text-zinc-200 font-light">
+          <div class="flex items-center gap-2">
+            <.lucide_icon name="graduation-cap" class="size-4" />
+            <p>Add Education</p>
+          </div>
+        </.dialog_title>
+      </.dialog_header>
+      <.shadow_form
+        for={@new_education_form}
+        id="new-education-form"
+        as="education"
+        phx-change="validate_education"
+        phx-submit="save_education"
+      >
+        <.dialog_content id="new-education-content">
+          <div class="flex flex-col gap-4">
+            <div class="space-y-3">
+              <.shadow_input
+                field={@new_education_form[:degree]}
+                placeholder="Degree"
+                class="text-xl tracking-tighter"
+                required
+              />
+              <.shadow_input
+                field={@new_education_form[:school]}
+                placeholder="School"
+                class="text-base tracking-tighter"
+                required
+              />
+              <.shadow_input
+                field={@new_education_form[:field_of_study]}
+                placeholder="Field of study"
+                class="text-sm tracking-tighter"
+              />
+            </div>
+
+            <div class="flex gap-4 mt-2">
+              <div class="relative">
+                <.shadow_date_picker
+                  label="Start date"
+                  id="new-education-start-date"
+                  form={@new_education_form}
+                  start_date_field={@new_education_form[:start_date]}
+                  required={true}
+                />
+              </div>
+              <div class="relative">
+                <.shadow_date_picker
+                  label="End date"
+                  id="new-education-end-date"
+                  form={@new_education_form}
+                  start_date_field={@new_education_form[:end_date]}
+                  required={false}
+                />
+              </div>
+            </div>
+
+            <.shadow_input
+              field={@new_education_form[:description]}
+              type="textarea"
+              placeholder="Describe your responsibilities, achievements, and the technologies you worked with..."
+              class="text-sm font-light"
+              socket={@socket}
+            />
+          </div>
+        </.dialog_content>
+
+        <.dialog_footer>
+          <div class="flex justify-end gap-2">
+            <.shadow_button
+              type="button"
+              variant="secondary"
+              phx-click={hide_modal("new-education-modal")}
+            >
+              Cancel
+            </.shadow_button>
+            <.shadow_button
+              type="submit"
+              variant="primary"
+              disabled={!@new_education_form.source.valid?}
+            >
+              Add Education
+            </.shadow_button>
+          </div>
+        </.dialog_footer>
+      </.shadow_form>
+    </.dialog>
     """
   end
 
@@ -436,9 +650,24 @@ defmodule AccomplishWeb.ResumeLive do
   end
 
   def mount(_params, _session, %{assigns: %{live_action: :education}} = socket) do
+    user = socket.assigns.current_user
+    profile = Profiles.get_profile_by_user(user.id)
+    educations = Profiles.list_educations(profile)
+    changeset = Profiles.change_education()
+
+    education_forms =
+      educations
+      |> Enum.map(fn education ->
+        {education.id, to_form(Profiles.change_education(education))}
+      end)
+      |> Map.new()
+
     socket =
       socket
       |> assign(page_title: "Resume • Education")
+      |> assign(new_education_form: to_form(changeset))
+      |> assign(education_forms: education_forms)
+      |> stream(:educations, educations)
 
     {:ok, socket}
   end
@@ -473,6 +702,18 @@ defmodule AccomplishWeb.ResumeLive do
      |> assign(new_experience_form: new_experience_form)
      |> push_event("js-exec", %{
        to: "#new-experience-modal",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event("open_new_education_modal", _params, socket) do
+    new_education_form = to_form(Profiles.change_education())
+
+    {:noreply,
+     socket
+     |> assign(new_education_form: new_education_form)
+     |> push_event("js-exec", %{
+       to: "#new-education-modal",
        attr: "phx-show-modal"
      })}
   end

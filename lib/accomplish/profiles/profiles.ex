@@ -302,4 +302,9 @@ defmodule Accomplish.Profiles do
 
     Repo.all(query)
   end
+
+  def change_education(education \\ %Education{}, attrs \\ %{}) do
+    education
+    |> Education.changeset(attrs)
+  end
 end
