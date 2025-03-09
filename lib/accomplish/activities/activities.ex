@@ -118,6 +118,43 @@ defmodule Accomplish.Activities do
   # RETRIEVING ACTIVITIES
   # ===========================
 
+  def list_activities_for_user(user_id, preloads \\ []) do
+    query =
+      from(a in Activity,
+        where: a.user_id == ^user_id,
+        order_by: [desc: a.occurred_at]
+      )
+
+    query =
+      if :actor in preloads do
+        query
+        |> join(:left, [a], u in Accomplish.Accounts.User,
+          on: a.actor_id == u.id and a.actor_type == "User"
+        )
+        |> select_merge([a, u], %{actor: u})
+      else
+        query
+      end
+
+    activities = Repo.all(query)
+
+    activities =
+      if :entity in preloads or :all in preloads do
+        preload_entities(activities)
+      else
+        activities
+      end
+
+    activities =
+      if :context in preloads or :all in preloads do
+        preload_contexts(activities)
+      else
+        activities
+      end
+
+    activities
+  end
+
   def list_activities_for_entity_or_context(entity_or_context) do
     type = get_entity_type(entity_or_context)
 
@@ -149,7 +186,6 @@ defmodule Accomplish.Activities do
 
   # Preload entities in a batch operation
   # This updates the preload_entities function in the Activities module to handle soft deleted entities
-
   defp preload_entities(activities) do
     activities_by_entity_type =
       Enum.group_by(activities, fn activity -> activity.entity_type end)
@@ -258,6 +294,8 @@ defmodule Accomplish.Activities do
     if context do
       broadcast!(msg, topic_suffix(:context, context))
     end
+
+    broadcast!(msg, "user:#{actor.id}")
   end
 
   defp broadcast!(msg, topic_suffix) do

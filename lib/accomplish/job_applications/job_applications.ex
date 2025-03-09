@@ -36,10 +36,21 @@ defmodule Accomplish.JobApplications do
     end
   end
 
-  def list_applications(applicant, filter \\ "all", preloads \\ []) do
+  @doc """
+  List applications for an applicant with optional limit and offset.
+  """
+  def list_applications(applicant, opts \\ []) do
+    filter = Keyword.get(opts, :filter, "all")
+    preloads = Keyword.get(opts, :preloads, [])
+    limit = Keyword.get(opts, :limit, 100)
+    offset = Keyword.get(opts, :offset, 0)
+
     query =
       from a in Application,
         where: a.applicant_id == ^applicant.id,
+        order_by: [desc: a.applied_at, desc: a.inserted_at],
+        limit: ^limit,
+        offset: ^offset,
         preload: ^preloads
 
     query =
@@ -50,8 +61,6 @@ defmodule Accomplish.JobApplications do
         _ ->
           query
       end
-
-    query = from a in query, order_by: [desc: a.applied_at]
 
     Repo.all(query)
   end

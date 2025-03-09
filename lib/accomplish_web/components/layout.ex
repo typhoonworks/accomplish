@@ -34,7 +34,7 @@ defmodule AccomplishWeb.Layout do
         <!-- Content area: split between main canvas and drawer -->
         <div class="flex flex-1 overflow-hidden relative">
           <!-- Main canvas: scrollable content area -->
-          <main class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-20 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+          <main class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
             {render_slot(@inner_block)}
           </main>
           {render_slot(@page_drawer)}
@@ -242,19 +242,19 @@ defmodule AccomplishWeb.Layout do
     </div>
     <nav class="flex flex-1 flex-col">
       <ul role="list" class="flex flex-1 flex-col gap-y-4">
+        <li>
+          <ul role="list" class="-mx-2 space-y-1">
+            <li>
+              <.sidebar_link
+                href={~p"/mission_control"}
+                icon="hero-rocket-launch-solid"
+                text="Mission Control"
+                active={@current_path == "/mission_control"}
+              />
+            </li>
+          </ul>
+        </li>
         <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
-          <li>
-            <ul role="list" class="-mx-2 space-y-1">
-              <li>
-                <.sidebar_link
-                  href={~p"/mission_control"}
-                  icon="hero-rocket-launch-solid"
-                  text="Mission Control"
-                  active={@current_path == "/mission_control"}
-                />
-              </li>
-            </ul>
-          </li>
           <.sidebar_group id={"#{@id}-workbench-menu"} name="Workbench">
             <.sidebar_item>
               <.sidebar_link
