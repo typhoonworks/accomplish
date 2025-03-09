@@ -164,6 +164,19 @@ defmodule Accomplish.Profiles.Skills do
   """
   def get_skill!(id), do: Repo.get!(Skill, id)
 
+  @doc """
+  Filters a list of skill names to only include those that exist in the database.
+  """
+  def filter_existing_skills(skill_names) when is_list(skill_names) do
+    normalized_names = Enum.map(skill_names, &Skill.normalize_skill_name/1)
+
+    Repo.all(
+      from s in Skill,
+        where: s.normalized_name in ^normalized_names,
+        select: s.normalized_name
+    )
+  end
+
   # Private helper functions
 
   defp find_skill_by_name(name) when is_binary(name) do

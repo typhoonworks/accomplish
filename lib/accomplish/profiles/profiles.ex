@@ -109,8 +109,11 @@ defmodule Accomplish.Profiles do
     if old_skills == new_skills do
       multi
     else
-      skills_added = new_skills -- old_skills
-      skills_removed = old_skills -- new_skills
+      existing_new_skills = Skills.filter_existing_skills(new_skills)
+      existing_old_skills = Skills.filter_existing_skills(old_skills)
+
+      skills_added = existing_new_skills -- existing_old_skills
+      skills_removed = existing_old_skills -- existing_new_skills
 
       multi
       |> add_skills_operation(
