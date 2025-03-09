@@ -18,7 +18,7 @@ defmodule AccomplishWeb.UserSessionControllerTest do
 
     test "redirects if already logged in", %{conn: conn, user: user} do
       conn = conn |> log_in_user(user) |> get(~p"/login")
-      assert redirected_to(conn) == ~p"/mission_control"
+      assert redirected_to(conn) == ~p"/job_applications"
     end
   end
 
@@ -30,12 +30,12 @@ defmodule AccomplishWeb.UserSessionControllerTest do
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/mission_control"
+      assert redirected_to(conn) == ~p"/job_applications"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")
       response = html_response(conn, 200)
-      assert response =~ ~p"/mission_control"
+      assert response =~ ~p"/job_applications"
     end
 
     test "logs the user in with remember me", %{conn: conn, user: user} do
@@ -49,7 +49,7 @@ defmodule AccomplishWeb.UserSessionControllerTest do
         })
 
       assert conn.resp_cookies["_accomplish_web_user_remember_me"]
-      assert redirected_to(conn) == ~p"/mission_control"
+      assert redirected_to(conn) == ~p"/job_applications"
     end
 
     test "logs the user in with return to", %{conn: conn, user: user} do

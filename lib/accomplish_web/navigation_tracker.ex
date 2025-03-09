@@ -34,7 +34,7 @@ defmodule AccomplishWeb.NavigationTracker do
 
   def get_last_path(user_id) do
     history = get_history(user_id)
-    List.first(history) || "/mission_control"
+    List.first(history) || "/job_applications"
   end
 
   def get_history(user_id) do

@@ -227,5 +227,5 @@ defmodule AccomplishWeb.Plugs.UserAuth do
 
   defp maybe_store_return_to(conn), do: conn
 
-  defp signed_in_path(_conn), do: ~p"/mission_control"
+  defp signed_in_path(_conn), do: ~p"/job_applications"
 end

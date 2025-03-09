@@ -55,7 +55,7 @@ defmodule AccomplishWeb.NavigationTrackerTest do
     end
 
     test "returns default path when no history exists" do
-      assert NavigationTracker.get_last_path(@mock_user_id) == "/mission_control"
+      assert NavigationTracker.get_last_path(@mock_user_id) == "/job_applications"
     end
   end
 
