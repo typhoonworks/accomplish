@@ -33,6 +33,7 @@ defmodule Accomplish.DataCase do
       import Accomplish.OAuthFixtures
       import Accomplish.ProfilesFixtures
       import Accomplish.RepositoriesFixtures
+      import Accomplish.SkillsFixtures
     end
   end
 

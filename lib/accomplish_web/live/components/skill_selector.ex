@@ -1,15 +1,20 @@
 defmodule AccomplishWeb.Components.SkillSelector do
   @moduledoc """
   A live component for selecting skills with auto-suggestions and displaying them as pills.
+
+  Skills are stored in a central skills database and suggested based on partial matches
+  and popularity across the platform.
   """
   use AccomplishWeb, :live_component
 
   import AccomplishWeb.CoreComponents
   import AccomplishWeb.ShadowrunComponents
 
+  alias Accomplish.Skills
+
   def render(assigns) do
     ~H"""
-    <div id={@id} class="space-y-2">
+    <div id={@id} class="space-y-2" phx-hook="SkillSelector">
       <h3 class="text-zinc-400">Skills</h3>
       <.shadow_button
         :if={!@show_input}
@@ -20,11 +25,10 @@ defmodule AccomplishWeb.Components.SkillSelector do
       >
         <.icon name="hero-plus" class="size-3" /> Add skills
       </.shadow_button>
-      
-    <!-- The input container is always rendered; its visibility is toggled by a CSS class -->
+
       <div
         id="skill-input-container"
-        class={"transition-all duration-300 ease-in-out overflow-hidden " <> if(@show_input, do: "", else: "hidden")}
+        class={"transition-all duration-300 ease-in-out " <> if(@show_input, do: "", else: "hidden")}
       >
         <div class="relative">
           <input
@@ -39,16 +43,17 @@ defmodule AccomplishWeb.Components.SkillSelector do
           />
           <div
             :if={@suggestions != [] and @input_value != ""}
-            class="absolute z-10 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-lg"
+            class="absolute z-10 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto"
+            id={"#{@id}-suggestions"}
           >
             <%= for suggestion <- @suggestions do %>
               <div
                 phx-click="select-suggestion"
                 phx-target={@myself}
-                phx-value-skill={suggestion}
-                class="p-2 hover:bg-zinc-700 cursor-pointer text-sm text-zinc-200"
+                phx-value-skill={suggestion.name}
+                class="p-2 hover:bg-zinc-700 cursor-pointer text-sm text-zinc-200 flex items-center justify-between"
               >
-                {suggestion}
+                <span>{suggestion.name}</span>
               </div>
             <% end %>
           </div>
@@ -75,8 +80,7 @@ defmodule AccomplishWeb.Components.SkillSelector do
           </div>
         </div>
       </div>
-      
-    <!-- The skill pills are always visible -->
+
       <div class="flex flex-wrap gap-2 mt-2">
         <%= for skill <- @skills do %>
           <.shadow_pill class="group">
@@ -117,7 +121,9 @@ defmodule AccomplishWeb.Components.SkillSelector do
   end
 
   def handle_event("toggle-skill-input", _, socket) do
-    {:noreply, assign(socket, show_input: true, input_value: "", suggestions: [])}
+    suggestions = Skills.suggest_skills(nil, 5)
+
+    {:noreply, assign(socket, show_input: true, input_value: "", suggestions: suggestions)}
   end
 
   def handle_event("cancel-skill-input", _, socket) do
@@ -136,9 +142,10 @@ defmodule AccomplishWeb.Components.SkillSelector do
   def handle_event("skill-input-keydown", %{"value" => value}, socket) do
     socket =
       if value == "" do
-        assign(socket, input_value: "", suggestions: [])
+        suggestions = Skills.suggest_skills(nil, 5)
+        assign(socket, input_value: "", suggestions: suggestions)
       else
-        suggestions = filter_suggestions(value)
+        suggestions = Skills.suggest_skills(value, 8)
         assign(socket, input_value: value, suggestions: suggestions)
       end
 
@@ -146,7 +153,7 @@ defmodule AccomplishWeb.Components.SkillSelector do
   end
 
   def handle_event("skill-input-blur", %{"value" => _value}, socket) do
-    {:noreply, assign(socket, show_input: false, input_value: "", suggestions: [])}
+    {:noreply, socket}
   end
 
   def handle_event("select-suggestion", %{"skill" => skill}, socket) do
@@ -174,6 +181,8 @@ defmodule AccomplishWeb.Components.SkillSelector do
     current_skills = socket.assigns.skills || []
 
     if skill != "" and skill not in current_skills do
+      Skills.increment_skill_usage(skill)
+
       updated_skills = current_skills ++ [skill]
 
       send(self(), {:update_profile_skills, updated_skills})
@@ -186,70 +195,5 @@ defmodule AccomplishWeb.Components.SkillSelector do
     else
       assign(socket, input_value: "", suggestions: [])
     end
-  end
-
-  defp filter_suggestions(query) do
-    query = String.downcase(query)
-
-    common_skills()
-    |> Enum.filter(fn skill ->
-      String.contains?(String.downcase(skill), query)
-    end)
-    |> Enum.take(5)
-  end
-
-  defp common_skills do
-    [
-      "JavaScript",
-      "TypeScript",
-      "React",
-      "Vue.js",
-      "Angular",
-      "Node.js",
-      "Express",
-      "Python",
-      "Django",
-      "Flask",
-      "Ruby",
-      "Ruby on Rails",
-      "PHP",
-      "Laravel",
-      "Java",
-      "Spring Boot",
-      "C#",
-      ".NET",
-      "Go",
-      "Rust",
-      "Elixir",
-      "Phoenix",
-      "PostgreSQL",
-      "MySQL",
-      "MongoDB",
-      "Redis",
-      "Docker",
-      "Kubernetes",
-      "AWS",
-      "Azure",
-      "GCP",
-      "CI/CD",
-      "Git",
-      "GitHub",
-      "GitLab",
-      "REST API",
-      "GraphQL",
-      "HTML",
-      "CSS",
-      "Sass",
-      "Tailwind CSS",
-      "Responsive Design",
-      "TDD",
-      "Agile",
-      "Scrum",
-      "Machine Learning",
-      "AI",
-      "Data Science",
-      "Blockchain",
-      "DevOps"
-    ]
   end
 end

@@ -3,6 +3,7 @@ alias Accomplish.Accounts
 alias Accomplish.JobApplications
 alias Accomplish.Activities
 alias Accomplish.Profiles
+alias Accomplish.Skills
 
 IO.puts("Cleaning up the database...")
 
@@ -13,9 +14,11 @@ tables = [
   "profile_experiences",
   "profile_educations",
   "profiles",
+  "skills",
   "api_keys",
   "users",
-  "oauth_applications"
+  "oauth_applications",
+  "skills"
 ]
 
 for table <- tables do
@@ -52,18 +55,37 @@ IO.puts("Creating initial user...")
 
 Accounts.update_user_role(user, :admin)
 
+IO.puts("Creating Skills...")
+skills_file = Path.join([__DIR__, "data/tech_skills.txt"])
+
+case File.read(skills_file) do
+  {:ok, content} ->
+    content
+    |> String.split("\n", trim: true)
+    |> Enum.each(fn skill ->
+      Skills.create_skill(skill)
+    end)
+
+    IO.puts("Tech skills have been seeded successfully!")
+
+  {:error, reason} ->
+    IO.puts("Error reading tech_skills.txt: #{reason}")
+end
+
 IO.puts("Creating Profile...")
+
+profile_skills = ["Elixir", "Rum", "Phoenix", "Plundering APIs", "Git", "Git Storms"]
 
 profile_attrs = %{
   user_id: user.id,
   headline: "Senior Software Pirate",
   bio:
-    "A wily coder sailin’ the Elixir currents, plunderin’ bugs and brewin’ rum-powered apps with me trusty Phoenix crew.",
+    "A wily coder sailin' the Elixir currents, plunderin' bugs and brewin' rum-powered apps with me trusty Phoenix crew.",
   location: "Tortuga, Caribbean Code Isles",
   github_handle: "sparrow",
   linkedin_handle: "sparrow",
   website_url: "https://jacksparrow.io",
-  skills: ["Elixir", "Rum", "Phoenix", "Plundering APIs", "Git Storms"]
+  skills: profile_skills
 }
 
 {:ok, profile} = Profiles.upsert_profile(user, profile_attrs)
@@ -77,7 +99,7 @@ education_attrs = %{
   start_date: ~D[2015-09-01],
   end_date: ~D[2019-06-01],
   description:
-    "Mastered the arts o’ distributed rum caches, data scurvy-structures, and algorithms fer outwittin’ the Royal Navy’s firewalls."
+    "Mastered the arts o' distributed rum caches, data scurvy-structures, and algorithms fer outwittin' the Royal Navy's firewalls."
 }
 
 {:ok, _education} = Profiles.add_education(profile, education_attrs)
@@ -91,17 +113,17 @@ experience_attrs_list = [
     start_date: ~D[2019-07-01],
     end_date: ~D[2021-07-01],
     description:
-      "Sailed the Elixir seas, craftin’ APIs and microservices to plunder data from the depths o’ the digital ocean.",
+      "Sailed the Elixir seas, craftin' APIs and microservices to plunder data from the depths o' the digital ocean.",
     location: "Tortuga, Caribbean Code Isles",
     workplace_type: "remote"
   },
   %{
-    company: "Sparrow’s Tech Armada",
-    role: "Captain o’ the Dev Crew",
+    company: "Sparrow's Tech Armada",
+    role: "Captain o' the Dev Crew",
     start_date: ~D[2021-08-01],
     description:
-      "Leadin’ a fierce band o’ coders to forge scalable, rum-fueled event-driven systems, outsmartin’ storms and rival fleets.",
-    location: "The Black Pearl, Roamin’ the Cloud Seas",
+      "Leadin' a fierce band o' coders to forge scalable, rum-fueled event-driven systems, outsmartin' storms and rival fleets.",
+    location: "The Black Pearl, Roamin' the Cloud Seas",
     workplace_type: "hybrid"
   }
 ]
@@ -135,7 +157,7 @@ job_applications = [
     - **Benefits:** Health, dental, 401k, learning stipend
     """,
     notes:
-      "Be this Stripe a treasure chest o’ coin and code? Their Elixir ways and distributed plunderin’ be callin’ to me pirate heart, savvy?"
+      "Be this Stripe a treasure chest o' coin and code? Their Elixir ways and distributed plunderin' be callin' to me pirate heart, savvy?"
   },
   %{
     company: %{name: "GitLab", website_url: "https://gitlab.com"},
@@ -148,7 +170,7 @@ job_applications = [
     Work with **Vue.js and TypeScript** to build next-gen DevOps tools at GitLab.
 
     **Key Responsibilities:**
-    - Improve UI/UX for GitLab’s **CI/CD pipeline dashboard**.
+    - Improve UI/UX for GitLab's **CI/CD pipeline dashboard**.
     - Work closely with product and backend teams to deliver intuitive user experiences.
     - Ensure performance and accessibility best practices.
 
@@ -159,7 +181,7 @@ job_applications = [
     - **Perks:** Remote work, flexible hours
     """,
     notes:
-      "A pox on ’em! They scuttled me chances at Vue.js glory. Methinks their loss be greater than mine own, arr!"
+      "A pox on 'em! They scuttled me chances at Vue.js glory. Methinks their loss be greater than mine own, arr!"
   },
   %{
     company: %{name: "Shopify", website_url: "https://shopify.com"},
@@ -184,7 +206,7 @@ job_applications = [
     - **Perks:** Remote-friendly, home office stipend, learning budget
     """,
     notes:
-      "Shiver me timbers, an offer from Shopify! A fine bounty o’ gold and code awaits—me compass points true to this prize, arr!"
+      "Shiver me timbers, an offer from Shopify! A fine bounty o' gold and code awaits—me compass points true to this prize, arr!"
   }
 ]
 
@@ -217,6 +239,26 @@ for attrs <- job_applications do
       DateTime.utc_now(),
       job_app
     )
+  end
+end
+
+IO.puts("Extracting skills from job descriptions...")
+
+job_skill_patterns = [
+  "Elixir",
+  "Rust",
+  "GraphQL",
+  "Vue.js",
+  "TypeScript",
+  "CI/CD",
+  "Ruby on Rails",
+  "React",
+  "Tailwind CSS"
+]
+
+for app <- job_applications, skill_name <- job_skill_patterns do
+  if String.contains?(app.job_description, skill_name) do
+    Skills.find_or_create_skill(skill_name)
   end
 end
 
