@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.Components.JobApplicationTimeline do
+  @moduledoc false
+
   use AccomplishWeb, :live_component
   import AccomplishWeb.TimeHelpers
 
