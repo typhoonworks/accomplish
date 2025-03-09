@@ -32,7 +32,6 @@ defmodule Accomplish.Profiles.Importer do
     |> Ecto.Multi.run(:profile, fn _repo, _changes ->
       profile_attrs = Map.get(profile_data, "profile", %{})
       profile_params = atomize_profile_params(profile_attrs)
-
       Profiles.upsert_profile(user, profile_params)
     end)
     |> Ecto.Multi.run(:experiences, fn _repo, %{profile: profile} ->

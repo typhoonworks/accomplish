@@ -1,20 +1,19 @@
-defmodule Accomplish.Workers.ProcessResume do
+defmodule Accomplish.Workers.ExtractResumeData do
   @moduledoc """
-  Worker that processes resume PDFs and imports the extracted data to user profiles.
+  Worker that extracts structured data from resume PDFs.
 
-  This worker handles resume processing in the background, including:
+  This worker handles only the extraction part:
   1. Processing resumes from a file path
   2. Processing extracted text from a resume
-  3. Importing the structured data to user profiles
+  3. Returns structured data for later import
   """
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
   require Logger
 
-  alias Accomplish.Accounts
   alias Accomplish.Profiles.PDFParser
-  alias Accomplish.Profiles.Importer
+  alias Accomplish.Workers.ImportResumeData
 
   @rate_limit_backoff [1, 5, 15, 30, 60]
 
@@ -26,16 +25,14 @@ defmodule Accomplish.Workers.ProcessResume do
         },
         attempt: attempt
       }) do
-    with {:ok, user} <- get_user(user_id),
-         {:ok, structured_data} <-
-           extract_with_backoff(fn -> PDFParser.extract_from_file(resume_path) end, attempt),
-         {:ok, result} <- Importer.import_profile_data(user, structured_data) do
-      {:ok, %{user_id: user.id, result: result}}
-    else
-      {:error, :user_not_found} ->
-        Logger.error("User not found: #{user_id}")
-        {:error, :user_not_found}
+    with {:ok, structured_data} <-
+           extract_with_backoff(fn -> PDFParser.extract_from_file(resume_path) end, attempt) do
+      %{user_id: user_id, structured_data: structured_data}
+      |> ImportResumeData.new()
+      |> Oban.insert()
 
+      {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
+    else
       {:error, :file_read_error, reason} ->
         Logger.error("Failed to read resume file: #{inspect(reason)}")
         {:error, :file_read_error}
@@ -43,12 +40,8 @@ defmodule Accomplish.Workers.ProcessResume do
       {:snooze, backoff} ->
         {:snooze, backoff}
 
-      {:error, {:import_failed, step, changeset}} ->
-        Logger.error("Failed to import profile data at step #{step}: #{inspect(changeset)}")
-        {:error, :profile_import_failed}
-
       {:error, reason} ->
-        Logger.error("Error processing resume: #{inspect(reason)}")
+        Logger.error("Error extracting resume data: #{inspect(reason)}")
         {:error, reason}
     end
   end
@@ -61,25 +54,19 @@ defmodule Accomplish.Workers.ProcessResume do
         },
         attempt: attempt
       }) do
-    with {:ok, user} <- get_user(user_id),
-         {:ok, structured_data} <-
-           extract_with_backoff(fn -> PDFParser.extract_from_text(text_content) end, attempt),
-         {:ok, result} <- Importer.import_profile_data(user, structured_data) do
-      {:ok, %{user_id: user.id, result: result}}
-    else
-      {:error, :user_not_found} ->
-        Logger.error("User not found: #{user_id}")
-        {:error, :user_not_found}
+    with {:ok, structured_data} <-
+           extract_with_backoff(fn -> PDFParser.extract_from_text(text_content) end, attempt) do
+      %{user_id: user_id, structured_data: structured_data}
+      |> ImportResumeData.new()
+      |> Oban.insert()
 
+      {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
+    else
       {:snooze, backoff} ->
         {:snooze, backoff}
 
-      {:error, {:import_failed, step, changeset}} ->
-        Logger.error("Failed to import profile data at step #{step}: #{inspect(changeset)}")
-        {:error, :profile_import_failed}
-
       {:error, reason} ->
-        Logger.error("Error processing resume: #{inspect(reason)}")
+        Logger.error("Error extracting resume data: #{inspect(reason)}")
         {:error, reason}
     end
   end
@@ -109,13 +96,6 @@ defmodule Accomplish.Workers.ProcessResume do
 
       error ->
         error
-    end
-  end
-
-  defp get_user(user_id) do
-    case Accounts.get_user(user_id) do
-      nil -> {:error, :user_not_found}
-      user -> {:ok, user}
     end
   end
 end

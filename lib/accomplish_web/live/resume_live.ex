@@ -8,7 +8,7 @@ defmodule AccomplishWeb.ResumeLive do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
 
-  alias Accomplish.Workers.ProcessResume
+  alias Accomplish.Workers.ExtractResumeData
 
   import AccomplishWeb.JobApplicationHelpers
 
@@ -1022,7 +1022,7 @@ defmodule AccomplishWeb.ResumeLive do
             user_id: socket.assigns.current_user.id,
             resume_text: text_content
           }
-          |> ProcessResume.new()
+          |> ExtractResumeData.new()
           |> Oban.insert()
 
           {:ok, :processed}

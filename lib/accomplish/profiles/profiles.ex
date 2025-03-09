@@ -10,6 +10,7 @@ defmodule Accomplish.Profiles do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
   alias Accomplish.Profiles.Skills
+  alias Accomplish.Profiles.Skill
 
   import Accomplish.Utils.Maps, only: [atomize_keys: 1]
 
@@ -109,22 +110,31 @@ defmodule Accomplish.Profiles do
     if old_skills == new_skills do
       multi
     else
-      existing_new_skills = Skills.filter_existing_skills(new_skills)
-      existing_old_skills = Skills.filter_existing_skills(old_skills)
+      existing_skills_normalized = Skills.filter_existing_skills(old_skills ++ new_skills)
 
-      skills_added = existing_new_skills -- existing_old_skills
-      skills_removed = existing_old_skills -- existing_new_skills
+      existing_old_skills =
+        old_skills
+        |> Enum.map(&Skill.normalize_skill_name/1)
+        |> Enum.filter(&(&1 in existing_skills_normalized))
+
+      existing_new_skills =
+        new_skills
+        |> Enum.map(&Skill.normalize_skill_name/1)
+        |> Enum.filter(&(&1 in existing_skills_normalized))
+
+      skills_to_increment = existing_new_skills -- existing_old_skills
+      skills_to_decrement = existing_old_skills -- existing_new_skills
 
       multi
       |> add_skills_operation(
         :increment_skills,
-        skills_added,
+        skills_to_increment,
         &Skills.batch_increment_usage/1,
         :no_skills_added
       )
       |> add_skills_operation(
         :decrement_skills,
-        skills_removed,
+        skills_to_decrement,
         &Skills.batch_decrement_usage/1,
         :no_skills_removed
       )
