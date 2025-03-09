@@ -13,6 +13,8 @@ defmodule Accomplish.Accounts.User do
   )a
 
   schema "users" do
+    field :role, Ecto.Enum, values: [:user, :admin], default: :user
+
     field :first_name, :string
     field :last_name, :string
     field :full_name, :string, virtual: true

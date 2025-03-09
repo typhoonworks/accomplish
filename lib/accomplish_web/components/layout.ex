@@ -242,70 +242,73 @@ defmodule AccomplishWeb.Layout do
     </div>
     <nav class="flex flex-1 flex-col">
       <ul role="list" class="flex flex-1 flex-col gap-y-4">
-        <li>
-          <ul role="list" class="-mx-2 space-y-1">
-            <li>
+        <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
+          <li>
+            <ul role="list" class="-mx-2 space-y-1">
+              <li>
+                <.sidebar_link
+                  href={~p"/mission_control"}
+                  icon="hero-rocket-launch-solid"
+                  text="Mission Control"
+                  active={@current_path == "/mission_control"}
+                />
+              </li>
+            </ul>
+          </li>
+          <.sidebar_group id={"#{@id}-workbench-menu"} name="Workbench">
+            <.sidebar_item>
               <.sidebar_link
-                href={~p"/mission_control"}
-                icon="hero-rocket-launch-solid"
-                text="Mission Control"
-                active={@current_path == "/mission_control"}
+                href="#"
+                icon="hero-wrench-screwdriver-solid"
+                text="Projects"
+                active={@current_path == "/projects"}
               />
-            </li>
-          </ul>
-        </li>
-        <.sidebar_group id={"#{@id}-workbench-menu"} name="Workbench">
-          <.sidebar_item>
-            <.sidebar_link
-              href="#"
-              icon="hero-wrench-screwdriver-solid"
-              text="Projects"
-              active={@current_path == "/projects"}
-            />
-          </.sidebar_item>
-          <.sidebar_item>
-            <.sidebar_link
-              href="#"
-              icon="hero-chart-bar-solid"
-              text="Work Logs"
-              active={@current_path == "/work_logs"}
-            />
-          </.sidebar_item>
-          <.sidebar_item>
-            <.sidebar_link
-              href="#"
-              icon="hero-calendar-solid"
-              text="Calendar"
-              active={@current_path == "/calendar"}
-            />
-          </.sidebar_item>
-        </.sidebar_group>
-        <.sidebar_group id={"#{@id}-vault-menu"} name="Vault">
-          <.sidebar_item>
-            <.sidebar_link
-              href="#"
-              icon="hero-code-bracket-solid"
-              text="Snippets"
-              active={@current_path == "/snippets"}
-            />
-          </.sidebar_item>
-          <.sidebar_item>
-            <.sidebar_link
-              href="#"
-              icon="hero-beaker-solid"
-              text="Recipes"
-              active={@current_path == "/recipes"}
-            />
-          </.sidebar_item>
-          <.sidebar_item>
-            <.sidebar_link
-              href="#"
-              icon="hero-document-text-solid"
-              text="Notes"
-              active={@current_path == "/notes"}
-            />
-          </.sidebar_item>
-        </.sidebar_group>
+            </.sidebar_item>
+            <.sidebar_item>
+              <.sidebar_link
+                href="#"
+                icon="hero-chart-bar-solid"
+                text="Work Logs"
+                active={@current_path == "/work_logs"}
+              />
+            </.sidebar_item>
+            <.sidebar_item>
+              <.sidebar_link
+                href="#"
+                icon="hero-calendar-solid"
+                text="Calendar"
+                active={@current_path == "/calendar"}
+              />
+            </.sidebar_item>
+          </.sidebar_group>
+          <.sidebar_group id={"#{@id}-vault-menu"} name="Vault">
+            <.sidebar_item>
+              <.sidebar_link
+                href="#"
+                icon="hero-code-bracket-solid"
+                text="Snippets"
+                active={@current_path == "/snippets"}
+              />
+            </.sidebar_item>
+            <.sidebar_item>
+              <.sidebar_link
+                href="#"
+                icon="hero-beaker-solid"
+                text="Recipes"
+                active={@current_path == "/recipes"}
+              />
+            </.sidebar_item>
+            <.sidebar_item>
+              <.sidebar_link
+                href="#"
+                icon="hero-document-text-solid"
+                text="Notes"
+                active={@current_path == "/notes"}
+              />
+            </.sidebar_item>
+          </.sidebar_group>
+        <% end %>
+
         <.sidebar_group id={"#{@id}-career-menu"} name="Career">
           <.sidebar_item>
             <.sidebar_link
@@ -345,14 +348,16 @@ defmodule AccomplishWeb.Layout do
     <nav class="flex flex-1 flex-col">
       <ul role="list" class="flex flex-1 flex-col gap-y-4">
         <.sidebar_group id={"#{@id}-account-menu"} name="Account">
-          <.sidebar_item>
-            <.sidebar_link
-              href={~p"/settings/account/preferences"}
-              icon="hero-adjustments-horizontal"
-              text="Preferences"
-              active={@current_path == "/settings/account/preferences"}
-            />
-          </.sidebar_item>
+          <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
+            <.sidebar_item>
+              <.sidebar_link
+                href={~p"/settings/account/preferences"}
+                icon="hero-adjustments-horizontal"
+                text="Preferences"
+                active={@current_path == "/settings/account/preferences"}
+              />
+            </.sidebar_item>
+          <% end %>
           <.sidebar_item>
             <.sidebar_link
               href={~p"/settings/account/profile"}
@@ -377,14 +382,16 @@ defmodule AccomplishWeb.Layout do
               active={@current_path == "/settings/account/security"}
             />
           </.sidebar_item>
-          <.sidebar_item>
-            <.sidebar_link
-              href={~p"/settings/account/connections"}
-              icon="hero-cpu-chip"
-              text="Connected accounts"
-              active={@current_path == "/settings/account/connections"}
-            />
-          </.sidebar_item>
+          <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
+            <.sidebar_item>
+              <.sidebar_link
+                href={~p"/settings/account/connections"}
+                icon="hero-cpu-chip"
+                text="Connected accounts"
+                active={@current_path == "/settings/account/connections"}
+              />
+            </.sidebar_item>
+          <% end %>
         </.sidebar_group>
 
         <li class="mt-auto">
