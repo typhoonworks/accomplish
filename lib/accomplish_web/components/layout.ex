@@ -242,19 +242,19 @@ defmodule AccomplishWeb.Layout do
     </div>
     <nav class="flex flex-1 flex-col">
       <ul role="list" class="flex flex-1 flex-col gap-y-4">
-        <li>
-          <ul role="list" class="-mx-2 space-y-1">
-            <li>
-              <.sidebar_link
-                href={~p"/mission_control"}
-                icon="hero-rocket-launch-solid"
-                text="Mission Control"
-                active={@current_path == "/mission_control"}
-              />
-            </li>
-          </ul>
-        </li>
         <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
+          <li>
+            <ul role="list" class="-mx-2 space-y-1">
+              <li>
+                <.sidebar_link
+                  href={~p"/mission_control"}
+                  icon="hero-rocket-launch-solid"
+                  text="Mission Control"
+                  active={@current_path == "/mission_control"}
+                />
+              </li>
+            </ul>
+          </li>
           <.sidebar_group id={"#{@id}-workbench-menu"} name="Workbench">
             <.sidebar_item>
               <.sidebar_link
