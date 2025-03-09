@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.Plugs.AdminAuth do
+  @moduledoc false
+
   import Plug.Conn
   import Phoenix.Controller
 
