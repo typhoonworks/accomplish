@@ -10,13 +10,16 @@
         /> --%>
       </a>
     </div>
-    <div class="flex flex-1 justify-end">
+    <div class="flex flex-1 justify-end items-center gap-x-6">
       <%= if @current_user do %>
-        <.link href={~p"/logout"} method="delete" class="text-sm/6 font-semibold text-white">
-          Log out <span aria-hidden="true">&rarr;</span>
+        <.link
+          href={~p"/mission_control"}
+          class="font-code hidden lg:flex px-2.5 py-1 rounded-md text-sm/6 font-semibold leading-normal transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 items-center justify-center gap-2 bg-transparent text-zinc-200 hover:bg-zinc-900/20 border border-solid border-zinc-600 shadow-md"
+        >
+          <.lucide_icon name="terminal" class="size-5" /> goto app
         </.link>
       <% else %>
-        <.link href={~p"/login"} class="text-sm/6 font-semibold text-white">
+        <.link href={~p"/login"} class="text-sm/6 font-semibold text-zinc-50">
           Log in <span aria-hidden="true">&rarr;</span>
         </.link>
       <% end %>

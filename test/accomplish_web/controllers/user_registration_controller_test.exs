@@ -35,8 +35,7 @@ defmodule AccomplishWeb.UserRegistrationControllerTest do
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")
       response = html_response(conn, 200)
-      assert response =~ ~p"/settings/account/security"
-      assert response =~ ~p"/logout"
+      assert response =~ ~p"/mission_control"
     end
 
     test "render errors for invalid data", %{conn: conn} do
