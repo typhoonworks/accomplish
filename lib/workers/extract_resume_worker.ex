@@ -25,15 +25,15 @@ defmodule Accomplish.Workers.ExtractResumeData do
         },
         attempt: attempt
       }) do
-    with {:ok, structured_data} <-
-           extract_with_backoff(fn -> PDFParser.extract_from_file(resume_path) end, attempt) do
-      %{user_id: user_id, structured_data: structured_data}
-      |> ImportResumeData.new()
-      |> Oban.insert()
+    case extract_with_backoff(fn -> PDFParser.extract_from_file(resume_path) end, attempt) do
+      {:ok, structured_data} ->
+        %{user_id: user_id, structured_data: structured_data}
+        |> ImportResumeData.new()
+        |> Oban.insert()
 
-      {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
-    else
-      {:error, :file_read_error, reason} ->
+        {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
+
+      {:error, {:file_read_error, reason}} ->
         Logger.error("Failed to read resume file: #{inspect(reason)}")
         {:error, :file_read_error}
 
@@ -54,14 +54,14 @@ defmodule Accomplish.Workers.ExtractResumeData do
         },
         attempt: attempt
       }) do
-    with {:ok, structured_data} <-
-           extract_with_backoff(fn -> PDFParser.extract_from_text(text_content) end, attempt) do
-      %{user_id: user_id, structured_data: structured_data}
-      |> ImportResumeData.new()
-      |> Oban.insert()
+    case extract_with_backoff(fn -> PDFParser.extract_from_text(text_content) end, attempt) do
+      {:ok, structured_data} ->
+        %{user_id: user_id, structured_data: structured_data}
+        |> ImportResumeData.new()
+        |> Oban.insert()
 
-      {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
-    else
+        {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
+
       {:snooze, backoff} ->
         {:snooze, backoff}
 
