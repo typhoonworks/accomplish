@@ -9,6 +9,7 @@ defmodule Accomplish.Profiles do
   alias Accomplish.Profiles.Profile
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
+  alias Accomplish.Profiles.Skills
 
   import Accomplish.Utils.Maps, only: [atomize_keys: 1]
 
@@ -64,10 +65,17 @@ defmodule Accomplish.Profiles do
       {:error, %Ecto.Changeset{}}
   """
   def create_profile(user, attrs) do
-    %Profile{}
-    |> Profile.changeset(attrs)
-    |> Ecto.Changeset.put_assoc(:user, user)
-    |> Repo.insert()
+    changeset =
+      %Profile{}
+      |> Profile.changeset(attrs)
+      |> Ecto.Changeset.put_assoc(:user, user)
+
+    multi =
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert(:profile, changeset)
+      |> handle_skills_changes([], Map.get(attrs, :skills, []))
+
+    execute_transaction(multi, :profile)
   end
 
   @doc """
@@ -83,10 +91,65 @@ defmodule Accomplish.Profiles do
   """
   def update_profile(%Profile{} = profile, attrs) do
     attrs = atomize_keys(attrs)
+    old_skills = profile.skills || []
+    new_skills = Map.get(attrs, :skills, old_skills)
 
-    profile
-    |> Profile.update_changeset(attrs)
-    |> Repo.update()
+    multi =
+      Ecto.Multi.new()
+      |> Ecto.Multi.update(:profile, Profile.update_changeset(profile, attrs))
+      |> handle_skills_changes(old_skills, new_skills)
+
+    execute_transaction(multi, :profile)
+  end
+
+  defp handle_skills_changes(multi, old_skills, new_skills) do
+    old_skills = old_skills || []
+    new_skills = new_skills || []
+
+    if old_skills == new_skills do
+      multi
+    else
+      skills_added = new_skills -- old_skills
+      skills_removed = old_skills -- new_skills
+
+      multi
+      |> add_skills_operation(
+        :increment_skills,
+        skills_added,
+        &Skills.batch_increment_usage/1,
+        :no_skills_added
+      )
+      |> add_skills_operation(
+        :decrement_skills,
+        skills_removed,
+        &Skills.batch_decrement_usage/1,
+        :no_skills_removed
+      )
+    end
+  end
+
+  defp add_skills_operation(multi, operation_name, skills, operation_fn, no_op_result) do
+    Ecto.Multi.run(multi, operation_name, fn _repo, _changes ->
+      handle_skill_operation(skills, operation_fn, no_op_result)
+    end)
+  end
+
+  defp handle_skill_operation(skills, operation_fn, no_op_result) do
+    if skills != [] do
+      case operation_fn.(skills) do
+        {count, _} -> {:ok, count}
+        error -> error
+      end
+    else
+      {:ok, no_op_result}
+    end
+  end
+
+  defp execute_transaction(multi, result_key) do
+    case Repo.transaction(multi) do
+      {:ok, results} -> {:ok, Map.get(results, result_key)}
+      {:error, _step, reason, _changes} -> {:error, reason}
+    end
   end
 
   def change_profile(profile \\ %Profile{}, attrs \\ %{}) do
@@ -184,10 +247,7 @@ defmodule Accomplish.Profiles do
   end
 
   def remove_experience(id) when is_binary(id) do
-    case Repo.get(Experience, id) do
-      nil -> {:error, :not_found}
-      experience -> remove_experience(experience)
-    end
+    get_and_remove(Experience, id)
   end
 
   @doc """
@@ -199,16 +259,7 @@ defmodule Accomplish.Profiles do
       [%Experience{}, ...]
   """
   def list_experiences(profile) do
-    query =
-      from e in Experience,
-        where: e.profile_id == ^profile.id,
-        order_by: [
-          desc: e.start_date,
-          asc_nulls_first: e.end_date,
-          desc: e.end_date
-        ]
-
-    Repo.all(query)
+    list_profile_records(Experience, profile.id)
   end
 
   def change_experience(experience \\ %Experience{}, attrs \\ %{}) do
@@ -286,10 +337,7 @@ defmodule Accomplish.Profiles do
   end
 
   def remove_education(id) when is_binary(id) do
-    case Repo.get(Education, id) do
-      nil -> {:error, :not_found}
-      education -> remove_education(education)
-    end
+    get_and_remove(Education, id)
   end
 
   @doc """
@@ -301,9 +349,29 @@ defmodule Accomplish.Profiles do
       [%Education{}, ...]
   """
   def list_educations(profile) do
+    list_profile_records(Education, profile.id)
+  end
+
+  def change_education(education \\ %Education{}, attrs \\ %{}) do
+    education
+    |> Education.changeset(attrs)
+  end
+
+  # ========================
+  # Shared Helper Functions
+  # ========================
+
+  defp get_and_remove(schema, id) do
+    case Repo.get(schema, id) do
+      nil -> {:error, :not_found}
+      record -> Repo.delete(record)
+    end
+  end
+
+  defp list_profile_records(schema, profile_id) do
     query =
-      from e in Education,
-        where: e.profile_id == ^profile.id,
+      from e in schema,
+        where: e.profile_id == ^profile_id,
         order_by: [
           desc: e.start_date,
           asc_nulls_first: e.end_date,
@@ -311,10 +379,5 @@ defmodule Accomplish.Profiles do
         ]
 
     Repo.all(query)
-  end
-
-  def change_education(education \\ %Education{}, attrs \\ %{}) do
-    education
-    |> Education.changeset(attrs)
   end
 end

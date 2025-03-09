@@ -10,7 +10,7 @@ defmodule AccomplishWeb.Components.SkillSelector do
   import AccomplishWeb.CoreComponents
   import AccomplishWeb.ShadowrunComponents
 
-  alias Accomplish.Skills
+  alias Accomplish.Profiles.Skills
 
   def render(assigns) do
     ~H"""

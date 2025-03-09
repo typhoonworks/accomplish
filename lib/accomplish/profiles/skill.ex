@@ -1,4 +1,4 @@
-defmodule Accomplish.Skills.Skill do
+defmodule Accomplish.Profiles.Skill do
   @moduledoc """
   Schema for storing skills in the system.
 
@@ -9,7 +9,7 @@ defmodule Accomplish.Skills.Skill do
 
   @derive {JSON.Encoder, only: [:id, :name, :usage_count]}
 
-  schema "skills" do
+  schema "profile_skills" do
     field :name, :string
     field :normalized_name, :string
     field :usage_count, :integer, default: 0

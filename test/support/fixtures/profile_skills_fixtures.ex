@@ -1,9 +1,9 @@
-defmodule Accomplish.SkillsFixtures do
+defmodule Accomplish.ProfileSkillsFixtures do
   @moduledoc """
-  This module defines test helpers for creating skills via the `Accomplish.Skills` context.
+  This module defines test helpers for creating skills via the `Accomplish.Profiles.Skills` context.
   """
 
-  alias Accomplish.Skills
+  alias Accomplish.Profiles.Skills
 
   @doc """
   Returns a skill fixture.

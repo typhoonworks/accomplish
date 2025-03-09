@@ -3,7 +3,7 @@ alias Accomplish.Accounts
 alias Accomplish.JobApplications
 alias Accomplish.Activities
 alias Accomplish.Profiles
-alias Accomplish.Skills
+alias Accomplish.Profiles.Skills
 
 IO.puts("Cleaning up the database...")
 

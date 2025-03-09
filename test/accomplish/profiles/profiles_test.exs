@@ -5,6 +5,8 @@ defmodule Accomplish.ProfilesTest do
   alias Accomplish.Profiles.Profile
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
+  alias Accomplish.Profiles.Skills
+  alias Accomplish.Profiles.Skill
 
   describe "profiles" do
     @valid_attrs %{
@@ -285,6 +287,92 @@ defmodule Accomplish.ProfilesTest do
       education = education_fixture(profile)
       assert [listed_education] = Profiles.list_educations(profile)
       assert listed_education.id == education.id
+    end
+  end
+
+  describe "profile skills usage tracking" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "create_profile increments skills usage count", %{user: user} do
+      skills = ["Elixir", "Phoenix", "PostgreSQL"]
+      Enum.each(skills, &Skills.create_skill/1)
+
+      {:ok, _} = Profiles.upsert_profile(user, %{skills: skills})
+
+      Enum.each(skills, fn skill ->
+        normalized_skill = Skill.normalize_skill_name(skill)
+        skill_record = Repo.get_by(Skill, normalized_name: normalized_skill)
+
+        assert skill_record, "Skill #{skill} should exist"
+        assert skill_record.usage_count > 0, "Usage count for #{skill} should be incremented"
+      end)
+    end
+
+    test "update_profile increments and decrements skills usage count", %{user: user} do
+      skills = ["Elixir", "Phoenix", "GraphQL", "React"]
+      Enum.each(skills, &Skills.create_skill/1)
+
+      initial_skills = ["Elixir", "Phoenix"]
+      {:ok, _profile} = Profiles.upsert_profile(user, %{skills: initial_skills})
+
+      Enum.each(initial_skills, fn skill ->
+        normalized_skill = Skill.normalize_skill_name(skill)
+        skill_record = Repo.get_by(Skill, normalized_name: normalized_skill)
+        assert skill_record.usage_count > 0
+      end)
+
+      updated_skills = ["Elixir", "GraphQL", "React"]
+      {:ok, _updated_profile} = Profiles.upsert_profile(user, %{skills: updated_skills})
+
+      Enum.each(["GraphQL", "React"], fn skill ->
+        normalized_skill = Skill.normalize_skill_name(skill)
+        skill_record = Repo.get_by(Skill, normalized_name: normalized_skill)
+
+        assert skill_record, "Skill #{skill} should exist"
+        assert skill_record.usage_count > 0, "Usage count for #{skill} should be incremented"
+      end)
+
+      Enum.each(["Phoenix"], fn skill ->
+        normalized_skill = Skill.normalize_skill_name(skill)
+        skill_record = Repo.get_by(Skill, normalized_name: normalized_skill)
+
+        assert skill_record, "Skill #{skill} should exist"
+        assert skill_record.usage_count == 0, "Usage count for #{skill} should be decremented"
+      end)
+
+      elixir_skill = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      assert elixir_skill.usage_count > 0
+    end
+
+    test "profile update with empty skills does not affect usage count", %{user: user} do
+      initial_skills = ["Elixir", "Phoenix"]
+
+      # Ensure skills exist first
+      Enum.each(initial_skills, fn skill ->
+        Skills.create_skill(skill)
+      end)
+
+      {:ok, _profile} = Profiles.upsert_profile(user, %{skills: initial_skills})
+
+      initial_counts =
+        Enum.map(initial_skills, fn skill ->
+          normalized_skill = Skill.normalize_skill_name(skill)
+          skill_record = Repo.get_by!(Skill, normalized_name: normalized_skill)
+          {skill, skill_record.usage_count}
+        end)
+        |> Map.new()
+
+      {:ok, _updated_profile} = Profiles.upsert_profile(user, %{headline: "Updated Headline"})
+
+      Enum.each(initial_skills, fn skill ->
+        normalized_skill = Skill.normalize_skill_name(skill)
+        skill_record = Repo.get_by!(Skill, normalized_name: normalized_skill)
+
+        assert skill_record.usage_count == initial_counts[skill],
+               "Usage count for #{skill} should remain unchanged"
+      end)
     end
   end
 end

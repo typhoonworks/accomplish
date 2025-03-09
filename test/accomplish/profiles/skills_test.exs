@@ -1,7 +1,9 @@
 defmodule Accomplish.SkillsTest do
   use Accomplish.DataCase
 
-  alias Accomplish.Skills
+  alias Accomplish.Profiles.Skills
+  alias Accomplish.Profiles.Skill
+  alias Accomplish.Repo
 
   describe "find_or_create_skill/1" do
     test "creates a new skill if it does not exist" do
@@ -103,6 +105,73 @@ defmodule Accomplish.SkillsTest do
       assert_raise Ecto.NoResultsError, fn ->
         Skills.get_skill!(UUIDv7.generate())
       end
+    end
+  end
+
+  describe "find_or_create_skills/1" do
+    test "returns a list of skills for given skill names" do
+      skills = Skills.find_or_create_skills(["Elixir", "Phoenix"])
+      assert is_list(skills)
+      assert length(skills) == 2
+      assert Enum.any?(skills, fn skill -> skill.name == "Elixir" end)
+      assert Enum.any?(skills, fn skill -> skill.name == "Phoenix" end)
+    end
+
+    test "increments usage for existing skills when called multiple times" do
+      _ = Skills.find_or_create_skill("React")
+      skill_before = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("React"))
+      usage_before = skill_before.usage_count
+
+      _ = Skills.find_or_create_skills(["React"])
+      skill_after = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("React"))
+      assert skill_after.usage_count == usage_before + 1
+    end
+  end
+
+  describe "batch_increment_usage/1" do
+    setup do
+      Skills.create_skill("Elixir")
+      Skills.create_skill("Phoenix")
+      :ok
+    end
+
+    test "increments usage count for multiple skills" do
+      elixir = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      phoenix = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Phoenix"))
+      initial_elixir = elixir.usage_count
+      initial_phoenix = phoenix.usage_count
+
+      Skills.batch_increment_usage(["Elixir", "Phoenix"])
+
+      updated_elixir = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      updated_phoenix = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Phoenix"))
+
+      assert updated_elixir.usage_count == initial_elixir + 1
+      assert updated_phoenix.usage_count == initial_phoenix + 1
+    end
+  end
+
+  describe "batch_decrement_usage/1" do
+    setup do
+      Skills.create_skill("Elixir")
+      Skills.batch_increment_usage(["Elixir"])
+      Skills.batch_increment_usage(["Elixir"])
+      :ok
+    end
+
+    test "decrements usage count for multiple skills but never below zero" do
+      elixir = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      initial_usage = elixir.usage_count
+      assert initial_usage >= 2
+
+      Skills.batch_decrement_usage(["Elixir"])
+      updated_skill = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      assert updated_skill.usage_count == initial_usage - 1
+
+      Skills.batch_decrement_usage(["Elixir"])
+      Skills.batch_decrement_usage(["Elixir"])
+      final_skill = Repo.get_by(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      assert final_skill.usage_count == 0
     end
   end
 end
