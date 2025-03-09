@@ -3,14 +3,14 @@ defmodule Accomplish.Workers.LogActivity do
 
   use Oban.Worker, queue: :default
 
-  alias Accomplish.Repo
   alias Accomplish.Activities
-  alias Accomplish.Accounts.User
+  alias Accomplish.Accounts
 
   @impl Oban.Worker
   def perform(%Oban.Job{
         args:
           %{
+            "user_id" => user_id,
             "actor_id" => actor_id,
             "action" => action,
             "entity_id" => entity_id,
@@ -21,10 +21,12 @@ defmodule Accomplish.Workers.LogActivity do
     context_id = Map.get(args, "context_id")
     context_type = Map.get(args, "context_type")
 
-    with {:ok, actor} <- fetch_actor(actor_id),
+    with {:ok, user} <- fetch_user(user_id),
+         {:ok, actor} <- fetch_actor(actor_id),
          {:ok, entity} <- Activities.fetch_entity(entity_id, entity_type),
          {:ok, context} <- fetch_optional_context(context_id, context_type) do
       Activities.log_activity(
+        user,
         actor,
         action,
         entity,
@@ -44,8 +46,16 @@ defmodule Accomplish.Workers.LogActivity do
   # FETCH HELPERS
   # =============================
 
+  # Add this helper function to properly handle user fetching
+  defp fetch_user(user_id) do
+    case Accounts.get_user(user_id) do
+      nil -> {:error, "User not found (ID: #{user_id})"}
+      user -> {:ok, user}
+    end
+  end
+
   defp fetch_actor(actor_id) do
-    case Repo.get(User, actor_id) do
+    case Accounts.get_user(actor_id) do
       nil -> {:error, "Actor not found (ID: #{actor_id})"}
       actor -> {:ok, actor}
     end

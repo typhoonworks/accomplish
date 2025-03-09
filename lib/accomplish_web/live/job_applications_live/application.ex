@@ -372,7 +372,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
   defp render_stages(assigns) do
     ~H"""
     <section class="max-w-full mx-auto px-6 lg:px-8 mt-8">
-      <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
+      <div>
         <div
           id="stages"
           class="inline-block min-w-full py-2 align-middle"

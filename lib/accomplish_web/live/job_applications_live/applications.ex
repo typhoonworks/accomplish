@@ -46,7 +46,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       </:page_header>
 
       <div class="mt-8 w-full">
-        <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
+        <div>
           <div
             id="applications"
             class="inline-block min-w-full py-2 align-middle"
@@ -257,7 +257,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     filter = params["filter"] || "active"
 
     applications =
-      JobApplications.list_applications(user, filter, [:current_stage, :stages])
+      JobApplications.list_applications(user, filter: filter, preloads: [:current_stage, :stages])
 
     statuses = visible_statuses(filter)
 

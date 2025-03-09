@@ -6,6 +6,8 @@ defmodule Accomplish.Activities do
   alias Accomplish.Activities.Activity
   alias Accomplish.Activities.Events
 
+  @system_actor_id "00000000-0000-0000-0000-000000000000"
+
   @entity_modules %{
     "JobApplications.Application" => Accomplish.JobApplications.Application,
     "JobApplications.Stage" => Accomplish.JobApplications.Stage,
@@ -61,7 +63,19 @@ defmodule Accomplish.Activities do
   # LOGGING ACTIVITIES
   # ===========================
 
+  def log_system_activity(
+        user,
+        action,
+        entity,
+        metadata \\ %{},
+        occurred_at \\ DateTime.utc_now(),
+        context \\ nil
+      ) do
+    log_activity(user, :system, action, entity, metadata, occurred_at, context)
+  end
+
   def log_activity(
+        user,
         actor,
         action,
         entity,
@@ -74,10 +88,11 @@ defmodule Accomplish.Activities do
         entity_type = get_entity_type(entity)
         context_type = get_context_type(context)
 
+        actor_id = if actor == :system, do: @system_actor_id, else: actor.id
+
         result =
-          %Activity{}
-          |> Activity.changeset(%{
-            actor_id: actor.id,
+          Activity.create_changeset(user, %{
+            actor_id: actor_id,
             actor_type: actor_type,
             action: action,
             metadata: metadata,
@@ -102,6 +117,43 @@ defmodule Accomplish.Activities do
   # ===========================
   # RETRIEVING ACTIVITIES
   # ===========================
+
+  def list_activities_for_user(user_id, preloads \\ []) do
+    query =
+      from(a in Activity,
+        where: a.user_id == ^user_id,
+        order_by: [desc: a.occurred_at]
+      )
+
+    query =
+      if :actor in preloads do
+        query
+        |> join(:left, [a], u in Accomplish.Accounts.User,
+          on: a.actor_id == u.id and a.actor_type == "User"
+        )
+        |> select_merge([a, u], %{actor: u})
+      else
+        query
+      end
+
+    activities = Repo.all(query)
+
+    activities =
+      if :entity in preloads or :all in preloads do
+        preload_entities(activities)
+      else
+        activities
+      end
+
+    activities =
+      if :context in preloads or :all in preloads do
+        preload_contexts(activities)
+      else
+        activities
+      end
+
+    activities
+  end
 
   def list_activities_for_entity_or_context(entity_or_context) do
     type = get_entity_type(entity_or_context)
@@ -134,7 +186,6 @@ defmodule Accomplish.Activities do
 
   # Preload entities in a batch operation
   # This updates the preload_entities function in the Activities module to handle soft deleted entities
-
   defp preload_entities(activities) do
     activities_by_entity_type =
       Enum.group_by(activities, fn activity -> activity.entity_type end)
@@ -211,6 +262,7 @@ defmodule Accomplish.Activities do
   end
 
   defp get_actor_type(%Accomplish.Accounts.User{}), do: {:ok, "User"}
+  defp get_actor_type(:system), do: {:ok, "System"}
   defp get_actor_type(_), do: {:error, "Unrecognized actor type"}
 
   # ===========================
@@ -242,6 +294,8 @@ defmodule Accomplish.Activities do
     if context do
       broadcast!(msg, topic_suffix(:context, context))
     end
+
+    broadcast!(msg, "user:#{actor.id}")
   end
 
   defp broadcast!(msg, topic_suffix) do

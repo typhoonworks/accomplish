@@ -7,6 +7,8 @@ defmodule Accomplish.Repo.Migrations.CreateActivities do
   def up do
     create table(:activities, primary_key: false) do
       add :id, :uuid, primary_key: true
+      add :user_id, references(:users, type: :uuid, on_delete: :delete_all), null: true
+
       add :actor_id, :uuid, null: false
       add :actor_type, :string, null: false, default: "User"
       add :action, :string, null: false

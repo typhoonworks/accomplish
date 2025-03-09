@@ -21,6 +21,7 @@ defmodule Accomplish.ActivitiesTest do
       {:ok, activity} =
         Activities.log_activity(
           applicant,
+          applicant,
           "job_application.status_updated",
           application,
           metadata
@@ -46,6 +47,7 @@ defmodule Accomplish.ActivitiesTest do
       {:ok, activity} =
         Activities.log_activity(
           applicant,
+          applicant,
           "job_application.stage_status_updated",
           stage,
           metadata,
@@ -70,7 +72,9 @@ defmodule Accomplish.ActivitiesTest do
       applicant: applicant,
       application: application
     } do
-      assert {:error, changeset} = Activities.log_activity(applicant, nil, application, %{})
+      assert {:error, changeset} =
+               Activities.log_activity(applicant, applicant, nil, application, %{})
+
       refute changeset.valid?
       assert "can't be blank" in errors_on(changeset).action
     end
@@ -80,7 +84,7 @@ defmodule Accomplish.ActivitiesTest do
       application: application
     } do
       {:ok, activity} =
-        Activities.log_activity(applicant, "job_application.created", application, %{})
+        Activities.log_activity(applicant, applicant, "job_application.created", application, %{})
 
       assert activity.metadata == %{}
     end
@@ -90,7 +94,7 @@ defmodule Accomplish.ActivitiesTest do
       application: application
     } do
       {:ok, activity} =
-        Activities.log_activity(applicant, "job_application.created", application, %{})
+        Activities.log_activity(applicant, applicant, "job_application.created", application, %{})
 
       assert activity.entity_type == "JobApplications.Application"
     end
@@ -100,13 +104,19 @@ defmodule Accomplish.ActivitiesTest do
       application: application
     } do
       {:ok, activity1} =
-        Activities.log_activity(applicant, "job_application.created", application, %{})
+        Activities.log_activity(applicant, applicant, "job_application.created", application, %{})
 
       {:ok, activity2} =
-        Activities.log_activity(applicant, "job_application.status_updated", application, %{
-          old_status: "applied",
-          new_status: "interviewing"
-        })
+        Activities.log_activity(
+          applicant,
+          applicant,
+          "job_application.status_updated",
+          application,
+          %{
+            old_status: "applied",
+            new_status: "interviewing"
+          }
+        )
 
       assert activity1.entity_id == application.id
       assert activity2.entity_id == application.id
@@ -180,6 +190,7 @@ defmodule Accomplish.ActivitiesTest do
       {:ok, _activity1} =
         Activities.log_activity(
           applicant,
+          applicant,
           "job_application.created",
           application,
           %{},
@@ -188,6 +199,7 @@ defmodule Accomplish.ActivitiesTest do
 
       {:ok, _activity2} =
         Activities.log_activity(
+          applicant,
           applicant,
           "job_application.stage_updated",
           stage,
@@ -261,6 +273,7 @@ defmodule Accomplish.ActivitiesTest do
       {:ok, _activity} =
         Activities.log_activity(
           applicant,
+          applicant,
           "job_application.stage_updated",
           soft_deleted_stage,
           %{old_status: "pending", new_status: "cancelled"},
@@ -302,6 +315,7 @@ defmodule Accomplish.ActivitiesTest do
 
       {:ok, _activity3} =
         Activities.log_activity(
+          applicant,
           applicant,
           "user.profile_updated",
           applicant,
@@ -355,6 +369,7 @@ defmodule Accomplish.ActivitiesTest do
 
       {:ok, _activity} =
         Activities.log_activity(
+          applicant,
           applicant,
           "job_application.stage_status_updated",
           stage,
