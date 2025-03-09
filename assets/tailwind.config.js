@@ -12,9 +12,19 @@ module.exports = {
   ],
   theme: {
     extend: {
+      animation: {
+        throb: "throb 1.5s infinite ease-in-out",
+      },
+      keyframes: {
+        throb: {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.3)", opacity: "0.8" },
+        },
+      },
       colors: require("./tailwind.colors.json"),
       fontFamily: {
         sans: ["Inter", "sans-serif"],
+        code: ["Fira Code", "monospace"],
       },
     },
   },
