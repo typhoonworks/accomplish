@@ -214,12 +214,14 @@ defmodule AccomplishWeb.Layout do
         <.dropdown_menu_content>
           <.menu class="w-56 text-zinc-300 bg-zinc-900">
             <.menu_group>
-              <.link href={~p"/settings/account/preferences"}>
-                <.menu_item class="text-[13px]">
-                  <span>Settings</span>
-                  <.menu_shortcut>⌘S</.menu_shortcut>
-                </.menu_item>
-              </.link>
+              <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
+                <.link href={~p"/settings/account/preferences"}>
+                  <.menu_item class="text-[13px]">
+                    <span>Settings</span>
+                    <.menu_shortcut>⌘S</.menu_shortcut>
+                  </.menu_item>
+                </.link>
+              <% end %>
               <.link href={~p"/settings/account/profile"}>
                 <.menu_item class="text-[13px]">
                   <span>Profile</span>

@@ -90,3 +90,10 @@ config :swoosh, :api_client, false
 config :salad_ui, components_path: Path.join(File.cwd!(), "lib/accomplish_web/components")
 
 config :open_api_spex, :cache_adapter, OpenApiSpex.Plug.NoneCache
+
+config :ex_aws, :s3,
+  scheme: "http://",
+  region: System.get_env("AWS_S3_REGION"),
+  host: System.get_env("AWS_S3_URL"),
+  port: System.get_env("AWS_S3_PORT"),
+  bucket: System.get_env("AWS_S3_BUCKET")

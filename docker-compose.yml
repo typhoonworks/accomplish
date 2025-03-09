@@ -1,0 +1,19 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - 4566:4566
+    environment:
+      # Own env vars
+      BUCKET_NAME: files
+      DEFAULT_REGION: us-west-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      # Service env vars
+      SERVICES: s3
+      DISABLE_CORS_CHECKS: 1
+      # PROVIDER_OVERRIDE_S3: asf | enable newer asf backend for S3
+      S3_SKIP_SIGNATURE_VALIDATION: 1
+    volumes:
+      - ./.localstack:/var/lib/localstack
+      - ./init_localstack.sh:/etc/localstack/init/ready.d/init_localstack.sh
