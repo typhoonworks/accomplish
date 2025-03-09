@@ -95,7 +95,9 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
               href={~p"/job_application/#{@application.slug}/stages"}
               active={@live_action == :stages}
             />
-            <.nav_button icon="files" text="Documents" href="#" active={@live_action == :documents} />
+            <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
+              <.nav_button icon="files" text="Documents" href="#" active={@live_action == :documents} />
+            <% end %>
           </:views>
         </.page_header>
       </:page_header>

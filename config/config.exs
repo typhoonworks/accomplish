@@ -85,6 +85,20 @@ config :accomplish, Oban,
   repo: Accomplish.Repo,
   queues: [default: 10]
 
+config :fun_with_flags, :cache,
+  enabled: true,
+  ttl: 900
+
+config :fun_with_flags, :persistence,
+  adapter: FunWithFlags.Store.Persistent.Ecto,
+  repo: Accomplish.Repo,
+  ecto_primary_key_type: :id
+
+config :fun_with_flags, :cache_bust_notifications,
+  enabled: true,
+  adapter: FunWithFlags.Notifications.PhoenixPubSub,
+  client: Accomplish.PubSub
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

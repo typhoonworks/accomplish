@@ -4,6 +4,7 @@ defmodule AccomplishWeb.Router do
   import Oban.Web.Router
 
   import AccomplishWeb.Plugs.UserAuth
+  import AccomplishWeb.Plugs.AdminAuth
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -19,10 +20,26 @@ defmodule AccomplishWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", AccomplishWeb do
-    pipe_through :browser
+  pipeline :admin do
+    plug :browser
+    plug :fetch_current_user
+    plug :require_admin_user
+  end
+
+  scope "/admin", AccomplishWeb.Admin do
+    pipe_through :admin
 
     oban_dashboard("/oban")
+  end
+
+  scope "/admin" do
+    pipe_through :admin
+
+    forward "/feature-flags", FunWithFlags.UI.Router, namespace: "admin/feature-flags"
+  end
+
+  scope "/", AccomplishWeb do
+    pipe_through :browser
 
     get "/", PageController, :home
   end

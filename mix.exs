@@ -52,6 +52,8 @@ defmodule Accomplish.MixProject do
       {:excoveralls, "~> 0.18", only: :test, runtime: false},
       {:finch, "~> 0.13"},
       {:floki, ">= 0.30.0"},
+      {:fun_with_flags, "~> 1.12"},
+      {:fun_with_flags_ui, "~> 1.0"},
       {:gettext, "~> 0.26"},
       {:goal, "~> 1.1"},
       {:heroicons,

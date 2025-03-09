@@ -22,6 +22,10 @@ for table <- tables do
   Repo.query!("TRUNCATE TABLE #{table} CASCADE")
 end
 
+IO.puts("Creating feature flags...")
+
+FunWithFlags.disable(:show_dev_ui)
+
 IO.puts("Creating OAuth application...")
 
 attrs = %{
@@ -45,6 +49,8 @@ IO.puts("Creating initial user...")
     },
     min_length: 3
   )
+
+Accounts.update_user_role(user, :admin)
 
 IO.puts("Creating Profile...")
 

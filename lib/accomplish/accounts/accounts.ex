@@ -142,6 +142,12 @@ defmodule Accomplish.Accounts do
     |> Repo.update()
   end
 
+  def update_user_role(user, role) when role in [:user, :admin] do
+    user
+    |> Ecto.Changeset.change(%{role: role})
+    |> Repo.update()
+  end
+
   ## Settings
 
   @doc """
