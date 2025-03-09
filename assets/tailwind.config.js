@@ -14,11 +14,17 @@ module.exports = {
     extend: {
       animation: {
         throb: "throb 1.5s infinite ease-in-out",
+        bounceThrob: "bounceThrob 1.5s infinite ease-in-out",
       },
       keyframes: {
         throb: {
           "0%, 100%": { transform: "scale(1)", opacity: "1" },
           "50%": { transform: "scale(1.3)", opacity: "0.8" },
+        },
+        bounceThrob: {
+          "0%": { transform: "scale(1) translateY(0px)", opacity: "1" },
+          "50%": { transform: "scale(1.3) translateY(1px)", opacity: "0.8" },
+          "100%": { transform: "scale(1) translateY(0px)", opacity: "1" },
         },
       },
       colors: require("./tailwind.colors.json"),
