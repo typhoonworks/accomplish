@@ -58,26 +58,63 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
                 <.application_group status={status} applications={@streams[stream_key(status)]} />
               <% end %>
             </.stacked_list>
-            <%= if !@has_applications do %>
-              <div class="mt-36 flex flex-col items-start justify-center gap-4 px-6 py-10 bg-zinc-900 max-w-sm mx-auto text-left">
-                <div class="flex items-center justify-center">
-                  <.icon name="hero-envelope-solid" class="size-12 text-zinc-300/50 icon-reflection" />
-                </div>
 
-                <div class="space-y-4">
-                  <h2 class="text-md font-light text-zinc-100">Job Applications</h2>
-                  <p class="text-sm font-light  text-zinc-400 leading-relaxed">
-                    Track and manage your job applications. Keep everything organized in one place for easy access and progress tracking.
-                  </p>
-                  <.shadow_button
-                    phx-click="prepare_new_application"
-                    phx-value-status="applied"
-                    phx-value-modal_id="new-job-application"
-                  >
-                    Add a new application
-                  </.shadow_button>
+            <%= cond do %>
+              <% !@has_applications -> %>
+                <!-- No applications at all -->
+                <div class="mt-36 flex flex-col items-start justify-center gap-4 px-6 py-10 bg-zinc-900 max-w-sm mx-auto text-left">
+                  <div class="flex items-center justify-center">
+                    <.icon
+                      name="hero-envelope-solid"
+                      class="size-12 text-zinc-300/50 icon-reflection"
+                    />
+                  </div>
+
+                  <div class="space-y-4">
+                    <h2 class="text-md font-light text-zinc-100">Job Applications</h2>
+                    <p class="text-sm font-light text-zinc-400 leading-relaxed">
+                      Track and manage your job applications. Keep everything organized in one place for easy access and progress tracking.
+                    </p>
+                    <.shadow_button
+                      phx-click="prepare_new_application"
+                      phx-value-status="applied"
+                      phx-value-modal_id="new-job-application"
+                    >
+                      Add a new application
+                    </.shadow_button>
+                  </div>
                 </div>
-              </div>
+              <% @has_applications && @filter_empty -> %>
+                <!-- Has applications but none match the current filter -->
+                <div class="mt-36 flex flex-col items-start justify-center gap-4 px-6 py-10 bg-zinc-900 max-w-sm mx-auto text-left">
+                  <div class="flex items-center justify-center">
+                    <.lucide_icon name="filter-x" class="size-12 text-zinc-300/50 icon-reflection" />
+                  </div>
+
+                  <div class="space-y-4">
+                    <h2 class="text-md font-light text-zinc-100">No {@filter} applications</h2>
+                    <p class="text-sm font-light text-zinc-400 leading-relaxed">
+                      {filter_empty_message(@filter)}
+                    </p>
+                    <div class="flex gap-2">
+                      <.link
+                        navigate={~p"/job_applications?filter=all"}
+                        class="px-2.5 py-1 rounded-md text-xs font-light leading-normal transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 flex items-center justify-center gap-2 border border-solid border-zinc-600 shadow-md bg-zinc-700 text-zinc-200 hover:bg-zinc-600"
+                      >
+                        View all applications
+                      </.link>
+                      <.shadow_button
+                        phx-click="prepare_new_application"
+                        phx-value-status={filter_to_status(@filter)}
+                        phx-value-modal_id="new-job-application"
+                      >
+                        Add new application
+                      </.shadow_button>
+                    </div>
+                  </div>
+                </div>
+              <% true -> %>
+                <!-- There are applications matching the filter, nothing to show here -->
             <% end %>
           </div>
         </div>
@@ -266,7 +303,9 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
         {status, Enum.filter(applications, &(&1.status == status))}
       end
 
-    # Create proper changeset for the job posting form
+    filter_applications = List.flatten(Map.values(applications_by_status))
+    filter_empty = applications != [] && filter_applications == []
+
     job_posting_changeset =
       {%{}, %{url: :string}}
       |> Ecto.Changeset.cast(%{url: ""}, [:url])
@@ -284,6 +323,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       |> assign(:applications_by_status, applications_by_status)
       |> assign(:statuses, statuses)
       |> assign(:has_applications, applications != [])
+      |> assign(:filter_empty, filter_empty)
       |> stream_applications(applications_by_status)
 
     {:ok, socket}
@@ -598,6 +638,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       socket
       |> assign(:has_applications, true)
       |> maybe_insert_new_application(event.application)
+      |> update_filter_empty_state()
 
     {:noreply, socket}
   end
@@ -608,13 +649,62 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     application =
       JobApplications.get_application!(user, event.application.id, [:current_stage, :stages])
 
-    {:noreply, replace_application(socket, application, event.diff)}
+    applications_by_status =
+      update_applications_by_status(
+        socket.assigns.applications_by_status,
+        application,
+        event.diff
+      )
+
+    socket =
+      socket
+      |> assign(applications_by_status: applications_by_status)
+      |> replace_application(application, event.diff)
+      |> update_filter_empty_state()
+
+    {:noreply, socket}
   end
 
   defp handle_notification(_, socket), do: {:noreply, socket}
 
   defp subscribe_to_notifications_topic(user_id) do
     Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
+  end
+
+  defp update_filter_empty_state(socket) do
+    matching_applications =
+      socket.assigns.statuses
+      |> Enum.flat_map(fn status ->
+        Map.get(socket.assigns.applications_by_status, status, [])
+      end)
+
+    filter_empty = socket.assigns.has_applications && matching_applications == []
+
+    assign(socket, filter_empty: filter_empty)
+  end
+
+  defp update_applications_by_status(applications_by_status, application, diff) do
+    old_status =
+      if Map.has_key?(diff, :status) do
+        diff[:status][:old]
+      else
+        application.status
+      end
+
+    updated_map =
+      Map.update(
+        applications_by_status,
+        old_status,
+        [],
+        &Enum.reject(&1, fn app -> app.id == application.id end)
+      )
+
+    Map.update(
+      updated_map,
+      application.status,
+      [application],
+      &[application | &1]
+    )
   end
 
   defp insert_application(socket, user, application) do
@@ -740,4 +830,20 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   defp visible_statuses("draft") do
     ~w(draft)a
   end
+
+  defp filter_empty_message("active") do
+    "You don't have any active job applications yet. Active applications include those with status: applied, interviewing, or offer."
+  end
+
+  defp filter_empty_message("draft") do
+    "You don't have any draft applications yet. Draft applications are those you've started but haven't applied to yet."
+  end
+
+  defp filter_empty_message(_) do
+    "There are no applications matching your current filter criteria."
+  end
+
+  defp filter_to_status("active"), do: "applied"
+  defp filter_to_status("draft"), do: "draft"
+  defp filter_to_status(_), do: "applied"
 end
