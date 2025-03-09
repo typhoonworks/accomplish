@@ -101,7 +101,7 @@ defmodule Accomplish.JobApplications.StagesTest do
       soft_deleted_stage: soft_deleted_stage
     } do
       found_stage =
-        Stages.get!(soft_deleted_stage.id, job_application.id, [], with_deleted: true)
+        Stages.get!(soft_deleted_stage.id, job_application.id, with_deleted: true)
 
       assert found_stage.id == soft_deleted_stage.id
       assert not is_nil(found_stage.deleted_at)

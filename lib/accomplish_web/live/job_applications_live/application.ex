@@ -5,6 +5,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
   alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.Stage
   alias Accomplish.Activities
+  alias Accomplish.CoverLetters
   alias Accomplish.CoverLetters.Generator
 
   import AccomplishWeb.Layout
@@ -52,6 +53,17 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
               <.dropdown_menu_content>
                 <.menu class="w-56 text-zinc-300 bg-zinc-800">
                   <.menu_group>
+                    <.menu_item class="text-sm">
+                      <button
+                        type="button"
+                        phx-click="new_cover_letter"
+                        class="flex items-center gap-2"
+                      >
+                        <.lucide_icon name="square-pen" class="size-4 text-zinc-400" />
+                        <span>Write cover letter</span>
+                      </button>
+                      <.menu_shortcut>⌘W</.menu_shortcut>
+                    </.menu_item>
                     <.menu_item class="text-sm">
                       <button
                         type="button"
@@ -475,6 +487,17 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
        to: "#cover-letter-dialog",
        attr: "phx-show-modal"
      })}
+  end
+
+  def handle_event("new_cover_letter", _params, socket) do
+    application = socket.assigns.application
+    {:ok, cover_letter} = CoverLetters.create_cover_letter(application)
+
+    {:noreply,
+     socket
+     |> push_navigate(
+       to: ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}"
+     )}
   end
 
   def handle_event(

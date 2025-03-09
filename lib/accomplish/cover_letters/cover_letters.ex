@@ -13,9 +13,25 @@ defmodule Accomplish.CoverLetters do
   @notifications_topic "notifications:events"
   @events_topic "events:all"
 
-  def get_cover_letter!(id, preloads \\ []) do
+  def get_application_cover_letter!(application, id, opts \\ []) do
+    preloads = Keyword.get(opts, :preloads, [])
+    with_deleted = Keyword.get(opts, :with_deleted, false)
+
+    query =
+      from(cl in CoverLetter,
+        where: cl.id == ^id and cl.application_id == ^application.id
+      )
+
+    result = Repo.one!(query, with_deleted: with_deleted)
+    Repo.preload(result, preloads)
+  end
+
+  def get_cover_letter!(id, opts \\ []) do
+    preloads = Keyword.get(opts, :preloads, [])
+    with_deleted = Keyword.get(opts, :with_deleted, false)
+
     CoverLetter
-    |> Repo.get!(id)
+    |> Repo.get!(id, with_deleted: with_deleted)
     |> Repo.preload(preloads)
   end
 
@@ -29,7 +45,7 @@ defmodule Accomplish.CoverLetters do
     Repo.all(query)
   end
 
-  def create_cover_letter(%Application{} = application, attrs) do
+  def create_cover_letter(%Application{} = application, attrs \\ %{}) do
     attrs = atomize_keys(attrs)
     changeset = CoverLetter.create_changeset(application, attrs)
 

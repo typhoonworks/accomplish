@@ -374,5 +374,21 @@ defmodule Accomplish.ProfilesTest do
                "Usage count for #{skill} should remain unchanged"
       end)
     end
+
+    test "profile update with non-existent skills doesn't fail", %{user: user} do
+      existing_skills = ["Elixir", "Phoenix"]
+      Enum.each(existing_skills, &Skills.create_skill/1)
+
+      {:ok, _profile} = Profiles.upsert_profile(user, %{skills: existing_skills})
+
+      mixed_skills = ["Elixir", "NonExistentSkill1", "PostgreSQL", "NonExistentSkill2"]
+
+      {:ok, updated_profile} = Profiles.upsert_profile(user, %{skills: mixed_skills})
+
+      assert Enum.sort(updated_profile.skills) == Enum.sort(mixed_skills)
+
+      elixir_skill = Repo.get_by!(Skill, normalized_name: Skill.normalize_skill_name("Elixir"))
+      assert elixir_skill.usage_count > 0
+    end
   end
 end

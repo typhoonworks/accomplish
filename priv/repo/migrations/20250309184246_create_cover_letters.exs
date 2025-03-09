@@ -1,5 +1,6 @@
 defmodule Accomplish.Repo.Migrations.CreateCoverLetters do
   use Ecto.Migration
+  import Ecto.SoftDelete.Migration
 
   @disable_ddl_transaction true
   @disable_migration_lock true
@@ -8,7 +9,7 @@ defmodule Accomplish.Repo.Migrations.CreateCoverLetters do
     create table(:cover_letters, primary_key: false) do
       add :id, :uuid, primary_key: true
       add :title, :string, null: false
-      add :content, :text, null: false
+      add :content, :text, default: "", null: false
       add :status, :string, default: "draft", null: false
       add :submitted_at, :utc_datetime
 
@@ -16,6 +17,7 @@ defmodule Accomplish.Repo.Migrations.CreateCoverLetters do
         null: false
 
       timestamps(type: :utc_datetime)
+      soft_delete_columns()
     end
 
     create index(:cover_letters, [:application_id], concurrently: true)

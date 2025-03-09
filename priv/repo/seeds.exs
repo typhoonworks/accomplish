@@ -14,11 +14,10 @@ tables = [
   "profile_experiences",
   "profile_educations",
   "profiles",
-  "skills",
   "api_keys",
   "users",
   "oauth_applications",
-  "skills"
+  "profile_skills"
 ]
 
 for table <- tables do
