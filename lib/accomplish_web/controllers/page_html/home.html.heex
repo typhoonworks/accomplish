@@ -27,7 +27,7 @@
     </div>
   </main>
 
-  <footer class="mx-auto max-w-7xl px-6 lg:px-8">
+  <footer class="mx-auto max-w-7xl px-6 lg:px-8 bg-zinc-950">
     <div class="border-t border-white/10 py-12 md:flex md:items-center md:justify-between">
       <div class="flex justify-center gap-x-6 md:order-2">
         <a href="https://github.com/typhoonworks" class="text-gray-400 hover:text-gray-300">
@@ -41,8 +41,9 @@
           </svg>
         </a>
       </div>
-      <p class="mt-8 text-center text-sm/6 text-gray-400 md:order-1 md:mt-0">
-        &copy; 2025 Typhoon Works. All rights reserved.
+      <p class="mt-8 text-center font-light text-sm/6 text-gray-400 md:order-1 md:mt-0">
+        <span class="sr-only">&copy; {Date.utc_today().year} Typhoon Works</span>
+        Built with Elixir & Phoenix
       </p>
     </div>
   </footer>
