@@ -19,7 +19,7 @@ import CodeInput from "./hooks/code_input";
 import ContextMenu from "./hooks/context_menu";
 import DropdownMenu from "./hooks/dropdown_menu";
 import GoBack from "./hooks/go_back";
-import SkillInputAutofocus from "./hooks/skill_input_autofocus";
+import SkillSelector from "./hooks/skill_selector";
 import StackedList from "./hooks/stacked_list";
 import UrlInputAutoFocus from "./hooks/url_input_autofocus";
 
@@ -33,7 +33,7 @@ const hooks = {
   ContextMenu,
   DropdownMenu,
   GoBack,
-  SkillInputAutofocus,
+  SkillSelector,
   StackedList,
   UrlInputAutoFocus,
   ...getHooks(Components),
