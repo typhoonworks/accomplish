@@ -35,7 +35,7 @@ defmodule AccomplishWeb.Components.JobApplicationTimeline do
       </div>
 
       <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900 flex-1">
-        <div class="min-w-max px-6 pb-6">
+        <div class="min-w-max h-full px-6 pb-6">
           <div class="flex border-b border-zinc-700 pb-2">
             <!-- Left side reserved for application titles -->
             <div class="w-52 flex-shrink-0"></div>
@@ -74,62 +74,65 @@ defmodule AccomplishWeb.Components.JobApplicationTimeline do
                   <% end %>
                 </div>
               <% end %>
-              
-    <!-- Current date vertical line -->
-              <div
-                class="absolute top-0 bottom-0 w-[2px] bg-purple-500 z-10"
-                style={"left: #{calculate_current_date_position(@start_date, @current_date)}px"}
-              >
-              </div>
             </div>
           </div>
           
-    <!-- Application rows -->
-          <%= if Enum.empty?(@applications) do %>
-            <div class="text-center py-8 text-zinc-500 text-sm h-full flex flex-col justify-center">
-              <p class="mt-2">No applications yet</p>
+    <!-- Timeline content with applications -->
+          <div class="relative h-full">
+            <!-- Current date indicator line that spans full height -->
+            <div
+              class="absolute top-0 bottom-0 w-[1px] bg-purple-500/50 z-10"
+              style={"left: #{calculate_current_date_position(@start_date, @current_date) + 52}px"}
+            >
             </div>
-          <% else %>
-            <%= for application <- @applications do %>
-              <div class="flex items-center py-2">
-                <!-- Application info -->
-                <div class="w-52 flex-shrink-0 p-4 rounded-md hover:bg-zinc-700/20">
-                  <.link
-                    navigate={~p"/job_application/#{application.slug}/overview"}
-                    class="font-light text-zinc-200 text-sm truncate block"
-                  >
-                    {application.role}
-                  </.link>
-                  <p class="text-zinc-500 text-xs truncate">{application.company.name}</p>
-                </div>
-                
-    <!-- Timeline bar -->
-                <div class="flex-1 relative min-h-[30px]">
-                  <%= if Map.has_key?(@timeline_data, application.id) do %>
-                    <% app_timeline = @timeline_data[application.id] %>
-                    <div
-                      class="absolute top-[10px] h-[10px] rounded-md flex items-center"
-                      style={"left: #{app_timeline.start_pos}px; width: #{app_timeline.width}px;"}
-                    >
-                      <!-- Past to present portion -->
-                      <div
-                        class={"h-full rounded-l-md #{status_color_bg(application.status)}"}
-                        style={"width: #{app_timeline.current_width}px"}
-                      >
-                      </div>
-                      
-    <!-- Future portion -->
-                      <div
-                        class={"h-full rounded-r-md bg-opacity-30 border-dashed border #{status_color_border(application.status)}"}
-                        style={"width: #{app_timeline.future_width}px"}
-                      >
-                      </div>
-                    </div>
-                  <% end %>
-                </div>
+            
+    <!-- Application rows -->
+            <%= if Enum.empty?(@applications) do %>
+              <div class="text-center py-8 text-zinc-500 text-sm h-full flex flex-col justify-center">
+                <p class="mt-2">No applications yet</p>
               </div>
+            <% else %>
+              <%= for application <- @applications do %>
+                <div class="flex items-center py-2">
+                  <!-- Application info -->
+                  <div class="w-52 flex-shrink-0 p-4 rounded-md hover:bg-zinc-700/20">
+                    <.link
+                      navigate={~p"/job_application/#{application.slug}/overview"}
+                      class="font-light text-zinc-200 text-sm truncate block"
+                    >
+                      {application.role}
+                    </.link>
+                    <p class="text-zinc-500 text-xs truncate">{application.company.name}</p>
+                  </div>
+                  
+    <!-- Timeline bar -->
+                  <div class="flex-1 relative min-h-[30px]">
+                    <%= if Map.has_key?(@timeline_data, application.id) do %>
+                      <% app_timeline = @timeline_data[application.id] %>
+                      <div
+                        class="absolute top-[10px] h-[10px] rounded-md flex items-center"
+                        style={"left: #{app_timeline.start_pos}px; width: #{app_timeline.width}px;"}
+                      >
+                        <!-- Past to present portion -->
+                        <div
+                          class={"h-full rounded-l-md #{status_color_bg(application.status)}"}
+                          style={"width: #{app_timeline.current_width}px"}
+                        >
+                        </div>
+                        
+    <!-- Future portion -->
+                        <div
+                          class={"h-full rounded-r-md bg-opacity-30 border-dashed border #{status_color_border(application.status)}"}
+                          style={"width: #{app_timeline.future_width}px"}
+                        >
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
             <% end %>
-          <% end %>
+          </div>
         </div>
       </div>
     </div>
