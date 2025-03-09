@@ -36,6 +36,10 @@ if config_env() == :prod do
 
   maybe_ipv6 = if get_env("ECTO_IPV6", false, :bool), do: [:inet6], else: []
 
+  config :ex_aws, :s3,
+    region: get_env("AWS_S3_REGION"),
+    bucket: get_env("AWS_S3_BUCKET")
+
   config :accomplish, Accomplish.Repo,
     # ssl: true,
     url: database_url,
