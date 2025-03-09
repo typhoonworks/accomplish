@@ -1,4 +1,6 @@
 defmodule AccomplishWeb.CoverLetterHelpers do
+  @moduledoc false
+
   def options_for_cover_letter_status do
     [
       %{
