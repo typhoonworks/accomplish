@@ -92,6 +92,7 @@ defmodule Accomplish.Activities.EventHandler do
     context_type = Activities.get_context_type(context)
 
     %{
+      "user_id" => actor_id,
       "actor_id" => actor_id,
       "action" => action,
       "entity_id" => entity.id,

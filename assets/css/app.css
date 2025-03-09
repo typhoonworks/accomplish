@@ -5,3 +5,7 @@
 /* This file is for your main application CSS */
 @import "./config";
 @import "./components";
+@import "./pages/";
+
+
+

@@ -10,6 +10,7 @@ defmodule Accomplish.Workers.LogActivityTest do
       stage = job_application_stage_fixture(application)
 
       valid_job_args = %{
+        "user_id" => applicant.id,
         "actor_id" => applicant.id,
         "action" => "job_application.stage_added",
         "entity_id" => stage.id,

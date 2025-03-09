@@ -6,6 +6,8 @@ defmodule Accomplish.Activities do
   alias Accomplish.Activities.Activity
   alias Accomplish.Activities.Events
 
+  @system_actor_id "00000000-0000-0000-0000-000000000000"
+
   @entity_modules %{
     "JobApplications.Application" => Accomplish.JobApplications.Application,
     "JobApplications.Stage" => Accomplish.JobApplications.Stage,
@@ -61,7 +63,19 @@ defmodule Accomplish.Activities do
   # LOGGING ACTIVITIES
   # ===========================
 
+  def log_system_activity(
+        user,
+        action,
+        entity,
+        metadata \\ %{},
+        occurred_at \\ DateTime.utc_now(),
+        context \\ nil
+      ) do
+    log_activity(user, :system, action, entity, metadata, occurred_at, context)
+  end
+
   def log_activity(
+        user,
         actor,
         action,
         entity,
@@ -74,10 +88,11 @@ defmodule Accomplish.Activities do
         entity_type = get_entity_type(entity)
         context_type = get_context_type(context)
 
+        actor_id = if actor == :system, do: @system_actor_id, else: actor.id
+
         result =
-          %Activity{}
-          |> Activity.changeset(%{
-            actor_id: actor.id,
+          Activity.create_changeset(user, %{
+            actor_id: actor_id,
             actor_type: actor_type,
             action: action,
             metadata: metadata,
@@ -211,6 +226,7 @@ defmodule Accomplish.Activities do
   end
 
   defp get_actor_type(%Accomplish.Accounts.User{}), do: {:ok, "User"}
+  defp get_actor_type(:system), do: {:ok, "System"}
   defp get_actor_type(_), do: {:error, "Unrecognized actor type"}
 
   # ===========================
