@@ -79,11 +79,20 @@ defmodule AccomplishWeb.Components.JobApplicationTimeline do
           
     <!-- Timeline content with applications -->
           <div class="relative h-full">
-            <!-- Current date indicator line that spans full height -->
+            <!-- Current date indicator line with pill tag -->
             <div
-              class="absolute top-0 bottom-0 w-[1px] bg-purple-500/50 z-10"
+              class="absolute top-0 bottom-0 w-[1px] bg-purple-500/80 z-10"
               style={"left: #{calculate_current_date_position(@start_date, @current_date) + 52}px"}
             >
+              <!-- Current date pill/tag -->
+              <div class="absolute -top-2 -translate-x-1/2 flex flex-col items-center">
+                <div class="bg-purple-700 text-zinc-50 text-xs font-light py-1 px-2 rounded-md whitespace-nowrap z-20">
+                  {String.upcase(Timex.format!(@current_date, "{Mshort}"))} {Timex.format!(
+                    @current_date,
+                    "{D}"
+                  )}
+                </div>
+              </div>
             </div>
             
     <!-- Application rows -->
@@ -93,7 +102,7 @@ defmodule AccomplishWeb.Components.JobApplicationTimeline do
               </div>
             <% else %>
               <%= for application <- @applications do %>
-                <div class="flex items-center py-2">
+                <div class="flex items-center py-3">
                   <!-- Application info -->
                   <div class="w-52 flex-shrink-0 p-4 rounded-md hover:bg-zinc-700/20">
                     <.link
@@ -106,11 +115,11 @@ defmodule AccomplishWeb.Components.JobApplicationTimeline do
                   </div>
                   
     <!-- Timeline bar -->
-                  <div class="flex-1 relative min-h-[30px]">
+                  <div class="flex-1 relative min-h-[40px]">
                     <%= if Map.has_key?(@timeline_data, application.id) do %>
                       <% app_timeline = @timeline_data[application.id] %>
                       <div
-                        class="absolute top-[10px] h-[10px] rounded-md flex items-center"
+                        class="absolute top-[6px] h-[16px] rounded-md flex items-center"
                         style={"left: #{app_timeline.start_pos}px; width: #{app_timeline.width}px;"}
                       >
                         <!-- Past to present portion -->
