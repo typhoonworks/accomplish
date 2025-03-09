@@ -25,7 +25,8 @@ defmodule Accomplish.JobApplications.Stages do
 
   * `:with_deleted` - if true, includes soft-deleted stages in the query (default: false)
   """
-  def get!(id, application_id, preloads \\ [], opts \\ []) do
+  def get!(id, application_id, opts \\ []) do
+    preloads = Keyword.get(opts, :preloads, [])
     with_deleted = Keyword.get(opts, :with_deleted, false)
 
     query =

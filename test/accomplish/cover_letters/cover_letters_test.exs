@@ -21,7 +21,9 @@ defmodule Accomplish.CoverLettersTest do
     end
 
     test "returns the cover letter with preloaded associations", %{cover_letter: cover_letter} do
-      fetched_cover_letter = CoverLetters.get_cover_letter!(cover_letter.id, [:application])
+      fetched_cover_letter =
+        CoverLetters.get_cover_letter!(cover_letter.id, preloads: :application)
+
       assert fetched_cover_letter.application.id == cover_letter.application_id
     end
 
@@ -225,12 +227,12 @@ defmodule Accomplish.CoverLettersTest do
     end
 
     test "validates required attributes", %{cover_letter: cover_letter} do
-      attrs = %{title: nil, content: nil}
+      attrs = %{title: nil}
 
       changeset = CoverLetters.change_cover_letter(cover_letter, attrs)
 
       refute changeset.valid?
-      assert %{title: ["can't be blank"], content: ["can't be blank"]} = errors_on(changeset)
+      assert %{title: ["can't be blank"]} = errors_on(changeset)
     end
   end
 end

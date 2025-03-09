@@ -1,4 +1,4 @@
-defmodule Accomplish.Repo.Migrations.CreateJobApplicationStage do
+defmodule Accomplish.Repo.Migrations.CreateJobApplicationStages do
   use Ecto.Migration
   import Ecto.SoftDelete.Migration
 
