@@ -39,7 +39,6 @@ defmodule AccomplishWeb.Components.SkillSelector do
             value={@input_value}
             placeholder="Type a skill (e.g., JavaScript, React, Python)"
             class="w-full p-2 bg-zinc-800 text-zinc-200 text-sm rounded-md border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-purple-600 focus:border-purple-600"
-            phx-hook="SkillInputAutofocus"
           />
           <div
             :if={@suggestions != [] and @input_value != ""}
