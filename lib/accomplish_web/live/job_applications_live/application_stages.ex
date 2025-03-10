@@ -2,9 +2,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
-  alias Accomplish.JobApplications.Application
   alias Accomplish.JobApplications.Stage
-  alias Accomplish.CoverLetters
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
@@ -47,7 +45,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
       </div>
     </.layout>
 
-    <.stage_dialog :if={@live_action == :stages} form={@stage_form} socket={@socket} />
+    <.stage_dialog form={@stage_form} socket={@socket} />
 
     {render_cover_letter_dialog(assigns)}
     """
@@ -164,8 +162,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
         |> assign(application: application)
         |> assign(stages_count: application.stages_count)
         |> assign(show_cover_letter_dialog: false)
-        |> assign_form(application)
-        |> assign_new_stage_form(%{application_id: application.id})
+        |> assign_stage_form(%{application_id: application.id})
         |> assign_statuses()
         |> assign_sounds()
         |> assign_play_sounds(true)
@@ -174,41 +171,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
 
       {:ok, socket}
     end
-  end
-
-  def handle_event("new_cover_letter", _params, socket) do
-    application = socket.assigns.application
-    {:ok, cover_letter} = CoverLetters.create_cover_letter(application)
-
-    {:noreply,
-     socket
-     |> push_navigate(
-       to: ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}"
-     )}
-  end
-
-  def handle_event("open_cover_letter_dialog", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_cover_letter_dialog, true)
-     |> push_event("js-exec", %{
-       to: "#cover-letter-dialog",
-       attr: "phx-show-modal"
-     })}
-  end
-
-  def handle_event("create_ai_cover_letter", _params, socket) do
-    application = socket.assigns.application
-
-    {:ok, cover_letter} =
-      CoverLetters.create_cover_letter(application, %{title: "AI-generated Cover Letter"})
-
-    {:noreply,
-     socket
-     |> push_navigate(
-       to:
-         ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?ai_generate=true"
-     )}
   end
 
   def handle_event(
@@ -220,7 +182,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
 
     {:noreply,
      socket
-     |> assign_new_stage_form(%{application_id: application.id, status: status, type: :screening})
+     |> assign_stage_form(%{application_id: application.id, status: status, type: :screening})
      |> push_event("js-exec", %{
        to: "#new-stage-modal",
        attr: "phx-show-modal"
@@ -251,25 +213,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     {:noreply, assign(socket, :stage_form, to_form(changeset))}
   end
 
-  def handle_event("save_application", %{"application" => application_params}, socket) do
-    case JobApplications.create_application(socket.assigns.current_user, application_params) do
-      {:ok, _application} ->
-        changeset = JobApplications.change_application_form(%Application{}, %{})
-
-        socket =
-          socket
-          |> put_flash(:info, "Job application created successfully.")
-          |> assign(:form, to_form(changeset))
-          |> close_modal("new-job-application")
-
-        {:noreply, socket}
-
-      {:error, changeset} ->
-        changeset = %{changeset | action: :insert}
-        {:noreply, assign(socket, form: to_form(changeset))}
-    end
-  end
-
   def handle_event("save_stage", %{"stage" => stage_params}, socket) do
     application = socket.assigns.application
 
@@ -290,7 +233,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     end
   end
 
-  def handle_event("reset_stage_form", %{"id" => modal_id}, socket) do
+  def handle_event("reset_form", %{"id" => modal_id}, socket) do
     changeset = JobApplications.change_stage_form(%{})
 
     socket =
@@ -315,41 +258,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to update stage.")}
     end
-  end
-
-  def handle_event(
-        "save_field",
-        %{"field" => _field, "value" => _value, "nested" => "company"} = params,
-        socket
-      ) do
-    update_field(socket, params)
-  end
-
-  def handle_event(
-        "save_field",
-        %{"field" => field_name, "value" => value, "nested" => nested},
-        socket
-      ) do
-    form = socket.assigns.form
-    application = socket.assigns.application
-
-    updated_changeset =
-      case nested do
-        "stage" ->
-          JobApplications.change_stage_form(Map.put(form.params || %{}, field_name, value))
-
-        _ ->
-          JobApplications.change_application_form(
-            application,
-            Map.put(form.params || %{}, field_name, value)
-          )
-      end
-
-    {:noreply, assign(socket, form: to_form(updated_changeset))}
-  end
-
-  def handle_event("save_field", params, socket) do
-    update_field(socket, params)
   end
 
   def handle_event(
@@ -382,62 +290,19 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     end
   end
 
-  def handle_event("delete_application", %{"id" => id}, socket) do
-    case JobApplications.delete_application(id) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Job application deleted successfully.")
-         |> push_navigate(to: ~p"/job_applications")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete job application.")}
-    end
-  end
-
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
     params = Map.put(form.params || %{}, to_string(field), date)
 
-    case form.name do
-      "application" ->
-        updated_changeset =
-          JobApplications.change_application_form(
-            socket.assigns.application,
-            Map.merge(socket.assigns.form.params || %{}, params)
-          )
+    updated_changeset =
+      JobApplications.change_stage_form(
+        Map.merge(socket.assigns.stage_form.params || %{}, params)
+      )
 
-        {:noreply, assign(socket, form: to_form(updated_changeset))}
-
-      "stage" ->
-        updated_changeset =
-          JobApplications.change_stage_form(
-            Map.merge(socket.assigns.stage_form.params || %{}, params)
-          )
-
-        {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
-
-      _ ->
-        {:noreply, socket}
-    end
-  end
-
-  def handle_info(%{id: _id, field: field, value: value, form: form}, socket) do
-    params =
-      if String.contains?(form.name, "company") do
-        %{"field" => to_string(field), "value" => value, "nested" => "company"}
-      else
-        %{"field" => to_string(field), "value" => value}
-      end
-
-    update_field(socket, params)
+    {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
   end
 
   def handle_info({JobApplications, event}, socket) do
     handle_notification(event, socket)
-  end
-
-  def handle_info({CoverLetters, _}, socket) do
-    {:noreply, socket}
   end
 
   defp handle_notification(%{name: "job_application.updated"} = event, socket) do
@@ -486,12 +351,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     end
   end
 
-  defp assign_form(socket, application) do
-    form = JobApplications.change_application_form(application)
-    assign(socket, form: to_form(form))
-  end
-
-  defp assign_new_stage_form(socket, attrs) do
+  defp assign_stage_form(socket, attrs) do
     changeset = JobApplications.change_stage_form(attrs)
     assign(socket, :stage_form, to_form(changeset))
   end
@@ -530,27 +390,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     Enum.reduce(statuses, socket, fn status, socket ->
       stream(socket, stream_key(status), Map.get(stages_by_status, status, []))
     end)
-  end
-
-  defp update_field(socket, %{"field" => field, "value" => value} = params) do
-    application = socket.assigns.application
-    form = socket.assigns.form
-
-    changes =
-      if Map.get(params, "nested") == "company" do
-        %{"company" => Map.put(form.params["company"] || %{}, field, value)}
-      else
-        %{field => value}
-      end
-
-    case JobApplications.update_application(application, changes) do
-      {:ok, updated_application} ->
-        new_form = JobApplications.change_application_form(updated_application)
-        {:noreply, assign(socket, form: to_form(new_form))}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
-    end
   end
 
   defp replace_stage(socket, stage, diff) do

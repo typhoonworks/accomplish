@@ -610,25 +610,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Application do
     {:noreply, assign(socket, :stage_form, to_form(changeset))}
   end
 
-  def handle_event("save_application", %{"application" => application_params}, socket) do
-    case JobApplications.create_application(socket.assigns.current_user, application_params) do
-      {:ok, _application} ->
-        changeset = JobApplications.change_application_form(%Application{}, %{})
-
-        socket =
-          socket
-          |> put_flash(:info, "Job application created successfully.")
-          |> assign(:form, to_form(changeset))
-          |> close_modal("new-job-application")
-
-        {:noreply, socket}
-
-      {:error, changeset} ->
-        changeset = %{changeset | action: :insert}
-        {:noreply, assign(socket, form: to_form(changeset))}
-    end
-  end
-
   def handle_event("save_stage", %{"stage" => stage_params}, socket) do
     application = socket.assigns.application
 
