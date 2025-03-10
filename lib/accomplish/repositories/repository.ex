@@ -11,6 +11,7 @@ defmodule Accomplish.Repositories.Repository do
   @name_pattern ~r/^(?!-)[a-zA-Z0-9_-]+(?<!-)$/
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :name,

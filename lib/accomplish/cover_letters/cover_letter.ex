@@ -11,6 +11,7 @@ defmodule Accomplish.CoverLetters.CoverLetter do
   @status_values ~w(draft final submitted)a
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :title,

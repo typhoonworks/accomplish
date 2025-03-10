@@ -11,6 +11,7 @@ defmodule Accomplish.Profiles.Profile do
   @required []
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :bio,

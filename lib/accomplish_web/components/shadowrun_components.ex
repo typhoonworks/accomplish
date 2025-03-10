@@ -240,6 +240,8 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
   attr :autosave, :boolean, default: false
   attr :autosave_delay, :integer, default: 1500
+  attr :streaming, :boolean, default: false
+  attr :streaming_complete, :boolean, default: false
 
   attr :socket, :any
 
@@ -311,7 +313,6 @@ defmodule AccomplishWeb.ShadowrunComponents do
     ]}>
       <input id={@id} type="hidden" name={@name} value={@value} {@rest} />
       <.Editor
-        :if={!@rest[:disabled]}
         content={@value}
         placeholder={@rest[:placeholder]}
         inputId={@id}
@@ -321,6 +322,9 @@ defmodule AccomplishWeb.ShadowrunComponents do
         blurEvent={@rest[:"phx-blur"] || @rest[:"phx-blur"] || nil}
         autosave={@autosave}
         autosaveDelay={@autosave_delay}
+        streaming={@streaming}
+        streamingComplete={@streaming_complete}
+        editorDisabled={@rest[:disabled] && !@streaming}
       />
       <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>

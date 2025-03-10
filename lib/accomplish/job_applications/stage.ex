@@ -13,6 +13,7 @@ defmodule Accomplish.JobApplications.Stage do
   @status_values ~w(pending scheduled in_progress completed skipped)a
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :title,

@@ -50,7 +50,6 @@ defmodule AccomplishWeb.CoverLetterLive do
             class="text-[25px] tracking-tighter hover:cursor-text"
             phx-blur="save_field"
             phx-value-field={@form[:title].field}
-            disabled={@ai_writing}
           />
         </div>
         <div class="flex justify-start items-baseline gap-2 my-2">
@@ -63,7 +62,6 @@ defmodule AccomplishWeb.CoverLetterLive do
               options={options_for_cover_letter_status()}
               on_select="save_field"
               variant="transparent"
-              disabled={@ai_writing}
             />
             <.tooltip_content side="bottom">
               <p>Change status</p>
@@ -95,27 +93,10 @@ defmodule AccomplishWeb.CoverLetterLive do
             autosave={@autosave && !@ai_writing}
             autosave_delay={2000}
             disabled={@ai_writing}
+            streaming={@ai_writing}
+            streaming_complete={@ai_writing_complete}
           />
         </div>
-
-        <%= if @ai_writing do %>
-          <div class="mt-6 flex flex-col gap-4">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <.lucide_icon name="sparkles" class="animate-pulse h-5 w-5 text-purple-500" />
-                <p class="text-zinc-300 text-sm">Writing your cover letter...</p>
-              </div>
-              <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-            <div id="live-content" class="text-sm leading-relaxed text-zinc-300 font-serif max-w-3xl">
-              {@ai_content}<span class="cursor animate-pulse">|</span>
-            </div>
-          </div>
-        <% end %>
       </section>
     </.layout>
     """
@@ -208,10 +189,18 @@ defmodule AccomplishWeb.CoverLetterLive do
 
     Generator.generate_streaming(self(), user, application)
 
+    new_content = ""
+    form = socket.assigns.form
+
+    updated_form =
+      Map.update!(form, :params, fn params ->
+        Map.put(params, "content", new_content)
+      end)
+
     {:noreply,
      socket
-     |> assign(ai_writing: true)
-     |> assign(ai_content: "")}
+     |> assign(:ai_content, new_content)
+     |> assign(:form, updated_form)}
   end
 
   def handle_info(:saved, socket) do
@@ -221,19 +210,32 @@ defmodule AccomplishWeb.CoverLetterLive do
   # Handle Anthropix streaming messages
   def handle_info({_pid, {:data, %{"type" => type} = message}}, socket) do
     case type do
+      "message_start" ->
+        {:noreply, assign(socket, :ai_writing, true)}
+
       "content_block_delta" ->
         if is_map_key(message, "delta") and is_map_key(message["delta"], "text") do
           new_content = socket.assigns.ai_content <> message["delta"]["text"]
+          form = socket.assigns.form
 
-          {:noreply, assign(socket, :ai_content, new_content)}
+          updated_form =
+            Map.update!(form, :params, fn params ->
+              Map.put(params, "content", new_content)
+            end)
+
+          {:noreply,
+           socket
+           |> assign(:ai_content, new_content)
+           |> assign(:form, updated_form)}
         else
           {:noreply, socket}
         end
 
-      "message_stop" ->
+      "content_block_stop" ->
         {:noreply, complete_ai_generation(socket)}
 
       _ ->
+        IO.inspect(type)
         {:noreply, socket}
     end
   end
@@ -246,27 +248,10 @@ defmodule AccomplishWeb.CoverLetterLive do
   end
 
   defp complete_ai_generation(socket) do
-    cover_letter = socket.assigns.cover_letter
-
-    case CoverLetters.update_cover_letter(cover_letter, %{content: socket.assigns.ai_content}) do
-      {:ok, updated_cover_letter} ->
-        form =
-          updated_cover_letter
-          |> CoverLetters.change_cover_letter()
-          |> to_form()
-
-        socket
-        |> assign(ai_writing: false)
-        |> assign(ai_writing_complete: true)
-        |> assign(form: form)
-        |> assign(cover_letter: updated_cover_letter)
-        |> put_flash(:info, "Cover letter written by AI")
-
-      {:error, _changeset} ->
-        socket
-        |> assign(ai_writing: false)
-        |> put_flash(:error, "Failed to save AI-generated cover letter")
-    end
+    socket
+    |> assign(ai_writing: false)
+    |> assign(ai_writing_complete: true)
+    |> put_flash(:info, "Cover letter written by AI")
   end
 
   defp assign_form(socket, cover_letter) do
