@@ -11,6 +11,7 @@ defmodule Accomplish.Activities.Activity do
   @required ~w(actor_id action entity_id entity_type occurred_at)a
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :actor_id,

@@ -14,6 +14,7 @@ defmodule Accomplish.Profiles.Experience do
   @workplace_types ~w(remote hybrid on_site)a
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :company,

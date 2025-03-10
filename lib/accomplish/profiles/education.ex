@@ -11,6 +11,7 @@ defmodule Accomplish.Profiles.Education do
   @required ~w(school degree field_of_study start_date)a
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :school,

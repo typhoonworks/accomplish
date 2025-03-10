@@ -16,6 +16,7 @@ defmodule Accomplish.JobApplications.Application do
   @employment_types ~w(full_time part_time contractor employer_of_record internship)a
 
   @derive {JSON.Encoder,
+           except: [:__meta__],
            only: [
              :id,
              :slug,

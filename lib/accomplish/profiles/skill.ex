@@ -7,7 +7,7 @@ defmodule Accomplish.Profiles.Skill do
   """
   use Accomplish.Schema
 
-  @derive {JSON.Encoder, only: [:id, :name, :usage_count]}
+  @derive {JSON.Encoder, except: [:__meta__], only: [:id, :name, :usage_count]}
 
   schema "profile_skills" do
     field :name, :string
