@@ -61,7 +61,7 @@ defmodule Accomplish.CoverLetters.Generator do
 
   **Example:**
 
-  > “At Hopin, I architected a GraphQL API enabling two backend engineers to efficiently support seven frontend developers, significantly accelerating new dashboard development. This experience reinforced my belief that thoughtful architectural decisions profoundly enhance developer velocity and product agility—qualities I see highly valued at your company.”
+  > “At Shopify, I architected a GraphQL API enabling two backend engineers to efficiently support seven frontend developers, significantly accelerating new dashboard development. This experience reinforced my belief that thoughtful architectural decisions profoundly enhance developer velocity and product agility—qualities I see highly valued at your company.”
 
   ## 3.  Personal Alignment (1 short paragraph)
 
