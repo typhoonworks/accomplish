@@ -33,7 +33,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       </:page_drawer>
 
       <div class="mt-8 w-full">
-        <.stacked_list>
+        <.stacked_list :if={Enum.any?(@cover_letters)}>
           {render_documents(assigns)}
         </.stacked_list>
       </div>

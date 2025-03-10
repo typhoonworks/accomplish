@@ -13,6 +13,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
 
   @pubsub Accomplish.PubSub
   @activities_topic "activities"
+  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
@@ -94,6 +95,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
       |> assign(application: application)
       |> assign_form(application)
       |> stream_activities(application)
+      |> subscribe_to_notifications_topic()
 
     {:ok, socket}
   end
@@ -128,12 +130,22 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
     handle_activity(event, socket)
   end
 
+  def handle_info({JobApplications, event}, socket) do
+    handle_notification(event, socket)
+  end
+
   defp handle_activity(%{name: "activity.logged"} = event, socket) do
     activity = %{event.activity | entity: event.entity, context: event.context}
     {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
   defp handle_activity(_, socket), do: {:noreply, socket}
+
+  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
+    {:noreply, assign(socket, application: event.application)}
+  end
+
+  defp handle_notification(_, socket), do: {:noreply, socket}
 
   defp assign_form(socket, application) do
     form = JobApplications.change_application_form(application)
@@ -152,5 +164,14 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
 
     Phoenix.PubSub.subscribe(@pubsub, entity_topic)
     Phoenix.PubSub.subscribe(@pubsub, context_topic)
+  end
+
+  defp subscribe_to_notifications_topic(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket),
+      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
+
+    socket
   end
 end

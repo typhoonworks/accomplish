@@ -234,16 +234,9 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationOverview do
     update_field(socket, params)
   end
 
-  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
-    params = Map.put(form.params || %{}, to_string(field), date)
-
-    updated_changeset =
-      JobApplications.change_application_form(
-        socket.assigns.application,
-        Map.merge(socket.assigns.form.params || %{}, params)
-      )
-
-    {:noreply, assign(socket, form: to_form(updated_changeset))}
+  def handle_info(%{date: date, field: field}, socket) do
+    changes = %{"field" => field, "value" => date}
+    update_field(socket, changes)
   end
 
   def handle_info(%{id: _id, field: field, value: value, form: form}, socket) do
