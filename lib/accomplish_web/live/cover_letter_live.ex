@@ -103,8 +103,8 @@ defmodule AccomplishWeb.CoverLetterLive do
   end
 
   def mount(
-        %{"application_slug" => application_slug, "id" => id},
-        %{"ai_generate" => "true"} = _session,
+        %{"application_slug" => application_slug, "id" => id, "ai_generate" => "true"},
+        _session,
         socket
       ) do
     applicant = socket.assigns.current_user
@@ -122,7 +122,7 @@ defmodule AccomplishWeb.CoverLetterLive do
         |> assign(cover_letter: cover_letter)
         |> assign(autosave: true)
         |> assign(is_saving: false)
-        |> assign(ai_writing: true)
+        |> assign(ai_writing: false)
         |> assign(ai_writing_complete: false)
         |> assign(ai_content: "")
         |> assign_form(cover_letter)
