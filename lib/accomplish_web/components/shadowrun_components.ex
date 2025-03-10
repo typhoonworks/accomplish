@@ -120,6 +120,29 @@ defmodule AccomplishWeb.ShadowrunComponents do
     """
   end
 
+  attr :is_saving, :boolean, required: true
+  attr :class, :string, default: "text-xs text-zinc-400"
+  attr :saved_text, :string, default: "Saved"
+  attr :saving_text, :string, default: "Saving..."
+
+  def saving_indicator(assigns) do
+    ~H"""
+    <div class={classes(["text-xs text-zinc-400", @class])}>
+      <%= if @is_saving do %>
+        <div class="flex items-center gap-1">
+          <.lucide_icon name="loader" class="size-3 animate-spin" />
+          <span>{@saving_text}</span>
+        </div>
+      <% else %>
+        <div class="flex items-center gap-1">
+          <.lucide_icon name="check" class="size-3" />
+          <span>{@saved_text}</span>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
   attr :name, :string, required: true
   attr :class, :string, required: false, default: "icon"
   attr :rest, :global
@@ -215,11 +238,15 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
 
+  attr :autosave, :boolean, default: false
+  attr :autosave_delay, :integer, default: 1500
+
   attr :socket, :any
 
   attr :rest, :global,
-    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
-                multiple pattern placeholder readonly required rows size step)
+    include:
+      ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
+                multiple pattern placeholder readonly required rows size step autosave autosave_delay)
 
   def shadow_input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
     errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
@@ -292,6 +319,8 @@ defmodule AccomplishWeb.ShadowrunComponents do
         resourceId={@rest[:"phx-value-id"] || @rest[:"phx-value-id"] || nil}
         field={@rest[:"phx-value-field"] || @rest[:"phx-value-field"] || nil}
         blurEvent={@rest[:"phx-blur"] || @rest[:"phx-blur"] || nil}
+        autosave={@autosave}
+        autosaveDelay={@autosave_delay}
       />
       <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>

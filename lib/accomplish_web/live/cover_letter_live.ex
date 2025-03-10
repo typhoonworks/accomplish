@@ -27,6 +27,10 @@ defmodule AccomplishWeb.CoverLetterLive do
               </span>
             </div>
           </:title>
+
+          <:menu>
+            <.saving_indicator is_saving={@is_saving} />
+          </:menu>
         </.page_header>
       </:page_header>
 
@@ -65,6 +69,8 @@ defmodule AccomplishWeb.CoverLetterLive do
             socket={@socket}
             phx-blur="save_field"
             phx-value-field={@form[:content].field}
+            autosave={@autosave}
+            autosave_delay={2000}
           />
         </div>
       </section>
@@ -83,6 +89,8 @@ defmodule AccomplishWeb.CoverLetterLive do
         |> assign(page_title: cover_letter.title)
         |> assign(application: application)
         |> assign(cover_letter: cover_letter)
+        |> assign(autosave: true)
+        |> assign(is_saving: false)
         |> assign_form(cover_letter)
 
       {:ok, socket}
@@ -95,6 +103,8 @@ defmodule AccomplishWeb.CoverLetterLive do
     cover_letter = socket.assigns.cover_letter
     changes = %{field => value}
 
+    socket = assign(socket, :is_saving, true)
+
     case CoverLetters.update_cover_letter(cover_letter, changes) do
       {:ok, updated_cover_letter} ->
         form =
@@ -102,10 +112,21 @@ defmodule AccomplishWeb.CoverLetterLive do
           |> CoverLetters.change_cover_letter()
           |> to_form()
 
+        Process.send_after(self(), :saved, 500)
+
         {:noreply,
          socket
-         |> assign(form: form)}
+         |> assign(form: form)
+         |> assign(cover_letter: updated_cover_letter)}
+
+      {:error, _changeset} ->
+        Process.send_after(self(), :saved, 500)
+        {:noreply, socket}
     end
+  end
+
+  def handle_info(:saved, socket) do
+    {:noreply, assign(socket, :is_saving, false)}
   end
 
   defp assign_form(socket, cover_letter) do
