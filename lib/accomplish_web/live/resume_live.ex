@@ -8,14 +8,14 @@ defmodule AccomplishWeb.ResumeLive do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
 
-  alias Accomplish.Workers.ExtractResumeData
-
   import AccomplishWeb.JobApplicationHelpers
 
   import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.Shadowrun.Menu
   import AccomplishWeb.Shadowrun.Tooltip
+
+  alias AccomplishWeb.JobApplicationsLive.ResumeHeader
 
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
@@ -24,56 +24,14 @@ defmodule AccomplishWeb.ResumeLive do
     ~H"""
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
-        <.page_header page_title="Resume">
-          <:views>
-            <.nav_button
-              icon="file-text"
-              text="Overview"
-              href={~p"/resume/overview"}
-              active={@live_action == :overview}
-            />
-            <.nav_button
-              icon="laptop"
-              text="Experience"
-              href={~p"/resume/experience"}
-              active={@live_action == :experience}
-            />
-            <.nav_button
-              icon="graduation-cap"
-              text="Education"
-              href={~p"/resume/education"}
-              active={@live_action == :education}
-            />
-          </:views>
-          <:actions>
-            <.shadow_button phx-click="import_resume" variant="transparent" class="text-xs">
-              <.icon name="hero-plus" class="size-3" /> Import Resume
-            </.shadow_button>
-          </:actions>
-          <:menu>
-            <.dropdown_menu>
-              <.dropdown_menu_trigger id="resume-dropdown-trigger" class="group">
-                <.shadow_button type="button" variant="transparent">
-                  <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
-                </.shadow_button>
-              </.dropdown_menu_trigger>
-              <.dropdown_menu_content>
-                <.menu class="w-56 text-zinc-300 bg-zinc-800">
-                  <.menu_group>
-                    <.menu_item class="text-xs">
-                      <button type="button" phx-click="import_resume" class="flex items-center gap-2">
-                        <.lucide_icon name="file-text" class="size-4 text-zinc-400" />
-                        <span>Import Resume</span>
-                      </button>
-                      <.menu_shortcut>⌘I</.menu_shortcut>
-                    </.menu_item>
-                  </.menu_group>
-                </.menu>
-              </.dropdown_menu_content>
-            </.dropdown_menu>
-            <.saving_indicator is_saving={@is_saving} />
-          </:menu>
-        </.page_header>
+        {live_render(@socket, ResumeHeader,
+          id: "resume-header",
+          session: %{
+            "view" => @live_action,
+            "topic" => @resume_header_topic
+          },
+          sticky: true
+        )}
       </:page_header>
 
       <div class="mt-8 w-full">
@@ -89,73 +47,6 @@ defmodule AccomplishWeb.ResumeLive do
         </div>
       </div>
     </.layout>
-    <.dialog
-      id="import-resume-dialog"
-      position={:center}
-      on_cancel={hide_modal("import-resume-dialog")}
-      class="w-full max-w-md"
-    >
-      <.dialog_header>
-        <.dialog_title class="text-sm text-zinc-200 font-light">
-          <div class="flex items-center gap-2">
-            <.icon name="hero-document-text" class="size-4" />
-            <p>Import Resume</p>
-          </div>
-        </.dialog_title>
-        <.dialog_description>
-          Upload your resume PDF to automatically import your profile information.
-          <span class="text-red-400">This will overwrite existing profile data.</span>
-        </.dialog_description>
-      </.dialog_header>
-
-      <.form
-        for={@resume_upload_form}
-        id="resume-upload-form"
-        phx-submit="import_resume_file"
-        phx-change="validate_resume_file"
-        class="space-y-4"
-      >
-        <.dialog_content id="import-resume-content">
-          <div class="flex flex-col gap-4 py-2">
-            <.live_file_input
-              upload={@uploads.resume}
-              class="block w-full text-sm text-zinc-400
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-xs file:font-light
-              file:bg-zinc-700 file:text-zinc-200
-              hover:file:bg-zinc-600"
-            />
-
-            <div :if={Enum.any?(@uploads.resume.errors)} class="text-red-500 text-xs">
-              <%= for {_ref, error} <- @uploads.resume.errors do %>
-                <p>{error_to_string(error)}</p>
-              <% end %>
-            </div>
-          </div>
-        </.dialog_content>
-
-        <.dialog_footer>
-          <div class="flex justify-end gap-2">
-            <.shadow_button
-              type="button"
-              variant="secondary"
-              phx-click={hide_dialog("import-resume-dialog")}
-            >
-              Cancel
-            </.shadow_button>
-            <.shadow_button
-              type="submit"
-              variant="primary"
-              phx-disable-with="Uploading..."
-              disabled={@uploads.resume.entries == []}
-            >
-              Import
-            </.shadow_button>
-          </div>
-        </.dialog_footer>
-      </.form>
-    </.dialog>
     """
   end
 
@@ -771,13 +662,13 @@ defmodule AccomplishWeb.ResumeLive do
   end
 
   def mount(params, session, socket) do
+    topic = "resume_header:#{socket.id}"
+
     socket =
       socket
       |> subscribe_to_notifications_topic()
-      |> assign_uploads()
-      |> assign(:resume_upload_form, to_form(%{"file" => nil}))
-      |> assign(:is_saving, false)
       |> assign(autosave: true)
+      |> assign(resume_header_topic: topic)
 
     mount_action(params, session, socket)
   end
@@ -847,10 +738,10 @@ defmodule AccomplishWeb.ResumeLive do
   end
 
   def handle_event("save_user_field", %{"field" => field, "value" => value}, socket) do
+    show_saving_spinner(socket)
+
     user = socket.assigns.current_user
     changes = %{field => value}
-
-    socket = assign(socket, :is_saving, true)
 
     case Accounts.update_user_profile(user, changes) do
       {:ok, updated_user} ->
@@ -859,11 +750,15 @@ defmodule AccomplishWeb.ResumeLive do
           |> Accounts.change_user_profile()
           |> to_form()
 
-        Process.send_after(self(), :saved, 500)
+        socket =
+          socket
+          |> assign(user_form: form)
+          |> schedule_hide_spinner()
 
-        {:noreply,
-         socket
-         |> assign(user_form: form)}
+        {:noreply, socket}
+
+      _ ->
+        {:noreply, schedule_hide_spinner(socket)}
     end
   end
 
@@ -1033,59 +928,14 @@ defmodule AccomplishWeb.ResumeLive do
     end
   end
 
-  def handle_event("import_resume", _params, socket) do
-    resume_upload_form = to_form(%{"file" => nil})
+  def handle_info(:hide_spinner, socket) do
+    Phoenix.PubSub.broadcast(
+      @pubsub,
+      socket.assigns.resume_header_topic,
+      {:set_saving, false}
+    )
 
-    {:noreply,
-     socket
-     |> assign(:resume_upload_form, resume_upload_form)
-     |> push_event("js-exec", %{
-       to: "#import-resume-dialog",
-       attr: "phx-show-modal"
-     })}
-  end
-
-  def handle_event("validate_resume_file", _params, socket) do
     {:noreply, socket}
-  end
-
-  def handle_event("import_resume_file", _params, socket) do
-    consume_uploaded_entries(socket, :resume, fn %{path: path}, _entry ->
-      case Accomplish.PDFExtractor.extract_text_from_file(path) do
-        {:ok, %{"text" => text_content}} ->
-          %{
-            user_id: socket.assigns.current_user.id,
-            resume_text: text_content
-          }
-          |> ExtractResumeData.new()
-          |> Oban.insert()
-
-          {:ok, :processed}
-
-        {:error, reason} ->
-          {:error, "Failed to extract text from PDF: #{inspect(reason)}"}
-      end
-    end)
-
-    case uploaded_entries(socket, :resume) do
-      {[_entry], []} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Resume uploaded successfully. Processing in progress...")
-         |> push_event("js-exec", %{
-           to: "#import-resume-dialog",
-           attr: "phx-hide-modal"
-         })}
-
-      _ ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Error uploading resume. Please try again.")}
-    end
-  end
-
-  def handle_info(:saved, socket) do
-    {:noreply, assign(socket, :is_saving, false)}
   end
 
   def handle_info({:update_profile_skills, skills}, socket) do
@@ -1191,9 +1041,9 @@ defmodule AccomplishWeb.ResumeLive do
   end
 
   def update_profile_field(socket, changes) do
-    profile = socket.assigns.profile
+    show_saving_spinner(socket)
 
-    socket = assign(socket, :is_saving, true)
+    profile = socket.assigns.profile
 
     case Profiles.update_profile(profile, changes) do
       {:ok, updated_profile} ->
@@ -1202,20 +1052,21 @@ defmodule AccomplishWeb.ResumeLive do
           |> Profiles.change_profile()
           |> to_form()
 
-        Process.send_after(self(), :saved, 500)
+        socket =
+          socket
+          |> assign(profile: updated_profile)
+          |> assign(profile_form: form)
+          |> schedule_hide_spinner()
 
-        {:noreply,
-         socket
-         |> assign(profile: updated_profile)
-         |> assign(profile_form: form)}
+        {:noreply, socket}
 
       {:error, _changeset} ->
-        {:noreply, socket}
+        {:noreply, schedule_hide_spinner(socket)}
     end
   end
 
   def update_experience_field(socket, experience, changes) do
-    socket = assign(socket, :is_saving, true)
+    show_saving_spinner(socket)
 
     case Profiles.update_experience(experience, changes) do
       {:ok, updated_experience} ->
@@ -1226,21 +1077,21 @@ defmodule AccomplishWeb.ResumeLive do
 
         experience_forms = Map.put(socket.assigns.experience_forms, experience.id, form)
 
-        Process.send_after(self(), :saved, 500)
+        socket =
+          socket
+          |> assign(experience_forms: experience_forms)
+          |> stream_insert(:experiences, updated_experience)
+          |> schedule_hide_spinner()
 
-        {:noreply,
-         socket
-         |> assign(experience_forms: experience_forms)
-         |> stream_insert(:experiences, updated_experience)}
+        {:noreply, socket}
 
       {:error, _changeset} ->
-        Process.send_after(self(), :saved, 500)
-        {:noreply, socket}
+        {:noreply, schedule_hide_spinner(socket)}
     end
   end
 
   def update_education_field(socket, education, changes) do
-    socket = assign(socket, :is_saving, true)
+    show_saving_spinner(socket)
 
     case Profiles.update_education(education, changes) do
       {:ok, updated_education} ->
@@ -1251,17 +1102,30 @@ defmodule AccomplishWeb.ResumeLive do
 
         education_forms = Map.put(socket.assigns.education_forms, education.id, form)
 
-        Process.send_after(self(), :saved, 500)
+        socket =
+          socket
+          |> assign(education_forms: education_forms)
+          |> stream_insert(:educations, updated_education)
+          |> schedule_hide_spinner()
 
-        {:noreply,
-         socket
-         |> assign(education_forms: education_forms)
-         |> stream_insert(:educations, updated_education)}
+        {:noreply, socket}
 
       {:error, _changeset} ->
-        Process.send_after(self(), :saved, 500)
-        {:noreply, socket}
+        {:noreply, schedule_hide_spinner(socket)}
     end
+  end
+
+  def show_saving_spinner(socket) do
+    Phoenix.PubSub.broadcast(
+      @pubsub,
+      socket.assigns.resume_header_topic,
+      {:set_saving, true}
+    )
+  end
+
+  def schedule_hide_spinner(socket) do
+    Process.send_after(self(), :hide_spinner, 500)
+    socket
   end
 
   defp subscribe_to_notifications_topic(socket) do
@@ -1272,19 +1136,4 @@ defmodule AccomplishWeb.ResumeLive do
 
     socket
   end
-
-  defp assign_uploads(socket) do
-    socket
-    |> allow_upload(:resume,
-      accept: ~w(.pdf),
-      max_entries: 1,
-      # 10MB
-      max_file_size: 10_000_000
-    )
-  end
-
-  defp error_to_string(:too_large), do: "File is too large"
-  defp error_to_string(:too_many_files), do: "Too many files"
-  defp error_to_string(:not_accepted), do: "Unacceptable file type"
-  defp error_to_string(error), do: "Error: #{inspect(error)}"
 end

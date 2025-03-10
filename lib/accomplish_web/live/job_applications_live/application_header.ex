@@ -13,90 +13,88 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
 
   def render(assigns) do
     ~H"""
-    <div>
-      <.page_header page_drawer?={true} drawer_open={true}>
-        <:title>
-          <div class="flex lg:items-center lg:gap-1">
-            <.link href={~p"/job_applications/"} class="hidden lg:inline">Job Applications</.link>
-            <span class="hidden lg:inline-flex items-center text-zinc-400">
-              <.icon name="hero-chevron-right" class="size-3" />
-            </span>
-            <span class="inline">
-              {truncate(@application.role, length: 20)} at {@application.company.name}
-            </span>
-          </div>
-        </:title>
-        <:menu>
-          <.dropdown_menu>
-            <.dropdown_menu_trigger id={"#{@application.id}-dropdown-trigger"} class="group">
-              <.shadow_button type="button" variant="transparent">
-                <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
-              </.shadow_button>
-            </.dropdown_menu_trigger>
-            <.dropdown_menu_content>
-              <.menu class="w-56 text-zinc-300 bg-zinc-800">
-                <.menu_group>
-                  <.menu_item class="text-sm">
-                    <button type="button" phx-click="new_cover_letter" class="flex items-center gap-2">
-                      <.lucide_icon name="square-pen" class="size-4 text-zinc-400" />
-                      <span>Write cover letter</span>
-                    </button>
-                    <.menu_shortcut>⌘W</.menu_shortcut>
-                  </.menu_item>
-                  <.menu_item class="text-sm">
-                    <button
-                      type="button"
-                      phx-click="open_cover_letter_dialog"
-                      class="flex items-center gap-2"
-                    >
-                      <.lucide_icon name="sparkles" class="size-4 text-zinc-400" />
-                      <span>Generate cover letter</span>
-                    </button>
-                    <.menu_shortcut>⌘G</.menu_shortcut>
-                  </.menu_item>
-                  <.menu_separator />
-                  <.menu_item class="text-sm">
-                    <button
-                      type="button"
-                      phx-click="delete_application"
-                      phx-value-id={@application.id}
-                      class="flex items-center gap-2"
-                    >
-                      <.lucide_icon name="trash-2" class="size-4 text-zinc-400" />
-                      <span>Delete application</span>
-                    </button>
-                    <.menu_shortcut>⌘D</.menu_shortcut>
-                  </.menu_item>
-                </.menu_group>
-              </.menu>
-            </.dropdown_menu_content>
-          </.dropdown_menu>
-        </:menu>
+    <.page_header page_drawer?={true} drawer_open={true}>
+      <:title>
+        <div class="flex lg:items-center lg:gap-1">
+          <.link href={~p"/job_applications/"} class="hidden lg:inline">Job Applications</.link>
+          <span class="hidden lg:inline-flex items-center text-zinc-400">
+            <.icon name="hero-chevron-right" class="size-3" />
+          </span>
+          <span class="inline">
+            {truncate(@application.role, length: 20)} at {@application.company.name}
+          </span>
+        </div>
+      </:title>
+      <:menu>
+        <.dropdown_menu>
+          <.dropdown_menu_trigger id={"#{@application.id}-dropdown-trigger"} class="group">
+            <.shadow_button type="button" variant="transparent">
+              <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
+            </.shadow_button>
+          </.dropdown_menu_trigger>
+          <.dropdown_menu_content>
+            <.menu class="w-56 text-zinc-300 bg-zinc-800">
+              <.menu_group>
+                <.menu_item class="text-sm">
+                  <button type="button" phx-click="new_cover_letter" class="flex items-center gap-2">
+                    <.lucide_icon name="square-pen" class="size-4 text-zinc-400" />
+                    <span>Write cover letter</span>
+                  </button>
+                  <.menu_shortcut>⌘W</.menu_shortcut>
+                </.menu_item>
+                <.menu_item class="text-sm">
+                  <button
+                    type="button"
+                    phx-click="open_cover_letter_dialog"
+                    class="flex items-center gap-2"
+                  >
+                    <.lucide_icon name="sparkles" class="size-4 text-zinc-400" />
+                    <span>Generate cover letter</span>
+                  </button>
+                  <.menu_shortcut>⌘G</.menu_shortcut>
+                </.menu_item>
+                <.menu_separator />
+                <.menu_item class="text-sm">
+                  <button
+                    type="button"
+                    phx-click="delete_application"
+                    phx-value-id={@application.id}
+                    class="flex items-center gap-2"
+                  >
+                    <.lucide_icon name="trash-2" class="size-4 text-zinc-400" />
+                    <span>Delete application</span>
+                  </button>
+                  <.menu_shortcut>⌘D</.menu_shortcut>
+                </.menu_item>
+              </.menu_group>
+            </.menu>
+          </.dropdown_menu_content>
+        </.dropdown_menu>
+      </:menu>
 
-        <:views>
-          <.nav_button
-            icon="file-text"
-            text="Overview"
-            href={~p"/job_application/#{@application.slug}/overview"}
-            active={@view == :overview}
-          />
-          <.nav_button
-            icon="layers"
-            text="Stages"
-            href={~p"/job_application/#{@application.slug}/stages"}
-            active={@view == :stages}
-          />
-          <.nav_button
-            icon="files"
-            text="Documents"
-            href={~p"/job_application/#{@application.slug}/documents"}
-            active={@view == :documents}
-          />
-        </:views>
-      </.page_header>
+      <:views>
+        <.nav_button
+          icon="file-text"
+          text="Overview"
+          href={~p"/job_application/#{@application.slug}/overview"}
+          active={@view == :overview}
+        />
+        <.nav_button
+          icon="layers"
+          text="Stages"
+          href={~p"/job_application/#{@application.slug}/stages"}
+          active={@view == :stages}
+        />
+        <.nav_button
+          icon="files"
+          text="Documents"
+          href={~p"/job_application/#{@application.slug}/documents"}
+          active={@view == :documents}
+        />
+      </:views>
+    </.page_header>
 
-      {render_cover_letter_dialog(assigns)}
-    </div>
+    {render_cover_letter_dialog(assigns)}
     """
   end
 
