@@ -8,7 +8,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationOverview do
   import AccomplishWeb.Shadowrun.Accordion
   import AccomplishWeb.Shadowrun.Tooltip
 
-  alias AccomplishWeb.JobApplications.ApplicationHeader
+  alias AccomplishWeb.JobApplicationsLive.ApplicationHeader
   alias AccomplishWeb.JobApplicationsLive.ApplicationAside
 
   @pubsub Accomplish.PubSub
@@ -18,13 +18,11 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationOverview do
     ~H"""
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
-        <.live_component
-          module={ApplicationHeader}
-          id="application-header"
-          application={@application}
-          current_user={@current_user}
-          view={:overview}
-        />
+        {live_render(@socket, ApplicationHeader,
+          id: "application-header",
+          session: %{"application" => @application, "view" => :overview},
+          sticky: true
+        )}
       </:page_header>
 
       <:page_drawer>

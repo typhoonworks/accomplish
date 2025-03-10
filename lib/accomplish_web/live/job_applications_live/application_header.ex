@@ -1,6 +1,7 @@
-defmodule AccomplishWeb.JobApplications.ApplicationHeader do
-  use AccomplishWeb, :live_component
+defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
+  use AccomplishWeb, :live_view
 
+  alias Accomplish.JobApplications
   alias Accomplish.CoverLetters
 
   import AccomplishWeb.Layout
@@ -10,7 +11,6 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
 
   import AccomplishWeb.StringHelpers
 
-  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -37,12 +37,7 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
               <.menu class="w-56 text-zinc-300 bg-zinc-800">
                 <.menu_group>
                   <.menu_item class="text-sm">
-                    <button
-                      type="button"
-                      phx-click="new_cover_letter"
-                      phx-target={@myself}
-                      class="flex items-center gap-2"
-                    >
+                    <button type="button" phx-click="new_cover_letter" class="flex items-center gap-2">
                       <.lucide_icon name="square-pen" class="size-4 text-zinc-400" />
                       <span>Write cover letter</span>
                     </button>
@@ -52,7 +47,6 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
                     <button
                       type="button"
                       phx-click="open_cover_letter_dialog"
-                      phx-target={@myself}
                       class="flex items-center gap-2"
                     >
                       <.lucide_icon name="sparkles" class="size-4 text-zinc-400" />
@@ -149,12 +143,7 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
             Cancel
           </.shadow_button>
 
-          <.shadow_button
-            type="button"
-            variant="primary"
-            phx-click="create_ai_cover_letter"
-            phx-target={@myself}
-          >
+          <.shadow_button type="button" variant="primary" phx-click="create_ai_cover_letter">
             Generate Cover Letter
           </.shadow_button>
         </div>
@@ -163,24 +152,21 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
     """
   end
 
-  @impl true
-  def mount(socket) do
-    {:ok, socket}
-  end
+  on_mount {AccomplishWeb.Plugs.UserAuth, :mount_current_user}
 
-  @impl true
-  def update(assigns, socket) do
+  def mount(_params, session, socket) do
+    application = session["application"]
+    view = session["view"]
+
     socket =
       socket
-      |> assign(:application, assigns.application)
-      |> assign(:current_user, assigns.current_user)
-      |> assign(:view, assigns.view)
+      |> assign(application: application)
+      |> assign(:view, view)
       |> assign(show_cover_letter_dialog: false)
 
     {:ok, socket}
   end
 
-  @impl true
   def handle_event("new_cover_letter", _params, socket) do
     application = socket.assigns.application
     {:ok, cover_letter} = CoverLetters.create_cover_letter(application)
@@ -192,7 +178,6 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
      )}
   end
 
-  @impl true
   def handle_event("open_cover_letter_dialog", _params, socket) do
     {:noreply,
      socket
@@ -203,7 +188,6 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
      })}
   end
 
-  @impl true
   def handle_event("create_ai_cover_letter", _params, socket) do
     application = socket.assigns.application
 
@@ -216,5 +200,18 @@ defmodule AccomplishWeb.JobApplications.ApplicationHeader do
        to:
          ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?ai_generate=true"
      )}
+  end
+
+  def handle_event("delete_application", %{"id" => id}, socket) do
+    case JobApplications.delete_application(id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Job application deleted successfully.")
+         |> push_navigate(to: ~p"/job_applications")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete job application.")}
+    end
   end
 end

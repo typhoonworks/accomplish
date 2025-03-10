@@ -10,7 +10,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
   import AccomplishWeb.Components.JobApplications.StageList
   import AccomplishWeb.Components.JobApplications.StageDialog
 
-  alias AccomplishWeb.JobApplications.ApplicationHeader
+  alias AccomplishWeb.JobApplicationsLive.ApplicationHeader
   alias AccomplishWeb.JobApplicationsLive.ApplicationAside
 
   @pubsub Accomplish.PubSub
@@ -20,13 +20,11 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     ~H"""
     <.layout current_user={@current_user} current_path={@current_path}>
       <:page_header>
-        <.live_component
-          module={ApplicationHeader}
-          id="application-header"
-          application={@application}
-          current_user={@current_user}
-          view={:stages}
-        />
+        {live_render(@socket, ApplicationHeader,
+          id: "application-header",
+          session: %{"application" => @application, "view" => :stages},
+          sticky: true
+        )}
       </:page_header>
 
       <:page_drawer>
