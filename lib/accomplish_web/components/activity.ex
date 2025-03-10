@@ -84,7 +84,7 @@ defmodule AccomplishWeb.Components.Activity do
     """
   end
 
-  defp activity_message(%{action: "job_application.stage_updated"} = assigns) do
+  defp activity_message(%{action: "job_application.changed_current_stage"} = assigns) do
     ~H"""
     Current stage changed from <span class="text-zinc-50">{@activity.metadata["from"]}</span>
     to <span class="text-zinc-50">{@activity.metadata["to"]}</span>
@@ -113,13 +113,13 @@ defmodule AccomplishWeb.Components.Activity do
   defp activity_color("job_application.created", "draft"), do: "bg-zinc-900"
   defp activity_color("job_application.created", _status), do: "bg-green-600"
   defp activity_color("job_application.updated", _status), do: "bg-blue-600"
-  defp activity_color("job_application.stage_updated", _status), do: "bg-zinc-600"
+  defp activity_color("job_application.changed_current_stage", _status), do: "bg-zinc-600"
   defp activity_color(_action, _status), do: "bg-zinc-900"
 
   @activity_icons %{
     "job_application.created" => "hero-paper-airplane-solid",
     "job_application.stage_added" => "hero-square-3-stack-3d-solid",
-    "job_application.stage_updated" => "hero-square-3-stack-3d-solid",
+    "job_application.changed_current_stage" => "hero-square-3-stack-3d-solid",
     "job_application.stage_deleted" => "hero-square-3-stack-3d-solid"
   }
 

@@ -32,7 +32,7 @@ defmodule Accomplish.JobApplications.Events do
 
   defmodule JobApplicationCurrentStageUpdated do
     @moduledoc false
-    defstruct name: "job_application.stage_updated", application: nil, from: nil, to: nil
+    defstruct name: "job_application.changed_current_stage", application: nil, from: nil, to: nil
   end
 
   defmodule JobApplicationStageStatusUpdated do

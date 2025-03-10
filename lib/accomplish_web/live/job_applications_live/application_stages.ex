@@ -5,7 +5,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
   alias Accomplish.JobApplications.Stage
 
   import AccomplishWeb.Layout
-  import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.StackedList
 
   import AccomplishWeb.Components.JobApplications.StageList
@@ -46,8 +45,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     </.layout>
 
     <.stage_dialog form={@stage_form} socket={@socket} />
-
-    {render_cover_letter_dialog(assigns)}
     """
   end
 
@@ -97,58 +94,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
         </div>
       </div>
     </section>
-    """
-  end
-
-  defp render_cover_letter_dialog(assigns) do
-    ~H"""
-    <.dialog
-      id="cover-letter-dialog"
-      position={:center}
-      on_cancel={hide_dialog("cover-letter-dialog")}
-      class="w-full max-w-md max-h-[90vh] overflow-hidden"
-    >
-      <.dialog_header>
-        <.dialog_title class="text-sm text-zinc-200 font-light">
-          <div class="flex items-center gap-2">
-            <.lucide_icon name="sparkles" class="size-4 text-purple-400" />
-            <p>AI Cover Letter Generator</p>
-          </div>
-        </.dialog_title>
-        <.dialog_description>
-          Let AI create a personalized cover letter based on your profile and job details.
-        </.dialog_description>
-      </.dialog_header>
-
-      <.dialog_content id="cover-letter-content" class="pb-6">
-        <div class="flex flex-col gap-4 py-4">
-          <p class="text-zinc-300 text-sm">
-            I'll create a personalized cover letter for your application to
-            <span class="font-semibold">{@application.role}</span>
-            at <span class="font-semibold"><%= @application.company.name %></span>.
-          </p>
-          <p class="text-zinc-300 text-sm">
-            The letter will be tailored based on your profile information and the job details.
-          </p>
-        </div>
-      </.dialog_content>
-
-      <.dialog_footer>
-        <div class="flex justify-end gap-2">
-          <.shadow_button
-            type="button"
-            variant="secondary"
-            phx-click={hide_dialog("cover-letter-dialog")}
-          >
-            Cancel
-          </.shadow_button>
-
-          <.shadow_button type="button" variant="primary" phx-click="create_ai_cover_letter">
-            Generate Cover Letter
-          </.shadow_button>
-        </div>
-      </.dialog_footer>
-    </.dialog>
     """
   end
 
@@ -339,7 +284,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
 
   defp handle_notification(_, socket), do: {:noreply, socket}
 
-  defp fetch_application(socket, slug, preloads \\ []) do
+  defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
 
     case JobApplications.get_application_by_slug(applicant, slug, preloads) do
@@ -417,7 +362,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
   end
 
   defp maybe_stream_insert(socket, key, stage) do
-    if socket.assigns.live_action == :stages and stage.status in socket.assigns.statuses do
+    if stage.status in socket.assigns.statuses do
       stream_insert(socket, key, stage, at: -1)
     else
       socket
