@@ -28,7 +28,9 @@
 }
 
 @keyframes typing {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     opacity: 0.4;
     transform: scale(0.8);
   }
