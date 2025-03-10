@@ -206,7 +206,6 @@ defmodule AccomplishWeb.CoverLetterLive do
     application = socket.assigns.application
     user = socket.assigns.current_user
 
-    # Start the cover letter generation process
     Generator.generate_streaming(self(), user, application)
 
     {:noreply,
@@ -232,33 +231,9 @@ defmodule AccomplishWeb.CoverLetterLive do
         end
 
       "message_stop" ->
-        # Generation complete, update the cover letter content
         {:noreply, complete_ai_generation(socket)}
 
       _ ->
-        # Ignore other message types
-        {:noreply, socket}
-    end
-  end
-
-  # Handle direct message format (used in legacy/testing mode)
-  def handle_info(%{"type" => type} = message, socket) do
-    case type do
-      "content_block_delta" ->
-        if is_map_key(message, "delta") and is_map_key(message["delta"], "text") do
-          new_content = socket.assigns.ai_content <> message["delta"]["text"]
-
-          {:noreply, assign(socket, :ai_content, new_content)}
-        else
-          {:noreply, socket}
-        end
-
-      "message_stop" ->
-        # Generation complete, update the cover letter content
-        {:noreply, complete_ai_generation(socket)}
-
-      _ ->
-        # Ignore other message types
         {:noreply, socket}
     end
   end
@@ -273,7 +248,6 @@ defmodule AccomplishWeb.CoverLetterLive do
   defp complete_ai_generation(socket) do
     cover_letter = socket.assigns.cover_letter
 
-    # Update the cover letter with the AI-generated content
     case CoverLetters.update_cover_letter(cover_letter, %{content: socket.assigns.ai_content}) do
       {:ok, updated_cover_letter} ->
         form =
