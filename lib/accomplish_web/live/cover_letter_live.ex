@@ -53,7 +53,7 @@ defmodule AccomplishWeb.CoverLetterLive do
             disabled={@ai_writing}
           />
         </div>
-        <div class="flex justify-start gap-2 my-2">
+        <div class="flex justify-start items-baseline gap-2 my-2">
           <.tooltip>
             <.shadow_select_input
               id={"status_select_#{@form.id}"}
