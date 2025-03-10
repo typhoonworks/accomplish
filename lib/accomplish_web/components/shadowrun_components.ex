@@ -355,6 +355,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :field, Phoenix.HTML.FormField
   attr :errors, :list, default: []
   attr :hint, :string, default: nil
+  attr :disabled, :boolean, default: false
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
@@ -396,7 +397,13 @@ defmodule AccomplishWeb.ShadowrunComponents do
 
         <.dropdown_menu>
           <.dropdown_menu_trigger id={"#{@id}-select-dropdown-trigger"} class="group">
-            <.shadow_button id={@id} aria-expanded="false" aria-haspopup="true" variant={@variant}>
+            <.shadow_button
+              id={@id}
+              aria-expanded="false"
+              aria-haspopup="true"
+              variant={@variant}
+              disabled={@disabled}
+            >
               <%= if @selected.value == nil do %>
                 <span>{@prompt}</span>
               <% else %>
@@ -423,10 +430,11 @@ defmodule AccomplishWeb.ShadowrunComponents do
               <.menu_group>
                 <%= for option <- @options do %>
                   <.menu_item
-                    phx-click={JS.push(@on_select)}
+                    phx-click={(@disabled && nil) || JS.push(@on_select)}
                     phx-value-id={@resource_id}
                     phx-value-field={@field_name}
                     phx-value-value={option.value}
+                    class={(@disabled && "opacity-50 cursor-not-allowed") || ""}
                   >
                     <div class="w-full flex items-center gap-2">
                       <%= if Map.has_key?(option, :icon) do %>

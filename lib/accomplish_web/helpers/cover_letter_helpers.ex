@@ -1,28 +1,33 @@
 defmodule AccomplishWeb.CoverLetterHelpers do
-  @moduledoc false
+  @moduledoc """
+  Provides helper functions for cover letter-related views.
+  """
 
+  @doc """
+  Returns a list of options for cover letter status dropdown.
+  """
   def options_for_cover_letter_status do
     [
       %{
         label: "Draft",
-        value: :draft,
-        icon: "hero-pencil-square",
-        color: "text-slate-400",
-        shortcut: "1"
+        value: "draft",
+        icon: "hero-document-text",
+        color: "text-zinc-400",
+        shortcut: ""
       },
       %{
         label: "Final",
-        value: :final,
+        value: "final",
         icon: "hero-document-check",
-        color: "text-green-600",
-        shortcut: "2"
+        color: "text-blue-400",
+        shortcut: ""
       },
       %{
         label: "Submitted",
-        value: :interviewing,
-        icon: "hero-envelope",
-        color: "text-purple-600",
-        shortcut: "3"
+        value: "submitted",
+        icon: "hero-paper-airplane",
+        color: "text-green-400",
+        shortcut: ""
       }
     ]
   end
