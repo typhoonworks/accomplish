@@ -50,6 +50,29 @@ defmodule AccomplishWeb.ResumeLive do
               <.icon name="hero-plus" class="size-3" /> Import Resume
             </.shadow_button>
           </:actions>
+          <:menu>
+            <.dropdown_menu>
+              <.dropdown_menu_trigger id="resume-dropdown-trigger" class="group">
+                <.shadow_button type="button" variant="transparent">
+                  <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
+                </.shadow_button>
+              </.dropdown_menu_trigger>
+              <.dropdown_menu_content>
+                <.menu class="w-56 text-zinc-300 bg-zinc-800">
+                  <.menu_group>
+                    <.menu_item class="text-xs">
+                      <button type="button" phx-click="import_resume" class="flex items-center gap-2">
+                        <.lucide_icon name="file-text" class="size-4 text-zinc-400" />
+                        <span>Import Resume</span>
+                      </button>
+                      <.menu_shortcut>⌘I</.menu_shortcut>
+                    </.menu_item>
+                  </.menu_group>
+                </.menu>
+              </.dropdown_menu_content>
+            </.dropdown_menu>
+            <.saving_indicator is_saving={@is_saving} />
+          </:menu>
         </.page_header>
       </:page_header>
 
@@ -213,6 +236,7 @@ defmodule AccomplishWeb.ResumeLive do
           socket={@socket}
           phx-blur="save_profile_field"
           phx-value-field={@profile_form[:bio].field}
+          autosave={@autosave}
         />
       </div>
       <div class="mt-12 space-y-2">
@@ -225,6 +249,7 @@ defmodule AccomplishWeb.ResumeLive do
           socket={@socket}
           phx-blur="save_profile_field"
           phx-value-field={@profile_form[:interests].field}
+          autosave={@autosave}
         />
       </div>
       <div class="mt-12 space-y-2">
@@ -391,6 +416,7 @@ defmodule AccomplishWeb.ResumeLive do
                 phx-blur="save_experience_field"
                 phx-value-field={@experience_forms[experience.id][:description].field}
                 phx-value-id={experience.id}
+                autosave={@autosave}
               />
             </div>
           </div>
@@ -488,6 +514,7 @@ defmodule AccomplishWeb.ResumeLive do
               placeholder="List your dev highlights – achievements, impact, and tech you used..."
               class="text-sm font-light"
               socket={@socket}
+              autosave={@autosave}
             />
           </div>
         </.dialog_content>
@@ -637,6 +664,7 @@ defmodule AccomplishWeb.ResumeLive do
                 phx-blur="save_education_field"
                 phx-value-field={@education_forms[education.id][:description].field}
                 phx-value-id={education.id}
+                autosave={@autosave}
               />
             </div>
           </div>
@@ -714,6 +742,7 @@ defmodule AccomplishWeb.ResumeLive do
               placeholder="Describe your responsibilities, achievements, and the technologies you worked with..."
               class="text-sm font-light"
               socket={@socket}
+              autosave={@autosave}
             />
           </div>
         </.dialog_content>
@@ -747,6 +776,8 @@ defmodule AccomplishWeb.ResumeLive do
       |> subscribe_to_notifications_topic()
       |> assign_uploads()
       |> assign(:resume_upload_form, to_form(%{"file" => nil}))
+      |> assign(:is_saving, false)
+      |> assign(autosave: true)
 
     mount_action(params, session, socket)
   end
@@ -819,12 +850,16 @@ defmodule AccomplishWeb.ResumeLive do
     user = socket.assigns.current_user
     changes = %{field => value}
 
+    socket = assign(socket, :is_saving, true)
+
     case Accounts.update_user_profile(user, changes) do
       {:ok, updated_user} ->
         form =
           updated_user
           |> Accounts.change_user_profile()
           |> to_form()
+
+        Process.send_after(self(), :saved, 500)
 
         {:noreply,
          socket
@@ -1049,6 +1084,10 @@ defmodule AccomplishWeb.ResumeLive do
     end
   end
 
+  def handle_info(:saved, socket) do
+    {:noreply, assign(socket, :is_saving, false)}
+  end
+
   def handle_info({:update_profile_skills, skills}, socket) do
     changes = %{skills: skills}
     update_profile_field(socket, changes)
@@ -1154,12 +1193,16 @@ defmodule AccomplishWeb.ResumeLive do
   def update_profile_field(socket, changes) do
     profile = socket.assigns.profile
 
+    socket = assign(socket, :is_saving, true)
+
     case Profiles.update_profile(profile, changes) do
       {:ok, updated_profile} ->
         form =
           updated_profile
           |> Profiles.change_profile()
           |> to_form()
+
+        Process.send_after(self(), :saved, 500)
 
         {:noreply,
          socket
@@ -1172,6 +1215,8 @@ defmodule AccomplishWeb.ResumeLive do
   end
 
   def update_experience_field(socket, experience, changes) do
+    socket = assign(socket, :is_saving, true)
+
     case Profiles.update_experience(experience, changes) do
       {:ok, updated_experience} ->
         form =
@@ -1181,17 +1226,22 @@ defmodule AccomplishWeb.ResumeLive do
 
         experience_forms = Map.put(socket.assigns.experience_forms, experience.id, form)
 
+        Process.send_after(self(), :saved, 500)
+
         {:noreply,
          socket
          |> assign(experience_forms: experience_forms)
          |> stream_insert(:experiences, updated_experience)}
 
       {:error, _changeset} ->
+        Process.send_after(self(), :saved, 500)
         {:noreply, socket}
     end
   end
 
   def update_education_field(socket, education, changes) do
+    socket = assign(socket, :is_saving, true)
+
     case Profiles.update_education(education, changes) do
       {:ok, updated_education} ->
         form =
@@ -1201,12 +1251,15 @@ defmodule AccomplishWeb.ResumeLive do
 
         education_forms = Map.put(socket.assigns.education_forms, education.id, form)
 
+        Process.send_after(self(), :saved, 500)
+
         {:noreply,
          socket
          |> assign(education_forms: education_forms)
          |> stream_insert(:educations, updated_education)}
 
       {:error, _changeset} ->
+        Process.send_after(self(), :saved, 500)
         {:noreply, socket}
     end
   end
