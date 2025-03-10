@@ -30,10 +30,14 @@
   export let placeholder = null;
   export let inputId;
   export let classList = "text-zinc-200";
+  export let autosave = false;
+  export let autosaveDelay = 1500;
 
-  let element;
   let editor;
+  let element;
   let hiddenInput;
+  let autosaveTimer;
+  let lastSavedContent;
 
   const BASE_EXTENSIONS = [
     Text,
@@ -71,7 +75,25 @@
     }
   }
 
+  function handleContentChange() {
+    editor = editor;
+    updateHiddenInput();
+
+    if (autosave) {
+      const newContent = editor.storage.markdown.getMarkdown();
+      if (newContent !== lastSavedContent) {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(() => {
+          lastSavedContent = newContent;
+          pushUpdate();
+        }, autosaveDelay);
+      }
+    }
+  }
+
   onMount(() => {
+    lastSavedContent = content;
+
     editor = new Editor({
       element: element,
       extensions: [
@@ -101,10 +123,7 @@
           class: `focus:outline-none ${classList}`,
         },
       },
-      onTransaction: () => {
-        editor = editor;
-        updateHiddenInput();
-      },
+      onTransaction: handleContentChange,
       onBlur: pushUpdate,
     });
 
@@ -117,7 +136,11 @@
     if (editor) {
       editor.destroy();
     }
+    if (autosaveTimer) {
+      clearTimeout(autosaveTimer);
+    }
   });
 </script>
 
+<!-- Simple, clean, and respects styling -->
 <div bind:this={element}></div>
