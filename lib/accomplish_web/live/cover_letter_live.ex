@@ -214,28 +214,12 @@ defmodule AccomplishWeb.CoverLetterLive do
         {:noreply, assign(socket, :ai_writing, true)}
 
       "content_block_delta" ->
-        if is_map_key(message, "delta") and is_map_key(message["delta"], "text") do
-          new_content = socket.assigns.ai_content <> message["delta"]["text"]
-          form = socket.assigns.form
-
-          updated_form =
-            Map.update!(form, :params, fn params ->
-              Map.put(params, "content", new_content)
-            end)
-
-          {:noreply,
-           socket
-           |> assign(:ai_content, new_content)
-           |> assign(:form, updated_form)}
-        else
-          {:noreply, socket}
-        end
+        handle_content_block_delta(socket, message)
 
       "content_block_stop" ->
         {:noreply, complete_ai_generation(socket)}
 
       _ ->
-        IO.inspect(type)
         {:noreply, socket}
     end
   end
@@ -257,5 +241,19 @@ defmodule AccomplishWeb.CoverLetterLive do
   defp assign_form(socket, cover_letter) do
     form = CoverLetters.change_cover_letter(cover_letter)
     assign(socket, form: to_form(form))
+  end
+
+  defp handle_content_block_delta(socket, message) do
+    with true <- is_map_key(message, "delta") and is_map_key(message["delta"], "text"),
+         new_content <- socket.assigns.ai_content <> message["delta"]["text"],
+         form <- socket.assigns.form,
+         updated_form <- Map.update!(form, :params, &Map.put(&1, "content", new_content)) do
+      {:noreply,
+       socket
+       |> assign(:ai_content, new_content)
+       |> assign(:form, updated_form)}
+    else
+      _ -> {:noreply, socket}
+    end
   end
 end
