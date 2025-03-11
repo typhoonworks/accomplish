@@ -210,7 +210,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationOverview do
   end
 
   def mount(%{"slug" => slug}, _session, socket) do
-    with {:ok, socket, application} <- fetch_application(socket, slug) do
+    with {:ok, socket, application} <- fetch_application(socket, slug, [:stages]) do
       socket =
         socket
         |> assign(page_title: "#{application.role} • Overview")
@@ -260,7 +260,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationOverview do
 
   defp handle_notification(_, socket), do: {:noreply, socket}
 
-  defp fetch_application(socket, slug, preloads \\ []) do
+  defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
 
     case JobApplications.get_application_by_slug(applicant, slug, preloads) do

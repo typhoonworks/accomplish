@@ -7,9 +7,10 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.DropdownMenu
-  import AccomplishWeb.Shadowrun.Menu
 
   import AccomplishWeb.StringHelpers
+
+  import AccomplishWeb.Components.JobApplicationMenu
 
   def render(assigns) do
     ~H"""
@@ -27,47 +28,17 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
       </:title>
       <:menu>
         <.dropdown_menu>
-          <.dropdown_menu_trigger id={"#{@application.id}-dropdown-trigger"} class="group">
+          <.dropdown_menu_trigger id={"app-trigger-#{@application.id}"} class="group">
             <.shadow_button type="button" variant="transparent">
               <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
             </.shadow_button>
           </.dropdown_menu_trigger>
           <.dropdown_menu_content>
-            <.menu class="w-56 text-zinc-300 bg-zinc-800">
-              <.menu_group>
-                <.menu_item class="text-sm">
-                  <button type="button" phx-click="new_cover_letter" class="flex items-center gap-2">
-                    <.lucide_icon name="square-pen" class="size-4 text-zinc-400" />
-                    <span>Write cover letter</span>
-                  </button>
-                  <.menu_shortcut>⌘W</.menu_shortcut>
-                </.menu_item>
-                <.menu_item class="text-sm">
-                  <button
-                    type="button"
-                    phx-click="open_cover_letter_dialog"
-                    class="flex items-center gap-2"
-                  >
-                    <.lucide_icon name="sparkles" class="size-4 text-zinc-400" />
-                    <span>Generate cover letter</span>
-                  </button>
-                  <.menu_shortcut>⌘G</.menu_shortcut>
-                </.menu_item>
-                <.menu_separator />
-                <.menu_item class="text-sm">
-                  <button
-                    type="button"
-                    phx-click="delete_application"
-                    phx-value-id={@application.id}
-                    class="flex items-center gap-2"
-                  >
-                    <.lucide_icon name="trash-2" class="size-4 text-zinc-400" />
-                    <span>Delete application</span>
-                  </button>
-                  <.menu_shortcut>⌘D</.menu_shortcut>
-                </.menu_item>
-              </.menu_group>
-            </.menu>
+            <.application_menu
+              application={@application}
+              position="dropdown"
+              id={"header-menu-#{@application.id}"}
+            />
           </.dropdown_menu_content>
         </.dropdown_menu>
       </:menu>
