@@ -103,7 +103,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
   end
 
   def mount(%{"slug" => slug}, _session, socket) do
-    with {:ok, socket, application} <- fetch_application(socket, slug),
+    with {:ok, socket, application} <- fetch_application(socket, slug, :stages),
          cover_letters <- CoverLetters.list_cover_letters_for_application(application.id) do
       socket =
         socket
@@ -157,7 +157,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
 
   defp handle_notification(_, socket), do: {:noreply, socket}
 
-  defp fetch_application(socket, slug, preloads \\ []) do
+  defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
 
     case JobApplications.get_application_by_slug(applicant, slug, preloads) do
