@@ -186,7 +186,7 @@ defmodule Accomplish.CoverLettersTest do
     end
   end
 
-  describe "delete_cover_letter/1" do
+  describe "delete_cover_letter/2" do
     setup do
       applicant = user_fixture()
       application = job_application_fixture(applicant)
@@ -194,8 +194,9 @@ defmodule Accomplish.CoverLettersTest do
       %{applicant: applicant, application: application, cover_letter: cover_letter}
     end
 
-    test "deletes the cover letter", %{cover_letter: cover_letter} do
-      assert {:ok, %CoverLetter{}} = CoverLetters.delete_cover_letter(cover_letter)
+    test "deletes the cover letter", %{cover_letter: cover_letter, application: application} do
+      assert {:ok, %CoverLetter{}} =
+               CoverLetters.delete_cover_letter(application, cover_letter.id)
 
       assert_raise Ecto.NoResultsError, fn ->
         CoverLetters.get_cover_letter!(cover_letter.id)
