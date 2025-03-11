@@ -13,21 +13,21 @@ defmodule AccomplishWeb.CoverLetterHelpers do
         value: "draft",
         icon: "hero-document-text",
         color: "text-zinc-400",
-        shortcut: ""
+        shortcut: "1"
       },
       %{
         label: "Final",
         value: "final",
         icon: "hero-document-check",
         color: "text-blue-400",
-        shortcut: ""
+        shortcut: "2"
       },
       %{
         label: "Submitted",
         value: "submitted",
         icon: "hero-paper-airplane",
         color: "text-green-400",
-        shortcut: ""
+        shortcut: "3"
       }
     ]
   end

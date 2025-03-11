@@ -2,6 +2,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
   use AccomplishWeb, :live_view
 
   alias Accomplish.Activities
+  alias Accomplish.CoverLetters
   alias Accomplish.JobApplications
 
   import AccomplishWeb.Layout
@@ -126,7 +127,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
     {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
 
-  def handle_info({CoverLetter, _event}, socket) do
+  def handle_info({CoverLetters, _event}, socket) do
     {:noreply, socket}
   end
 

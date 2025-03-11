@@ -7,8 +7,11 @@ defmodule AccomplishWeb.CoverLetterLive do
 
   import AccomplishWeb.StringHelpers
   import AccomplishWeb.CoverLetterHelpers
+
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Tooltip
+  import AccomplishWeb.Shadowrun.DropdownMenu
+  import AccomplishWeb.Shadowrun.Menu
 
   def render(assigns) do
     ~H"""
@@ -17,7 +20,10 @@ defmodule AccomplishWeb.CoverLetterLive do
         <.page_header>
           <:title>
             <div class="flex lg:items-center lg:gap-1">
-              <.link href={~p"/job_application/#{@application.slug}/stages"} class="hidden lg:inline">
+              <.link
+                href={~p"/job_application/#{@application.slug}/documents"}
+                class="hidden lg:inline"
+              >
                 <span class="inline">{@application.role} at {@application.company.name}</span>
               </.link>
               <span class="hidden lg:inline-flex items-center text-zinc-400">
@@ -30,6 +36,31 @@ defmodule AccomplishWeb.CoverLetterLive do
           </:title>
 
           <:menu>
+            <.dropdown_menu>
+              <.dropdown_menu_trigger id="resume-dropdown-trigger" class="group">
+                <.shadow_button type="button" variant="transparent">
+                  <.lucide_icon name="ellipsis" class="size-5 text-zinc-400" />
+                </.shadow_button>
+              </.dropdown_menu_trigger>
+              <.dropdown_menu_content>
+                <.menu class="w-56 text-zinc-300 bg-zinc-800">
+                  <.menu_group>
+                    <.menu_item class="text-sm">
+                      <button
+                        type="button"
+                        phx-click="delete_cover_letter"
+                        phx-value-id={@cover_letter.id}
+                        class="flex items-center gap-2"
+                      >
+                        <.lucide_icon name="trash-2" class="size-4 text-zinc-400" />
+                        <span>Delete cover letter</span>
+                      </button>
+                      <.menu_shortcut>⌘D</.menu_shortcut>
+                    </.menu_item>
+                  </.menu_group>
+                </.menu>
+              </.dropdown_menu_content>
+            </.dropdown_menu>
             <%= if @ai_writing do %>
               <div class="flex items-center gap-2">
                 <.lucide_icon name="sparkles" class="animate-pulse h-5 w-5 text-purple-500" />
@@ -201,6 +232,21 @@ defmodule AccomplishWeb.CoverLetterLive do
      socket
      |> assign(:ai_content, new_content)
      |> assign(:form, updated_form)}
+  end
+
+  def handle_event("delete_cover_letter", %{"id" => id}, socket) do
+    application = socket.assigns.application
+
+    case CoverLetters.delete_cover_letter(application, id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Cover letter deleted successfully.")
+         |> push_navigate(to: ~p"/job_application/#{application.slug}/documents")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to delete cover letter.")}
+    end
   end
 
   def handle_info(:saved, socket) do

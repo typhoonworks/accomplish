@@ -6,6 +6,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.StackedList
+  import AccomplishWeb.Components.JobApplications.DocumentList
 
   alias AccomplishWeb.JobApplicationsLive.ApplicationHeader
   alias AccomplishWeb.JobApplicationsLive.ApplicationAside
@@ -33,9 +34,22 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       </:page_drawer>
 
       <div class="mt-8 w-full">
-        <.stacked_list :if={Enum.any?(@cover_letters)}>
-          {render_documents(assigns)}
-        </.stacked_list>
+        <div>
+          <div
+            id="documents"
+            class="inline-block min-w-full py-2 align-middle"
+            phx-hook="AudioMp3"
+            data-sounds={@sounds}
+          >
+            <.stacked_list>
+              <.document_group
+                type="cover_letter"
+                documents={@streams.cover_letters}
+                application={@application}
+              />
+            </.stacked_list>
+          </div>
+        </div>
       </div>
     </.layout>
     """
@@ -95,10 +109,29 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
         socket
         |> assign(page_title: "#{application.role} • Documents")
         |> assign(application: application)
-        |> assign(:cover_letters, cover_letters)
         |> subscribe_to_notifications_topic()
+        |> assign_sounds()
+        |> assign_play_sounds(true)
+        |> stream(:cover_letters, cover_letters)
 
       {:ok, socket}
+    end
+  end
+
+  def handle_event("delete_document", %{"id" => id, "type" => "cover_letter"}, socket) do
+    application = socket.assigns.application
+
+    case CoverLetters.delete_cover_letter(application, id) do
+      {:ok, cover_letter} ->
+        socket =
+          socket
+          |> stream_delete(:cover_letters, cover_letter)
+          |> maybe_play_sound("swoosh")
+
+        {:noreply, socket}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to delete cover letter.")}
     end
   end
 
@@ -106,12 +139,20 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
     handle_notification(event, socket)
   end
 
-  def handle_info({CoverLetters, _}, socket) do
-    {:noreply, socket}
+  def handle_info({CoverLetters, event}, socket) do
+    handle_notification(event, socket)
   end
 
   defp handle_notification(%{name: "job_application.updated"} = event, socket) do
     {:noreply, assign(socket, application: event.application)}
+  end
+
+  defp handle_notification(%{name: "cover_letter.created"} = event, socket) do
+    {:noreply, stream_insert(socket, :cover_letters, event.cover_letter)}
+  end
+
+  defp handle_notification(%{name: "cover_letter.deleted"} = event, socket) do
+    {:noreply, stream_delete(socket, :cover_letters, event.cover_letter)}
   end
 
   defp handle_notification(_, socket), do: {:noreply, socket}
@@ -135,5 +176,27 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
 
     socket
+  end
+
+  defp assign_sounds(socket) do
+    json =
+      JSON.encode!(%{
+        swoosh: ~p"/audio/swoosh.mp3"
+      })
+
+    assign(socket, :sounds, json)
+  end
+
+  defp assign_play_sounds(socket, play_sounds) do
+    assign(socket, play_sounds: play_sounds)
+  end
+
+  defp maybe_play_sound(socket, sound) do
+    %{play_sounds: play_sounds} = socket.assigns
+
+    case play_sounds do
+      true -> push_event(socket, "play-sound", %{name: sound})
+      _ -> socket
+    end
   end
 end
