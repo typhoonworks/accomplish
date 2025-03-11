@@ -14,8 +14,7 @@ defmodule AccomplishWeb.Components.JobApplications.List do
   import AccomplishWeb.Shadowrun.StackedList
   import AccomplishWeb.TimeHelpers
   import AccomplishWeb.JobApplicationHelpers
-
-  alias Accomplish.JobApplications.Stages
+  import AccomplishWeb.Components.JobApplicationMenu
 
   def application_group(assigns) do
     ~H"""
@@ -67,7 +66,11 @@ defmodule AccomplishWeb.Components.JobApplications.List do
                 {application.applied_at && formatted_relative_time(application.applied_at)}
               </p>
 
-              <.context_menu application={application} />
+              <.application_menu
+                application={application}
+                position="right-click"
+                id={"context-menu-#{application.id}"}
+              />
             </.list_item>
           </div>
         </div>
@@ -129,176 +132,6 @@ defmodule AccomplishWeb.Components.JobApplications.List do
         </.menu>
       </.dropdown_menu_content>
     </.dropdown_menu>
-    """
-  end
-
-  defp context_menu(assigns) do
-    ~H"""
-    <.menu id={"context-menu-#{@application.id}"} class="hidden w-56 text-zinc-300 bg-zinc-800">
-      <.menu_group>
-        {status_menu_item(%{application: @application})}
-
-        <.menu_separator />
-        {add_stage_menu_item(%{application: @application})}
-        {current_stage_menu_item(%{application: @application})}
-
-        <.menu_separator />
-        <.menu_item phx-click="delete_application" phx-value-id={@application.id}>
-          <div class="w-full flex items-center gap-2">
-            <.icon name="hero-trash" class="size-4" />
-            <span>Delete</span>
-            <.menu_shortcut>
-              <div class="flex gap-1">
-                <span>⌘</span>
-                <span>⌫</span>
-              </div>
-            </.menu_shortcut>
-          </div>
-        </.menu_item>
-      </.menu_group>
-    </.menu>
-    """
-  end
-
-  defp status_menu_item(assigns) do
-    ~H"""
-    <div class="relative group">
-      <.menu_item class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <.icon name="hero-envelope-open" class="size-4" />
-          <span>Status</span>
-        </div>
-        <.menu_shortcut>
-          <div class="flex gap-4">
-            <span>S</span>
-            <span class="text-[8px]">▶</span>
-          </div>
-        </.menu_shortcut>
-      </.menu_item>
-      
-    <!-- Submenu positioned absolutely -->
-      <div class="absolute left-full top-0 hidden group-hover:block w-48 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
-        <.menu class="w-full">
-          <.menu_group>
-            <%= for option <- options_for_application_status() do %>
-              <.menu_item
-                phx-click="update_application_status"
-                phx-value-id={@application.id}
-                phx-value-status={option.value}
-              >
-                <div class="w-full flex items-center gap-2">
-                  <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
-                  <span>{option.label}</span>
-                  <.menu_shortcut>
-                    <div class="w-full flex items-center gap-2 justify-between">
-                      <%= if option.value  == @application.status do %>
-                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
-                      <% end %>
-                    </div>
-                  </.menu_shortcut>
-                </div>
-              </.menu_item>
-            <% end %>
-          </.menu_group>
-        </.menu>
-      </div>
-    </div>
-    """
-  end
-
-  defp add_stage_menu_item(assigns) do
-    ~H"""
-    <div class="relative group">
-      <.menu_item class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <.icon name="hero-arrow-down-on-square" class="size-4" />
-          <span>Add stage</span>
-        </div>
-        <.menu_shortcut>
-          <div class="flex gap-4">
-            <div class="flex gap-1">
-              <span>Ctrl</span>
-              <span>S</span>
-            </div>
-            <span class="text-[8px]">▶</span>
-          </div>
-        </.menu_shortcut>
-      </.menu_item>
-      
-    <!-- Submenu positioned absolutely -->
-      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
-        <.menu class="w-full">
-          <.menu_group>
-            <%= for stage <- Stages.predefined_stages() do %>
-              <.menu_item
-                phx-click="prepare_predefined_stage"
-                phx-value-application-id={@application.id}
-                phx-value-title={stage.title}
-                phx-value-type={Atom.to_string(stage.type)}
-              >
-                <div class="w-full flex items-center gap-2">
-                  <.icon name={stage_icon(stage.type)} class="size-4 text-zinc-300" />
-                  <span>{stage.title}</span>
-                </div>
-              </.menu_item>
-            <% end %>
-            <.menu_separator />
-            <.menu_item phx-click="prepare_new_stage" phx-value-application-id={@application.id}>
-              <div class="w-full flex items-center gap-2">
-                <.icon name="hero-pencil-square" class="size-4" />
-                <span>Custom stage</span>
-              </div>
-            </.menu_item>
-          </.menu_group>
-        </.menu>
-      </div>
-    </div>
-    """
-  end
-
-  def current_stage_menu_item(assigns) do
-    ~H"""
-    <div class="relative group">
-      <.menu_item disabled={Enum.empty?(@application.stages)}>
-        <div class="w-full flex items-center gap-2">
-          <.icon name="hero-square-3-stack-3d" class="size-4" />
-          <span>Current stage</span>
-          <.menu_shortcut>
-            <div class="flex gap-1">
-              <span>C</span>
-              <span class="text-[8px]">▶</span>
-            </div>
-          </.menu_shortcut>
-        </div>
-      </.menu_item>
-      
-    <!-- Submenu positioned absolutely -->
-      <div class="absolute left-full top-0 hidden group-hover:block w-56 bg-zinc-800 shadow-md border border-zinc-700 rounded-md z-90">
-        <.menu class="w-full">
-          <.menu_group>
-            <%= for stage <- @application.stages do %>
-              <.menu_item
-                phx-click="set_current_stage"
-                phx-value-application-id={@application.id}
-                phx-value-stage-id={stage.id}
-              >
-                <div class="w-full flex items-center gap-2">
-                  <.icon name={stage_icon(stage.type)} class="size-4 text-zinc-300" />
-                  <span>{stage.title}</span>
-                  <.menu_shortcut>
-                    <div class="w-full flex items-center gap-2 justify-between">
-                      <%= if stage.id == @application.current_stage_id do %>
-                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
-                      <% end %>
-                    </div>
-                  </.menu_shortcut>
-                </div>
-              </.menu_item>
-            <% end %>
-          </.menu_group>
-        </.menu>
-      </div>
-    </div>
     """
   end
 end
