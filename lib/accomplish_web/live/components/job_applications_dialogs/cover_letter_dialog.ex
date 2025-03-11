@@ -76,15 +76,6 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
     {:ok, assign(socket, assigns)}
   end
 
-  def handle_event("create_ai_cover_letter", %{"application_id" => application_id}, socket) do
-    application = socket.assigns.application
-
-    {:noreply,
-     socket
-     |> close_modal("cover-letter-dialog")
-     |> JobApplicationActions.handle_ai_cover_letter_create(application)}
-  end
-
   def handle_event("create_ai_cover_letter", _params, socket) do
     application = socket.assigns.application
 

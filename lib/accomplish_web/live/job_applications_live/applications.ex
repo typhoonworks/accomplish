@@ -552,23 +552,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, handle_prepare_new_stage(socket, application_id)}
   end
 
-  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
-    params = Map.put(form.params || %{}, to_string(field), date)
-
-    case form.name do
-      "application" ->
-        updated_changeset = JobApplications.change_application_form(%Application{}, params)
-        {:noreply, assign(socket, form: to_form(updated_changeset))}
-
-      "stage" ->
-        updated_changeset = JobApplications.change_stage_form(params)
-        {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
-
-      _ ->
-        {:noreply, socket}
-    end
-  end
-
   def handle_event("new_cover_letter", %{"application_id" => application_id}, socket) do
     user = socket.assigns.current_user
     application = JobApplications.get_application!(user, application_id)
@@ -604,6 +587,23 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not create AI cover letter.")}
+    end
+  end
+
+  def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
+    params = Map.put(form.params || %{}, to_string(field), date)
+
+    case form.name do
+      "application" ->
+        updated_changeset = JobApplications.change_application_form(%Application{}, params)
+        {:noreply, assign(socket, form: to_form(updated_changeset))}
+
+      "stage" ->
+        updated_changeset = JobApplications.change_stage_form(params)
+        {:noreply, assign(socket, stage_form: to_form(updated_changeset))}
+
+      _ ->
+        {:noreply, socket}
     end
   end
 
