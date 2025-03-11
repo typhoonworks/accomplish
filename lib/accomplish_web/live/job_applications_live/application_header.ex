@@ -129,7 +129,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
 
   def handle_event(
         "set_current_stage",
-        %{"application-id" => application_id, "stage-id" => stage_id},
+        %{"application_id" => application_id, "stage_id" => stage_id},
         socket
       ) do
     {:noreply, handle_set_current_stage(socket, application_id, stage_id)}
@@ -137,13 +137,13 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
 
   def handle_event(
         "prepare_predefined_stage",
-        %{"application-id" => application_id, "title" => title, "type" => type},
+        %{"application_id" => application_id, "title" => title, "type" => type},
         socket
       ) do
     {:noreply, handle_prepare_predefined_stage(socket, application_id, title, type)}
   end
 
-  def handle_event("prepare_new_stage", %{"application-id" => application_id}, socket) do
+  def handle_event("prepare_new_stage", %{"application_id" => application_id}, socket) do
     {:noreply, handle_prepare_new_stage(socket, application_id)}
   end
 
