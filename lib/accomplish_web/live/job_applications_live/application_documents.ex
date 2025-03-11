@@ -6,6 +6,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.StackedList
+  import AccomplishWeb.Components.JobApplications.DocumentList
 
   alias AccomplishWeb.JobApplicationsLive.ApplicationHeader
   alias AccomplishWeb.JobApplicationsLive.ApplicationAside
@@ -33,9 +34,22 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       </:page_drawer>
 
       <div class="mt-8 w-full">
-        <.stacked_list :if={Enum.any?(@cover_letters)}>
-          {render_documents(assigns)}
-        </.stacked_list>
+        <div>
+          <div
+            id="documents"
+            class="inline-block min-w-full py-2 align-middle"
+            phx-hook="AudioMp3"
+            data-sounds={@sounds}
+          >
+            <.stacked_list>
+              <.document_group
+                type="cover_letter"
+                documents={@streams.cover_letter}
+                application={@application}
+              />
+            </.stacked_list>
+          </div>
+        </div>
       </div>
     </.layout>
     """
@@ -95,8 +109,10 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
         socket
         |> assign(page_title: "#{application.role} • Documents")
         |> assign(application: application)
-        |> assign(:cover_letters, cover_letters)
         |> subscribe_to_notifications_topic()
+        |> assign_sounds()
+        |> assign_play_sounds(true)
+        |> stream(:cover_letter, cover_letters)
 
       {:ok, socket}
     end
@@ -135,5 +151,27 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
 
     socket
+  end
+
+  defp assign_sounds(socket) do
+    json =
+      JSON.encode!(%{
+        swoosh: ~p"/audio/swoosh.mp3"
+      })
+
+    assign(socket, :sounds, json)
+  end
+
+  defp assign_play_sounds(socket, play_sounds) do
+    assign(socket, play_sounds: play_sounds)
+  end
+
+  defp maybe_play_sound(socket, sound) do
+    %{play_sounds: play_sounds} = socket.assigns
+
+    case play_sounds do
+      true -> push_event(socket, "play-sound", %{name: sound})
+      _ -> socket
+    end
   end
 end

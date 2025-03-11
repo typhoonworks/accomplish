@@ -67,32 +67,7 @@ defmodule AccomplishWeb.Components.JobApplications.List do
                 {application.applied_at && formatted_relative_time(application.applied_at)}
               </p>
 
-              <.menu
-                id={"context-menu-#{application.id}"}
-                class="hidden w-56 text-zinc-300 bg-zinc-800"
-              >
-                <.menu_group>
-                  {status_menu_item(%{application: application})}
-
-                  <.menu_separator />
-                  {add_stage_menu_item(%{application: application})}
-                  {current_stage_menu_item(%{application: application})}
-
-                  <.menu_separator />
-                  <.menu_item phx-click="delete_application" phx-value-id={application.id}>
-                    <div class="w-full flex items-center gap-2">
-                      <.icon name="hero-trash" class="size-4" />
-                      <span>Delete</span>
-                      <.menu_shortcut>
-                        <div class="flex gap-1">
-                          <span>⌘</span>
-                          <span>⌫</span>
-                        </div>
-                      </.menu_shortcut>
-                    </div>
-                  </.menu_item>
-                </.menu_group>
-              </.menu>
+              <.context_menu application={application} />
             </.list_item>
           </div>
         </div>
@@ -154,6 +129,34 @@ defmodule AccomplishWeb.Components.JobApplications.List do
         </.menu>
       </.dropdown_menu_content>
     </.dropdown_menu>
+    """
+  end
+
+  defp context_menu(assigns) do
+    ~H"""
+    <.menu id={"context-menu-#{@application.id}"} class="hidden w-56 text-zinc-300 bg-zinc-800">
+      <.menu_group>
+        {status_menu_item(%{application: @application})}
+
+        <.menu_separator />
+        {add_stage_menu_item(%{application: @application})}
+        {current_stage_menu_item(%{application: @application})}
+
+        <.menu_separator />
+        <.menu_item phx-click="delete_application" phx-value-id={@application.id}>
+          <div class="w-full flex items-center gap-2">
+            <.icon name="hero-trash" class="size-4" />
+            <span>Delete</span>
+            <.menu_shortcut>
+              <div class="flex gap-1">
+                <span>⌘</span>
+                <span>⌫</span>
+              </div>
+            </.menu_shortcut>
+          </div>
+        </.menu_item>
+      </.menu_group>
+    </.menu>
     """
   end
 
