@@ -113,9 +113,9 @@ defmodule AccomplishWeb.Router do
       live "/job_application/:application_slug/stage/:slug", JobApplicationsLive.Stage, :show
       live "/job_application/:application_slug/cover_letter/:id", CoverLetterLive, :edit
 
-      live "/resume/overview", ResumeLive, :overview
-      live "/resume/experience", ResumeLive, :experience
-      live "/resume/education", ResumeLive, :education
+      live "/resume/overview", ResumeLive.ResumeOverview
+      live "/resume/experience", ResumeLive.ResumeExperience
+      live "/resume/education", ResumeLive.ResumeEducation
     end
 
     live_session :require_authenticated_user_without_tracking,

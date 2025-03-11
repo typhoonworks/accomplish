@@ -1,4 +1,4 @@
-defmodule AccomplishWeb.JobApplicationsLive.ResumeHeader do
+defmodule AccomplishWeb.ResumeLive.ResumeHeader do
   use AccomplishWeb, :live_view
 
   alias Accomplish.Workers.ExtractResumeData
