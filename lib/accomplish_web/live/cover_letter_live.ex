@@ -17,7 +17,10 @@ defmodule AccomplishWeb.CoverLetterLive do
         <.page_header>
           <:title>
             <div class="flex lg:items-center lg:gap-1">
-              <.link href={~p"/job_application/#{@application.slug}/stages"} class="hidden lg:inline">
+              <.link
+                href={~p"/job_application/#{@application.slug}/documents"}
+                class="hidden lg:inline"
+              >
                 <span class="inline">{@application.role} at {@application.company.name}</span>
               </.link>
               <span class="hidden lg:inline-flex items-center text-zinc-400">

@@ -447,8 +447,15 @@ defmodule AccomplishWeb.ShadowrunComponents do
                       <span>{option.label}</span>
                       <.menu_shortcut>
                         <div class="w-full flex items-center gap-2 justify-between">
-                          <%= if option.value == @value do %>
-                            <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                          <%= cond do %>
+                            <% is_binary(@value) && is_binary(option.value) && option.value == @value -> %>
+                              <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                            <% is_atom(@value) && is_binary(option.value) && String.to_atom(option.value) == @value -> %>
+                              <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                            <% is_atom(option.value) && (option.value == @value || (is_binary(@value) && option.value == String.to_atom(@value))) -> %>
+                              <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                            <% true -> %>
+                              <!-- No icon -->
                           <% end %>
                           <span>{option.shortcut}</span>
                         </div>

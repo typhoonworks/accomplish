@@ -56,6 +56,11 @@ defmodule AccomplishWeb.Components.JobApplications.DocumentList do
               <.context_menu document={document} type={@type} />
             </.list_item>
           </div>
+          <.list_empty_state>
+            <div class="text-[13px] text-zinc-300 leading-tight">
+              This application doesn't have any cover letters yet
+            </div>
+          </.list_empty_state>
         </div>
       </.list_content>
     </div>

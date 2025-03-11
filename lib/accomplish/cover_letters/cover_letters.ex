@@ -93,16 +93,18 @@ defmodule Accomplish.CoverLetters do
     end
   end
 
-  def delete_cover_letter(%CoverLetter{} = cover_letter) do
-    application = Repo.get!(Application, cover_letter.application_id)
-
-    Repo.transaction(fn ->
-      Repo.delete!(cover_letter)
-      broadcast_cover_letter_deleted(cover_letter, application)
-    end)
-    |> case do
-      {:ok, _} -> {:ok, cover_letter}
-      {:error, error} -> {:error, error}
+  def delete_cover_letter(application, id) do
+    with %CoverLetter{} = cover_letter <- get_application_cover_letter!(application, id),
+         {:ok, _} <-
+           Repo.transaction(fn ->
+             Repo.delete!(application)
+             broadcast_cover_letter_deleted(cover_letter, application)
+           end) do
+      {:ok, application}
+    else
+      nil -> {:error, :not_found}
+      {:error, e} -> {:error, e}
+      _ -> {:error, :unexpected_error}
     end
   end
 

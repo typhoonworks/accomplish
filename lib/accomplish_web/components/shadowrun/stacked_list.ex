@@ -58,4 +58,20 @@ defmodule AccomplishWeb.Shadowrun.StackedList do
     </div>
     """
   end
+
+  attr :class, :string, default: nil
+  slot :inner_block, required: true
+
+  def list_empty_state(assigns) do
+    ~H"""
+    <div class="relative hidden first:block">
+      <div class={[
+        "flex justify-center items-center gap-4 px-4 py-3 sm:px-6",
+        @class
+      ]}>
+        {render_slot(@inner_block)}
+      </div>
+    </div>
+    """
+  end
 end
