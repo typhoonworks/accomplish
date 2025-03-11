@@ -4,13 +4,18 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   alias Accomplish.JobApplications
   alias Accomplish.CoverLetters
 
+  alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
+  alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
+
   import AccomplishWeb.Layout
-  import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.DropdownMenu
-
   import AccomplishWeb.StringHelpers
-
   import AccomplishWeb.Components.JobApplicationMenu
+  import AccomplishWeb.EventHandlers.JobApplicationActions
+  import AccomplishWeb.EventHandlers.JobApplicationStageActions
+
+  @pubsub Accomplish.PubSub
+  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
@@ -41,6 +46,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
             />
           </.dropdown_menu_content>
         </.dropdown_menu>
+        <.saving_indicator is_saving={false} />
       </:menu>
 
       <:views>
@@ -65,59 +71,13 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
       </:views>
     </.page_header>
 
-    {render_cover_letter_dialog(assigns)}
-    """
-  end
-
-  defp render_cover_letter_dialog(assigns) do
-    ~H"""
-    <.dialog
-      id="cover-letter-dialog"
-      position={:center}
-      on_cancel={hide_dialog("cover-letter-dialog")}
-      class="w-full max-w-md max-h-[90vh] overflow-hidden"
-    >
-      <.dialog_header>
-        <.dialog_title class="text-sm text-zinc-200 font-light">
-          <div class="flex items-center gap-2">
-            <.lucide_icon name="sparkles" class="size-4 text-purple-400" />
-            <p>AI Cover Letter Generator</p>
-          </div>
-        </.dialog_title>
-        <.dialog_description>
-          Let AI create a personalized cover letter based on your profile and job details.
-        </.dialog_description>
-      </.dialog_header>
-
-      <.dialog_content id="cover-letter-content" class="pb-6">
-        <div class="flex flex-col gap-4 py-4">
-          <p class="text-zinc-300 text-sm">
-            I'll create a personalized cover letter for your application to
-            <span class="font-semibold">{@application.role}</span>
-            at <span class="font-semibold"><%= @application.company.name %></span>.
-          </p>
-          <p class="text-zinc-300 text-sm">
-            The letter will be tailored based on your profile information and the job details.
-          </p>
-        </div>
-      </.dialog_content>
-
-      <.dialog_footer>
-        <div class="flex justify-end gap-2">
-          <.shadow_button
-            type="button"
-            variant="secondary"
-            phx-click={hide_dialog("cover-letter-dialog")}
-          >
-            Cancel
-          </.shadow_button>
-
-          <.shadow_button type="button" variant="primary" phx-click="create_ai_cover_letter">
-            Generate Cover Letter
-          </.shadow_button>
-        </div>
-      </.dialog_footer>
-    </.dialog>
+    <.live_component module={CoverLetterDialog} id="cover-letter-dialog" application={@application} />
+    <.live_component
+      module={StageDialog}
+      id="stage-dialog"
+      form={@stage_form}
+      current_user={@current_user}
+    />
     """
   end
 
@@ -126,25 +86,21 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   def mount(_params, session, socket) do
     application = session["application"]
     view = session["view"]
+    changeset = JobApplications.change_stage_form()
 
     socket =
       socket
       |> assign(application: application)
       |> assign(:view, view)
+      |> assign(:stage_form, to_form(changeset))
       |> assign(show_cover_letter_dialog: false)
+      |> subscribe_to_notifications_topic()
 
     {:ok, socket}
   end
 
   def handle_event("new_cover_letter", _params, socket) do
-    application = socket.assigns.application
-    {:ok, cover_letter} = CoverLetters.create_cover_letter(application)
-
-    {:noreply,
-     socket
-     |> push_navigate(
-       to: ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}"
-     )}
+    {:noreply, handle_cover_letter_create(socket, socket.assigns.application)}
   end
 
   def handle_event("open_cover_letter_dialog", _params, socket) do
@@ -171,16 +127,71 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
      )}
   end
 
-  def handle_event("delete_application", %{"id" => id}, socket) do
-    case JobApplications.delete_application(id) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Job application deleted successfully.")
-         |> push_navigate(to: ~p"/job_applications")}
+  def handle_event(
+        "set_current_stage",
+        %{"application-id" => application_id, "stage-id" => stage_id},
+        socket
+      ) do
+    {:noreply, handle_set_current_stage(socket, application_id, stage_id)}
+  end
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete job application.")}
-    end
+  def handle_event(
+        "prepare_predefined_stage",
+        %{"application-id" => application_id, "title" => title, "type" => type},
+        socket
+      ) do
+    {:noreply, handle_prepare_predefined_stage(socket, application_id, title, type)}
+  end
+
+  def handle_event("prepare_new_stage", %{"application-id" => application_id}, socket) do
+    {:noreply, handle_prepare_new_stage(socket, application_id)}
+  end
+
+  def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
+    {:noreply, handle_application_status_update(socket, id, status)}
+  end
+
+  def handle_event("delete_application", %{"id" => id}, socket) do
+    {:noreply, handle_application_delete(socket, id)}
+  end
+
+  def handle_info({JobApplications, event}, socket) do
+    handle_notification(event, socket)
+  end
+
+  def handle_info(%{event: "stage-created", payload: %{success: true}}, socket) do
+    {:noreply, put_flash(socket, :info, "Stage added successfully.")}
+  end
+
+  defp handle_notification(%{name: "job_application.updated"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.status_updated"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.changed_current_stage"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.stage_added"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp subscribe_to_notifications_topic(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket),
+      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
+
+    socket
+  end
+
+  def assign_application(socket) do
+    applicant = socket.assigns.current_user
+    application = socket.assigns.application
+    application = JobApplications.get_application!(applicant, application.id, [:stages])
+    assign(socket, application: application)
   end
 end

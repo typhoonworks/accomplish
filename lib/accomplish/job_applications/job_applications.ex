@@ -329,6 +329,7 @@ defmodule Accomplish.JobApplications do
          %Stage{} = new_stage <- Stages.get(stage_id, application.id),
          {:ok, updated_application} <-
            Repo.update(Ecto.Changeset.change(application, current_stage_id: new_stage.id)) do
+      # updated_application = Repo.preload(updated_application, preloads)
       broadcast_current_stage_updated(updated_application, old_stage, new_stage)
       {:ok, updated_application}
     else

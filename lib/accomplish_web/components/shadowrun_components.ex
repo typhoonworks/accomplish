@@ -367,11 +367,9 @@ defmodule AccomplishWeb.ShadowrunComponents do
   attr :variant, :string, default: "secondary", values: ["primary", "secondary", "transparent"]
   attr :resource_id, :any, default: nil, doc: "The resource ID for the select input"
 
-  attr :phx_change_event, :string,
-    default: nil,
-    doc: "The event triggered when selecting an option"
-
   def shadow_select_input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
+    extra = assigns_to_attributes(assigns)
+
     assigns
     |> assign(field: nil, id: assigns.id || field.id)
     |> assign(:errors, Enum.map(field.errors, &translate_error/1))
@@ -390,6 +388,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         to_string(option.value) == to_string(assigns.value)
       end) || Enum.at(assigns.options, 0)
     )
+    |> assign(:extra, extra)
     |> shadow_select_input()
   end
 

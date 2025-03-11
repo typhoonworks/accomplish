@@ -1,18 +1,21 @@
 defmodule AccomplishWeb.JobApplicationsLive.Applications do
   use AccomplishWeb, :live_view
 
+  # alias Accomplish.CoverLetters
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Application
   alias Accomplish.URLValidators
 
+  # alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
+  alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
+
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.StackedList
-
   import AccomplishWeb.Components.JobApplications.List
-  import AccomplishWeb.Components.JobApplications.StageDialog
-
   import AccomplishWeb.JobApplicationHelpers
+  import AccomplishWeb.EventHandlers.JobApplicationActions
+  import AccomplishWeb.EventHandlers.JobApplicationStageActions
 
   @pubsub Accomplish.PubSub
   @notifications_topic "notifications:events"
@@ -282,7 +285,12 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       </.form>
     </.dialog>
 
-    <.stage_dialog form={@stage_form} socket={@socket} />
+    <.live_component
+      module={StageDialog}
+      id="stage-dialog"
+      form={@stage_form}
+      current_user={@current_user}
+    />
     """
   end
 
@@ -417,19 +425,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   end
 
   def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
-    user = socket.assigns.current_user
-
-    with %Application{} = application <- JobApplications.get_application!(user, id),
-         {:ok, _updated_application} <-
-           JobApplications.update_application(application, %{status: status}) do
-      {:noreply, socket}
-    else
-      nil ->
-        {:noreply, put_flash(socket, :error, "Application not found.")}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to update application.")}
-    end
+    {:noreply, handle_application_status_update(socket, id, status)}
   end
 
   def handle_event("validate_application", %{"application" => application_params}, socket) do
@@ -471,58 +467,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   end
 
   def handle_event("delete_application", %{"id" => id}, socket) do
-    user = socket.assigns.current_user
-
-    case JobApplications.delete_application(id) do
-      {:ok, application} ->
-        key = stream_key(application.status)
-        has_applications = JobApplications.count_applications(user) > 0
-
-        socket =
-          socket
-          |> assign(:has_applications, has_applications)
-          |> maybe_stream_delete(key, application)
-          |> maybe_play_sound("swoosh")
-
-        {:noreply, socket}
-
-      {:error, _reason} ->
-        {:noreply, put_flash(socket, :error, "Failed to delete job application.")}
-    end
-  end
-
-  def handle_event("prepare_new_stage", %{"application-id" => application_id}, socket) do
-    changeset = JobApplications.change_stage_form(%{application_id: application_id})
-
-    {:noreply,
-     socket
-     |> assign(:stage_form, to_form(changeset))
-     |> push_event("js-exec", %{
-       to: "#new-stage-modal",
-       attr: "phx-show-modal"
-     })}
-  end
-
-  def handle_event(
-        "prepare_predefined_stage",
-        %{"application-id" => application_id, "title" => title, "type" => type},
-        socket
-      ) do
-    form_params = %{
-      title: title,
-      type: type,
-      application_id: application_id
-    }
-
-    changeset = JobApplications.change_stage_form(form_params)
-
-    {:noreply,
-     socket
-     |> assign(:stage_form, to_form(changeset))
-     |> push_event("js-exec", %{
-       to: "#new-stage-modal",
-       attr: "phx-show-modal"
-     })}
+    {:noreply, handle_application_delete(socket, id)}
   end
 
   def handle_event("update_stage_form_type", %{"value" => value}, socket) do
@@ -586,19 +531,19 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
         %{"application-id" => application_id, "stage-id" => stage_id},
         socket
       ) do
-    user = socket.assigns.current_user
-    application = JobApplications.get_application!(user, application_id)
+    {:noreply, handle_set_current_stage(socket, application_id, stage_id)}
+  end
 
-    case JobApplications.set_current_stage(application, stage_id) do
-      {:ok, _} ->
-        {:noreply, insert_application(socket, user, application)}
+  def handle_event(
+        "prepare_predefined_stage",
+        %{"application-id" => application_id, "title" => title, "type" => type},
+        socket
+      ) do
+    {:noreply, handle_prepare_predefined_stage(socket, application_id, title, type)}
+  end
 
-      {:error, :stage_not_found} ->
-        {:noreply, put_flash(socket, :error, "Stage not found")}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Could not update stage")}
-    end
+  def handle_event("prepare_new_stage", %{"application-id" => application_id}, socket) do
+    {:noreply, handle_prepare_new_stage(socket, application_id)}
   end
 
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
@@ -669,6 +614,32 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, socket}
   end
 
+  defp handle_notification(%{name: "job_application.changed_current_stage"} = event, socket) do
+    user = socket.assigns.current_user
+
+    application =
+      JobApplications.get_application!(user, event.application.id, [:current_stage, :stages])
+
+    socket =
+      socket
+      |> replace_application(application)
+
+    {:noreply, socket}
+  end
+
+  defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
+    user = socket.assigns.current_user
+
+    application =
+      JobApplications.get_application!(user, event.application.id, [:current_stage, :stages])
+
+    socket =
+      socket
+      |> replace_application(application)
+
+    {:noreply, socket}
+  end
+
   defp handle_notification(_, socket), do: {:noreply, socket}
 
   defp subscribe_to_notifications_topic(user_id) do
@@ -729,7 +700,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     end
   end
 
-  defp replace_application(socket, application, diff) do
+  defp replace_application(socket, application, diff \\ %{}) do
     old_status =
       if Map.has_key?(diff, :status) do
         diff[:status][:old]
@@ -812,15 +783,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
   defp assign_play_sounds(socket, play_sounds) do
     assign(socket, play_sounds: play_sounds)
-  end
-
-  defp maybe_play_sound(socket, sound) do
-    %{play_sounds: play_sounds} = socket.assigns
-
-    case play_sounds do
-      true -> push_event(socket, "play-sound", %{name: sound})
-      _ -> socket
-    end
   end
 
   defp visible_statuses("all") do
