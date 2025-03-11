@@ -97,10 +97,10 @@ defmodule Accomplish.CoverLetters do
     with %CoverLetter{} = cover_letter <- get_application_cover_letter!(application, id),
          {:ok, _} <-
            Repo.transaction(fn ->
-             Repo.delete!(application)
+             Repo.delete!(cover_letter)
              broadcast_cover_letter_deleted(cover_letter, application)
            end) do
-      {:ok, application}
+      {:ok, cover_letter}
     else
       nil -> {:error, :not_found}
       {:error, e} -> {:error, e}
