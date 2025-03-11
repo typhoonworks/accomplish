@@ -126,6 +126,10 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationAside do
     {:noreply, assign(socket, form: to_form(updated_changeset))}
   end
 
+  def handle_info({CoverLetter, _event}, socket) do
+    {:noreply, socket}
+  end
+
   def handle_info({Activities, event}, socket) do
     handle_activity(event, socket)
   end

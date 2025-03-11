@@ -7,7 +7,7 @@ defmodule Accomplish.Profiles.Profile do
   alias Accomplish.Profiles.Experience
   alias Accomplish.Profiles.Education
 
-  @permitted ~w(bio headline location website_url github_handle linkedin_handle skills)a
+  @permitted ~w(bio headline location website_url github_handle linkedin_handle skills interests)a
   @required []
 
   @derive {JSON.Encoder,
@@ -21,6 +21,7 @@ defmodule Accomplish.Profiles.Profile do
              :github_handle,
              :linkedin_handle,
              :skills,
+             :interests,
              :inserted_at,
              :updated_at
            ]}
@@ -33,6 +34,7 @@ defmodule Accomplish.Profiles.Profile do
     field :github_handle, :string
     field :linkedin_handle, :string
     field :skills, {:array, :string}, default: []
+    field :interests, :string
 
     belongs_to :user, User
 
