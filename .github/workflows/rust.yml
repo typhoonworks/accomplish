@@ -6,6 +6,7 @@ on:
     paths: ['cli/**/*', 'native/**/*', 'Cargo.toml', 'Cargo.lock']
   pull_request:
     paths: ['cli/**/*', 'native/**/*', 'Cargo.toml', 'Cargo.lock']
+  workflow_dispatch:
 
 jobs:
   test-cli:
