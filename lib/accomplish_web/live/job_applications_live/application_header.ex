@@ -8,7 +8,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
 
   import AccomplishWeb.Layout
-  import AccomplishWeb.Shadowrun.Dialog
   import AccomplishWeb.Shadowrun.DropdownMenu
   import AccomplishWeb.StringHelpers
   import AccomplishWeb.Components.JobApplicationMenu
@@ -133,7 +132,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
         %{"application-id" => application_id, "stage-id" => stage_id},
         socket
       ) do
-    IO.inspect(socket.assigns.application)
     {:noreply, handle_set_current_stage(socket, application_id, stage_id)}
   end
 
@@ -161,24 +159,24 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
     handle_notification(event, socket)
   end
 
-  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
-    {:noreply, assign_application(socket)}
-  end
-
-  defp handle_notification(%{name: "job_application.status_updated"} = event, socket) do
-    {:noreply, assign_application(socket)}
-  end
-
-  defp handle_notification(%{name: "job_application.changed_current_stage"} = event, socket) do
-    {:noreply, assign_application(socket)}
-  end
-
-  defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
-    {:noreply, assign_application(socket)}
-  end
-
   def handle_info(%{event: "stage-created", payload: %{success: true}}, socket) do
     {:noreply, put_flash(socket, :info, "Stage added successfully.")}
+  end
+
+  defp handle_notification(%{name: "job_application.updated"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.status_updated"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.changed_current_stage"}, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.stage_added"}, socket) do
+    {:noreply, assign_application(socket)}
   end
 
   defp subscribe_to_notifications_topic(socket) do

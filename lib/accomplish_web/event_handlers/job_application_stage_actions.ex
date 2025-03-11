@@ -8,9 +8,6 @@ defmodule AccomplishWeb.EventHandlers.JobApplicationStageActions do
 
   use AccomplishWeb, :live_component
 
-  import Phoenix.Component
-  alias Phoenix.LiveView.JS
-
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Stage
 
@@ -19,8 +16,8 @@ defmodule AccomplishWeb.EventHandlers.JobApplicationStageActions do
 
   Sets up the form and shows the dialog.
   """
-  def handle_prepare_new_stage(socket, application_id, dialog_id \\ "stage-dialog") do
-    changeset = JobApplications.change_stage_form(%{application_id: application_id})
+  def handle_prepare_new_stage(socket, _application_id, dialog_id \\ "stage-dialog") do
+    # changeset = JobApplications.change_stage_form(%{application_id: application_id})
 
     socket
     |> push_event("js-exec", %{

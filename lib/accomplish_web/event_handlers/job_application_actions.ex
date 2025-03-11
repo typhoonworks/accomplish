@@ -8,9 +8,6 @@ defmodule AccomplishWeb.EventHandlers.JobApplicationActions do
 
   use AccomplishWeb, :live_component
 
-  import Phoenix.Component
-  alias Phoenix.LiveView.JS
-
   alias Accomplish.JobApplications
   alias Accomplish.CoverLetters
 

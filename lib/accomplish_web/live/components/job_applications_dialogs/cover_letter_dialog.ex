@@ -8,11 +8,10 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
   """
   use AccomplishWeb, :live_component
 
-  import AccomplishWeb.CoreComponents
   import AccomplishWeb.ShadowrunComponents
   import AccomplishWeb.Shadowrun.Dialog
 
-  alias AccomplishWeb.EventHandlers.ApplicationActions
+  alias AccomplishWeb.EventHandlers.JobApplicationActions
 
   def render(assigns) do
     ~H"""
@@ -83,6 +82,6 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
     {:noreply,
      socket
      |> hide_dialog()
-     |> ApplicationActions.handle_ai_cover_letter_create(application)}
+     |> JobApplicationActions.handle_ai_cover_letter_create(application)}
   end
 end

@@ -61,7 +61,6 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.StageDialog do
                   value={@form[:type].value}
                   options={options_for_stage_type()}
                   on_select="update_stage_form_type"
-                  phx-target={@myself}
                 />
 
                 <.shadow_date_picker
@@ -80,7 +79,6 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.StageDialog do
                   value={@form[:status].value}
                   options={options_for_stage_status()}
                   on_select="update_stage_form_status"
-                  phx-target={@myself}
                 />
               </div>
 
