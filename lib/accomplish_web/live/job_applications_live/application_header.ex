@@ -149,6 +149,10 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
     {:noreply, handle_prepare_new_stage(socket, application_id)}
   end
 
+  def handle_event("update_application_status", %{"id" => id, "status" => status}, socket) do
+    {:noreply, handle_application_status_update(socket, id, status)}
+  end
+
   def handle_event("delete_application", %{"id" => id}, socket) do
     {:noreply, handle_application_delete(socket, id)}
   end
@@ -158,6 +162,10 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   end
 
   defp handle_notification(%{name: "job_application.updated"} = event, socket) do
+    {:noreply, assign_application(socket)}
+  end
+
+  defp handle_notification(%{name: "job_application.status_updated"} = event, socket) do
     {:noreply, assign_application(socket)}
   end
 
