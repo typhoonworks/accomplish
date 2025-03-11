@@ -15,7 +15,11 @@ mod atoms {
 
 /// Extract PDF text (optionally including metadata)
 #[rustler::nif(schedule = "DirtyCpu")]
-fn extract_text_nif<'a>(env: Env<'a>, pdf_data: Binary, include_metadata: bool) -> NifResult<Term<'a>> {
+fn extract_text_nif<'a>(
+    env: Env<'a>,
+    pdf_data: Binary,
+    include_metadata: bool,
+) -> NifResult<Term<'a>> {
     let bytes = pdf_data.as_slice();
 
     match extract_text_from_pdf(bytes) {
@@ -30,14 +34,14 @@ fn extract_text_nif<'a>(env: Env<'a>, pdf_data: Binary, include_metadata: bool) 
             };
 
             let output_map = map_new(env)
-                .map_put("text", text).unwrap()
-                .map_put("metadata", metadata_map).unwrap();
+                .map_put("text", text)
+                .unwrap()
+                .map_put("metadata", metadata_map)
+                .unwrap();
 
             Ok((atoms::ok(), output_map).encode(env))
         }
-        Err(err_msg) => {
-            Ok((atoms::error(), atoms::extraction_error(), err_msg).encode(env))
-        }
+        Err(err_msg) => Ok((atoms::error(), atoms::extraction_error(), err_msg).encode(env)),
     }
 }
 
@@ -47,7 +51,7 @@ fn extract_metadata_nif<'a>(env: Env<'a>, pdf_data: Binary) -> NifResult<Term<'a
 
     match extract_metadata_from_pdf(bytes) {
         Ok(meta_map) => Ok((atoms::ok(), meta_map).encode(env)),
-        Err(err_msg) => Ok((atoms::error(), atoms::extraction_error(), err_msg).encode(env))
+        Err(err_msg) => Ok((atoms::error(), atoms::extraction_error(), err_msg).encode(env)),
     }
 }
 
