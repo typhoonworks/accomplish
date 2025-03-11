@@ -1,12 +1,12 @@
 defmodule AccomplishWeb.JobApplicationsLive.Applications do
   use AccomplishWeb, :live_view
 
-  # alias Accomplish.CoverLetters
+  alias Accomplish.CoverLetters
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Application
   alias Accomplish.URLValidators
 
-  # alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
+  alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
   alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
 
   import AccomplishWeb.Layout
@@ -286,6 +286,11 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     </.dialog>
 
     <.live_component
+      module={CoverLetterDialog}
+      id="cover-letter-dialog"
+      application={@application_in_context}
+    />
+    <.live_component
       module={StageDialog}
       id="stage-dialog"
       form={@stage_form}
@@ -332,6 +337,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       |> assign(:statuses, statuses)
       |> assign(:has_applications, applications != [])
       |> assign(:filter_empty, filter_empty)
+      |> assign(:application_in_context, nil)
       |> stream_applications(applications_by_status)
 
     {:ok, socket}
@@ -528,7 +534,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
   def handle_event(
         "set_current_stage",
-        %{"application-id" => application_id, "stage-id" => stage_id},
+        %{"application_id" => application_id, "stage_id" => stage_id},
         socket
       ) do
     {:noreply, handle_set_current_stage(socket, application_id, stage_id)}
@@ -536,14 +542,52 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
   def handle_event(
         "prepare_predefined_stage",
-        %{"application-id" => application_id, "title" => title, "type" => type},
+        %{"application_id" => application_id, "title" => title, "type" => type},
         socket
       ) do
     {:noreply, handle_prepare_predefined_stage(socket, application_id, title, type)}
   end
 
-  def handle_event("prepare_new_stage", %{"application-id" => application_id}, socket) do
+  def handle_event("prepare_new_stage", %{"application-_d" => application_id}, socket) do
     {:noreply, handle_prepare_new_stage(socket, application_id)}
+  end
+
+  def handle_event("new_cover_letter", %{"application_id" => application_id}, socket) do
+    user = socket.assigns.current_user
+    application = JobApplications.get_application!(user, application_id)
+
+    {:noreply, handle_cover_letter_create(socket, application)}
+  end
+
+  def handle_event("open_cover_letter_dialog", %{"application_id" => application_id}, socket) do
+    user = socket.assigns.current_user
+    application = JobApplications.get_application!(user, application_id)
+
+    {:noreply,
+     socket
+     |> assign(:application_in_context, application)
+     |> push_event("js-exec", %{
+       to: "#cover-letter-dialog",
+       attr: "phx-show-modal"
+     })}
+  end
+
+  def handle_event("create_ai_cover_letter", %{"application_id" => application_id}, socket) do
+    user = socket.assigns.current_user
+    application = JobApplications.get_application!(user, application_id)
+
+    case CoverLetters.create_cover_letter(application, %{title: "AI-generated Cover Letter"}) do
+      {:ok, cover_letter} ->
+        {:noreply,
+         socket
+         |> push_navigate(
+           to:
+             ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?ai_generate=true"
+         )}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not create AI cover letter.")}
+    end
   end
 
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do

@@ -205,7 +205,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
 
   def handle_event(
         "set_current_stage",
-        %{"application-id" => application_id, "stage-id" => stage_id},
+        %{"application_id" => application_id, "stage_id" => stage_id},
         socket
       ) do
     user = socket.assigns.current_user

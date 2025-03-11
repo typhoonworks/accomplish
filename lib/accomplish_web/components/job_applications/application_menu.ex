@@ -97,7 +97,7 @@ defmodule AccomplishWeb.Components.JobApplicationMenu do
               <%= for stage <- Stages.predefined_stages() do %>
                 <.menu_item
                   phx-click="prepare_predefined_stage"
-                  phx-value-application-id={@application.id}
+                  phx-value-application_id={@application.id}
                   phx-value-title={stage.title}
                   phx-value-type={Atom.to_string(stage.type)}
                 >
@@ -108,7 +108,7 @@ defmodule AccomplishWeb.Components.JobApplicationMenu do
                 </.menu_item>
               <% end %>
               <.menu_separator />
-              <.menu_item phx-click="prepare_new_stage" phx-value-application-id={@application.id}>
+              <.menu_item phx-click="prepare_new_stage" phx-value-application_id={@application.id}>
                 <div class="w-full flex items-center gap-2">
                   <.icon name="hero-pencil-square" class="size-4" />
                   <span>Custom stage</span>
@@ -141,8 +141,8 @@ defmodule AccomplishWeb.Components.JobApplicationMenu do
               <%= for stage <- @application.stages do %>
                 <.menu_item
                   phx-click="set_current_stage"
-                  phx-value-application-id={@application.id}
-                  phx-value-stage-id={stage.id}
+                  phx-value-application_id={@application.id}
+                  phx-value-stage_id={stage.id}
                 >
                   <div class="w-full flex items-center gap-2">
                     <.icon name={stage_icon(stage.type)} class="size-4 text-zinc-300" />
@@ -165,7 +165,7 @@ defmodule AccomplishWeb.Components.JobApplicationMenu do
       <.menu_separator />
       
     <!-- Cover letter actions -->
-      <.menu_item phx-click="new_cover_letter">
+      <.menu_item phx-click="new_cover_letter" phx-value-application_id={@application.id}>
         <div class="w-full flex items-center gap-2">
           <.lucide_icon name="square-pen" class="size-4 text-zinc-400" />
           <span>Write cover letter</span>
@@ -173,7 +173,7 @@ defmodule AccomplishWeb.Components.JobApplicationMenu do
         </div>
       </.menu_item>
 
-      <.menu_item phx-click="open_cover_letter_dialog">
+      <.menu_item phx-click="open_cover_letter_dialog" phx-value-application_id={@application.id}>
         <div class="w-full flex items-center gap-2">
           <.lucide_icon name="sparkles" class="size-4 text-zinc-400" />
           <span>Generate cover letter</span>

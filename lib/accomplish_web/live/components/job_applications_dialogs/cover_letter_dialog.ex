@@ -34,7 +34,7 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
           </.dialog_description>
         </.dialog_header>
 
-        <.dialog_content id={"#{@id}-content"} class="pb-6">
+        <.dialog_content :if={@application} id={"#{@id}-content"} class="pb-6">
           <div class="flex flex-col gap-4 py-4">
             <p class="text-zinc-300 text-sm">
               I'll create a personalized cover letter for your application to
@@ -81,7 +81,15 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
 
     {:noreply,
      socket
-     |> hide_dialog()
+     |> close_modal("cover-letter-dialog")
      |> JobApplicationActions.handle_ai_cover_letter_create(application)}
+  end
+
+  defp close_modal(socket, modal_id) do
+    socket
+    |> push_event("js-exec", %{
+      to: "##{modal_id}",
+      attr: "phx-remove"
+    })
   end
 end

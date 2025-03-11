@@ -204,8 +204,8 @@ defmodule AccomplishWeb.Components.JobApplications.StageList do
     <div class="relative group">
       <.menu_item
         phx-click="set_current_stage"
-        phx-value-application-id={@application.id}
-        phx-value-stage-id={@stage.id}
+        phx-value-application_id={@application.id}
+        phx-value-stage_id={@stage.id}
       >
         <div class="w-full flex items-center gap-2">
           <.icon name="hero-square-3-stack-3d" class="size-4" />
