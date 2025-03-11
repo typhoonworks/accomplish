@@ -1,11 +1,11 @@
-name: Rust CI
+name: CLI CI
 
 on:
   push:
     branches: [main]
-    paths: ['cli/**/*', 'native/**/*', 'Cargo.toml', 'Cargo.lock']
+    paths: ['cli/**/*']
   pull_request:
-    paths: ['cli/**/*', 'native/**/*', 'Cargo.toml', 'Cargo.lock']
+    paths: ['cli/**/*']
   workflow_dispatch:
 
 jobs:
@@ -39,24 +39,6 @@ jobs:
           RUST_LOG: debug
         run: cargo test --all -- --test-threads=1
 
-  test-native:
-    name: Test PDF Extractor
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./native/pdf_extractor
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Run PDF Extractor cargo build
-        run: cargo build
-
   formatting:
     name: Cargo fmt
     runs-on: ubuntu-latest
@@ -70,10 +52,7 @@ jobs:
           toolchain: stable
           components: rustfmt
 
-      - name: Run rustfmt Check for CLI
+      - name: Run rustfmt
         run: cargo fmt --all --check
         working-directory: ./cli
 
-      - name: Run rustfmt Check for PDF Extractor
-        run: cargo fmt --all --check
-        working-directory: ./native/pdf_extractor
