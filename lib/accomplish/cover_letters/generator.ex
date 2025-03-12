@@ -9,6 +9,8 @@ defmodule Accomplish.CoverLetters.Generator do
   import Accomplish.ConfigHelpers
 
   alias Accomplish.Profiles
+  alias Accomplish.CoverLetters
+  alias Accomplish.AI.StreamAdapter
 
   @model "claude-3-5-haiku-20241022"
 
@@ -51,7 +53,7 @@ defmodule Accomplish.CoverLetters.Generator do
 
   **Example:**
 
-  > “As a passionate software engineer fascinated by developer productivity, I was immediately drawn to Acme's commitment to empowering teams through elegant, impactful tools. Your recent work on simplifying CI/CD pipelines deeply resonates with me, aligning perfectly with my own experience optimizing developer workflows at scale.”
+  > "As a passionate software engineer fascinated by developer productivity, I was immediately drawn to Acme's commitment to empowering teams through elegant, impactful tools. Your recent work on simplifying CI/CD pipelines deeply resonates with me, aligning perfectly with my own experience optimizing developer workflows at scale."
 
   ## 2. Connect your experience to the role (1-2 paragraphs)
 
@@ -61,7 +63,7 @@ defmodule Accomplish.CoverLetters.Generator do
 
   **Example:**
 
-  > “At Shopify, I architected a GraphQL API enabling two backend engineers to efficiently support seven frontend developers, significantly accelerating new dashboard development. This experience reinforced my belief that thoughtful architectural decisions profoundly enhance developer velocity and product agility—qualities I see highly valued at your company.”
+  > "At Shopify, I architected a GraphQL API enabling two backend engineers to efficiently support seven frontend developers, significantly accelerating new dashboard development. This experience reinforced my belief that thoughtful architectural decisions profoundly enhance developer velocity and product agility—qualities I see highly valued at your company."
 
   ## 3.  Personal Alignment (1 short paragraph)
 
@@ -70,7 +72,7 @@ defmodule Accomplish.CoverLetters.Generator do
 
   **Example:**
 
-  > “I’ve long admired your team’s dedication to open-source contributions and developer experience. Contributing directly to tools that empower fellow engineers is exactly the type of work that excites me.”
+  > "I've long admired your team's dedication to open-source contributions and developer experience. Contributing directly to tools that empower fellow engineers is exactly the type of work that excites me."
 
   ## 4. Closing and Call to Action (brief and enthusiastic)
 
@@ -80,7 +82,7 @@ defmodule Accomplish.CoverLetters.Generator do
 
   **Example:**
 
-  > “I’d welcome the chance to discuss how my experience can directly contribute to your product’s continued success. Thanks for considering my application—I look forward to speaking soon.”
+  > "I'd welcome the chance to discuss how my experience can directly contribute to your product's continued success. Thanks for considering my application—I look forward to speaking soon."
 
   ## 5. Signature line
 
@@ -88,139 +90,146 @@ defmodule Accomplish.CoverLetters.Generator do
   """
 
   @doc """
-  Generates a cover letter using the Claude API with streaming. Sends chunks to the caller.
+  Starts the generation of a cover letter with streaming output.
+
+  Returns a stream ID that can be used to track the stream.
 
   ## Parameters
-    - pid: Process ID to receive streamed content
     - user: The current user
-    - application: The job application
+    - application: The job application to generate a cover letter for
+    - cover_letter_id: The ID of the cover letter to update
 
   ## Returns
-    - :ok on successful generation
+    - {:ok, stream_id} on successful stream initialization
     - {:error, reason} on failure
   """
-  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
-  def generate_streaming(pid, user, application) do
+  def start_stream(user, application, cover_letter_id) do
+    stream_id = "cover_letter_stream_#{cover_letter_id}"
+
+    save_fn = fn buffer ->
+      cover_letter = CoverLetters.get_cover_letter!(cover_letter_id)
+      CoverLetters.update_streaming_content(cover_letter, buffer)
+    end
+
+    receiver_pid =
+      StreamAdapter.create_streaming_wrapper(
+        stream_id,
+        save_fn,
+        save_interval: 5_000,
+        ttl: 6_000
+      )
+
     Task.start(fn ->
-      # Configure client and prepare request data
-      profile = Profiles.get_profile_by_user(user.id)
-      experiences = (profile && Profiles.list_experiences(profile)) || []
-      educations = (profile && Profiles.list_educations(profile)) || []
-
-      # Get relevant experiences (most recent 2-3)
-      relevant_experiences =
-        experiences
-        |> Enum.sort_by(fn exp -> exp.start_date end, {:desc, Date})
-        |> Enum.take(3)
-
-      # Get relevant education
-      relevant_educations =
-        educations
-        |> Enum.sort_by(fn edu -> edu.start_date end, {:desc, Date})
-        |> Enum.take(2)
-
-      profile_data = %{
-        name: Accomplish.Accounts.User.display_name(user),
-        headline: profile && profile.headline,
-        bio: profile && profile.bio,
-        skills: profile && profile.skills,
-        experiences:
-          Enum.map(relevant_experiences, fn exp ->
-            %{
-              company: exp.company,
-              role: exp.role,
-              start_date: exp.start_date,
-              end_date: exp.end_date,
-              description: exp.description
-            }
-          end),
-        educations:
-          Enum.map(relevant_educations, fn edu ->
-            %{
-              school: edu.school,
-              degree: edu.degree,
-              field_of_study: edu.field_of_study,
-              start_date: edu.start_date,
-              end_date: edu.end_date
-            }
-          end)
-      }
-
-      job_data = %{
-        role: application.role,
-        company: application.company.name,
-        company_website: application.company.website_url,
-        description: application.job_description,
-        workplace_type: application.workplace_type,
-        employment_type: application.employment_type
-      }
-
-      api_key = get_env("ANTHROPIC_API_KEY")
-
-      prompt_message = """
-      Write a concise, professional yet friendly cover letter for a #{job_data.role} position at #{job_data.company}.
-
-      Highlight my strengths according to my profile and job details below:
-
-      PROFILE:
-      Name: #{profile_data.name}
-      Headline: #{profile_data.headline || "N/A"}
-      Bio: #{profile_data.bio || "N/A"}
-      Skills: #{Enum.join(profile_data.skills || [], ", ")}
-
-      Work Experience:
-      #{format_experiences(profile_data.experiences)}
-
-      Education:
-      #{format_educations(profile_data.educations)}
-
-      JOB DETAILS:
-      Role: #{job_data.role}
-      Company: #{job_data.company}
-      Company Website: #{job_data.company_website || "N/A"}
-      Workplace Type: #{job_data.workplace_type || "N/A"}
-      Employment Type: #{job_data.employment_type || "N/A"}
-
-      Job Description:
-      #{job_data.description || "No job description provided."}
-
-      The tone should be enthusiastic and authentic.
-      """
-
-      messages = [
-        %{role: "user", content: String.trim(prompt_message)}
-      ]
-
-      # Initialize the client
-      client = Anthropix.init(api_key)
-      Logger.debug("Initializing Anthropix client")
-
       try do
-        # Call the Anthropix API with the provided PID for streaming
-        # Note: Anthropix will send messages to the specified PID
-        result =
-          Anthropix.chat(client,
-            model: @model,
-            system: @system_message,
-            messages: messages,
-            stream: pid,
-            max_tokens: 4000,
-            temperature: 0.7
-          )
-
-        Logger.debug("Anthropix.chat result: #{inspect(result)}")
-
-        # The result should be {:ok, task} where task is a Task struct
-        # We don't need to do anything with the task as Anthropix
-        # will send the streaming messages directly to the PID
+        generate_content(receiver_pid, user, application)
       rescue
         e ->
           Logger.error("Exception in cover letter generation: #{inspect(e)}")
-          send(pid, {:stream_error, "Exception generating cover letter: #{inspect(e)}"})
+          send(receiver_pid, {:stream_error, "Failed to generate cover letter: #{inspect(e)}"})
       end
     end)
 
-    :ok
+    {:ok, stream_id}
+  end
+
+  defp generate_content(receiver_pid, user, application) do
+    profile = Profiles.get_profile_by_user(user.id)
+    experiences = (profile && Profiles.list_experiences(profile)) || []
+    educations = (profile && Profiles.list_educations(profile)) || []
+
+    relevant_experiences =
+      experiences
+      |> Enum.sort_by(fn exp -> exp.start_date end, {:desc, Date})
+      |> Enum.take(3)
+
+    relevant_educations =
+      educations
+      |> Enum.sort_by(fn edu -> edu.start_date end, {:desc, Date})
+      |> Enum.take(2)
+
+    profile_data = %{
+      name: Accomplish.Accounts.User.display_name(user),
+      headline: profile && profile.headline,
+      bio: profile && profile.bio,
+      skills: profile && profile.skills,
+      experiences:
+        Enum.map(relevant_experiences, fn exp ->
+          %{
+            company: exp.company,
+            role: exp.role,
+            start_date: exp.start_date,
+            end_date: exp.end_date,
+            description: exp.description
+          }
+        end),
+      educations:
+        Enum.map(relevant_educations, fn edu ->
+          %{
+            school: edu.school,
+            degree: edu.degree,
+            field_of_study: edu.field_of_study,
+            start_date: edu.start_date,
+            end_date: edu.end_date
+          }
+        end)
+    }
+
+    job_data = %{
+      role: application.role,
+      company: application.company.name,
+      company_website: application.company.website_url,
+      description: application.job_description,
+      workplace_type: application.workplace_type,
+      employment_type: application.employment_type
+    }
+
+    prompt_message = """
+    Write a concise, professional yet friendly cover letter for a #{job_data.role} position at #{job_data.company}.
+
+    Highlight my strengths according to my profile and job details below:
+
+    PROFILE:
+    Name: #{profile_data.name}
+    Headline: #{profile_data.headline || "N/A"}
+    Bio: #{profile_data.bio || "N/A"}
+    Skills: #{Enum.join(profile_data.skills || [], ", ")}
+
+    Work Experience:
+    #{format_experiences(profile_data.experiences)}
+
+    Education:
+    #{format_educations(profile_data.educations)}
+
+    JOB DETAILS:
+    Role: #{job_data.role}
+    Company: #{job_data.company}
+    Company Website: #{job_data.company_website || "N/A"}
+    Workplace Type: #{job_data.workplace_type || "N/A"}
+    Employment Type: #{job_data.employment_type || "N/A"}
+
+    Job Description:
+    #{job_data.description || "No job description provided."}
+
+    The tone should be enthusiastic and authentic.
+    """
+
+    messages = [
+      %{role: "user", content: String.trim(prompt_message)}
+    ]
+
+    api_key = get_env("ANTHROPIC_API_KEY")
+
+    client = Anthropix.init(api_key)
+    Logger.debug("Initializing Anthropix client for cover letter generation")
+
+    Anthropix.chat(client,
+      model: @model,
+      system: @system_message,
+      messages: messages,
+      stream: receiver_pid,
+      max_tokens: 800,
+      temperature: 0.3
+    )
   end
 
   defp format_experiences([]), do: "No work experience provided."

@@ -4,6 +4,7 @@ defmodule AccomplishWeb.CoverLetterLive do
   alias Accomplish.JobApplications
   alias Accomplish.CoverLetters
   alias Accomplish.CoverLetters.Generator
+  alias Accomplish.Streaming
 
   import AccomplishWeb.StringHelpers
   import AccomplishWeb.CoverLetterHelpers
@@ -99,7 +100,7 @@ defmodule AccomplishWeb.CoverLetterLive do
             </.tooltip_content>
           </.tooltip>
 
-          <.tooltip :if={!@ai_writing && !@ai_writing_complete}>
+          <.tooltip :if={!@ai_writing}>
             <button
               phx-click="generate_cover_letter"
               class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-light transition-colors duration-150 hover:bg-zinc-800 text-zinc-300"
@@ -143,22 +144,24 @@ defmodule AccomplishWeb.CoverLetterLive do
     with {:ok, application} <-
            JobApplications.get_application_by_slug(applicant, application_slug),
          cover_letter <- CoverLetters.get_application_cover_letter!(application, id) do
-      # Start AI generation immediately
-      Generator.generate_streaming(self(), applicant, application)
+      stream_id = "cover_letter_stream_#{cover_letter.id}"
 
       socket =
         socket
         |> assign(page_title: cover_letter.title)
         |> assign(application: application)
         |> assign(cover_letter: cover_letter)
-        |> assign(autosave: true)
-        |> assign(is_saving: false)
-        |> assign(ai_writing: false)
-        |> assign(ai_writing_complete: false)
-        |> assign(ai_content: "")
         |> assign_form(cover_letter)
+        |> assign(is_saving: false)
+        |> assign(autosave: true)
+        |> assign(:ai_writing, false)
+        |> assign(:ai_writing_complete, false)
+        |> assign(stream_id: stream_id)
 
-      {:ok, socket}
+      Generator.start_stream(applicant, application, cover_letter.id)
+      updated_socket = check_and_connect_to_stream(socket)
+
+      {:ok, updated_socket}
     else
       :error -> {:ok, push_navigate(socket, to: ~p"/job_applications")}
     end
@@ -170,68 +173,69 @@ defmodule AccomplishWeb.CoverLetterLive do
     with {:ok, application} <-
            JobApplications.get_application_by_slug(applicant, application_slug),
          cover_letter <- CoverLetters.get_application_cover_letter!(application, id) do
+      stream_id = "cover_letter_stream_#{cover_letter.id}"
+
       socket =
         socket
         |> assign(page_title: cover_letter.title)
         |> assign(application: application)
         |> assign(cover_letter: cover_letter)
-        |> assign(autosave: true)
-        |> assign(is_saving: false)
-        |> assign(ai_writing: false)
-        |> assign(ai_writing_complete: false)
-        |> assign(ai_content: "")
         |> assign_form(cover_letter)
+        |> assign(is_saving: false)
+        |> assign(autosave: true)
+        |> assign(stream_id: stream_id)
+        |> assign(:ai_writing, false)
+        |> assign(:ai_writing_complete, false)
 
-      {:ok, socket}
+      updated_socket = check_and_connect_to_stream(socket)
+
+      {:ok, updated_socket}
     else
       :error -> {:ok, push_navigate(socket, to: ~p"/job_applications")}
     end
   end
 
   def handle_event("save_field", %{"field" => field, "value" => value}, socket) do
-    cover_letter = socket.assigns.cover_letter
-    changes = %{field => value}
+    if socket.assigns.ai_writing do
+      {:noreply, socket}
+    else
+      cover_letter = socket.assigns.cover_letter
+      changes = %{field => value}
 
-    socket = assign(socket, :is_saving, true)
+      socket = assign(socket, :is_saving, true)
 
-    case CoverLetters.update_cover_letter(cover_letter, changes) do
-      {:ok, updated_cover_letter} ->
-        form =
-          updated_cover_letter
-          |> CoverLetters.change_cover_letter()
-          |> to_form()
+      case CoverLetters.update_cover_letter(cover_letter, changes) do
+        {:ok, updated_cover_letter} ->
+          form =
+            updated_cover_letter
+            |> CoverLetters.change_cover_letter()
+            |> to_form()
 
-        Process.send_after(self(), :saved, 500)
+          Process.send_after(self(), :saved, 500)
 
-        {:noreply,
-         socket
-         |> assign(form: form)
-         |> assign(cover_letter: updated_cover_letter)}
+          {:noreply,
+           socket
+           |> assign(form: form)
+           |> assign(cover_letter: updated_cover_letter)}
 
-      {:error, _changeset} ->
-        Process.send_after(self(), :saved, 500)
-        {:noreply, socket}
+        {:error, _changeset} ->
+          Process.send_after(self(), :saved, 500)
+          {:noreply, socket}
+      end
     end
   end
 
   def handle_event("generate_cover_letter", _params, socket) do
-    application = socket.assigns.application
-    user = socket.assigns.current_user
+    if socket.assigns.ai_writing do
+      {:noreply, socket}
+    else
+      application = socket.assigns.application
+      cover_letter = socket.assigns.cover_letter
+      user = socket.assigns.current_user
 
-    Generator.generate_streaming(self(), user, application)
-
-    new_content = ""
-    form = socket.assigns.form
-
-    updated_form =
-      Map.update!(form, :params, fn params ->
-        Map.put(params, "content", new_content)
-      end)
-
-    {:noreply,
-     socket
-     |> assign(:ai_content, new_content)
-     |> assign(:form, updated_form)}
+      {:ok, _stream_id} = Generator.start_stream(user, application, cover_letter.id)
+      {:noreply, check_and_connect_to_stream(socket)}
+    end
   end
 
   def handle_event("delete_cover_letter", %{"id" => id}, socket) do
@@ -253,35 +257,40 @@ defmodule AccomplishWeb.CoverLetterLive do
     {:noreply, assign(socket, :is_saving, false)}
   end
 
-  # Handle Anthropix streaming messages
-  def handle_info({_pid, {:data, %{"type" => type} = message}}, socket) do
-    case type do
-      "message_start" ->
-        {:noreply, assign(socket, :ai_writing, true)}
+  def handle_info({:stream_buffer, buffer}, socket) do
+    form = socket.assigns.form
 
-      "content_block_delta" ->
-        handle_content_block_delta(socket, message)
+    updated_form =
+      Map.update!(form, :params, fn params ->
+        Map.put(params, "content", buffer)
+      end)
 
-      "content_block_stop" ->
-        {:noreply, complete_ai_generation(socket)}
-
-      _ ->
-        {:noreply, socket}
-    end
+    {:noreply, assign(socket, form: updated_form)}
   end
 
-  def handle_info({:stream_error, error}, socket) do
+  def handle_info({:stream_chunk, _chunk}, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_info({:stream_complete, _final_buffer}, socket) do
     {:noreply,
      socket
-     |> put_flash(:error, "Error generating cover letter: #{error}")
-     |> assign(:ai_writing, false)}
+     |> assign(:ai_writing, false)
+     |> assign(:ai_writing_complete, true)
+     |> put_flash(:info, "Cover letter written by AI")}
   end
 
-  defp complete_ai_generation(socket) do
-    socket
-    |> assign(ai_writing: false)
-    |> assign(ai_writing_complete: true)
-    |> put_flash(:info, "Cover letter written by AI")
+  def handle_info({:stream_status, status}, socket) do
+    case status do
+      :streaming ->
+        {:noreply, assign(socket, ai_writing: true, ai_writing_complete: false)}
+
+      :completed ->
+        {:noreply, assign(socket, ai_writing: false, ai_writing_complete: true)}
+
+      :stopped ->
+        {:noreply, assign(socket, ai_writing: false, ai_writing_complete: false)}
+    end
   end
 
   defp assign_form(socket, cover_letter) do
@@ -289,17 +298,22 @@ defmodule AccomplishWeb.CoverLetterLive do
     assign(socket, form: to_form(form))
   end
 
-  defp handle_content_block_delta(socket, message) do
-    with true <- is_map_key(message, "delta") and is_map_key(message["delta"], "text"),
-         new_content <- socket.assigns.ai_content <> message["delta"]["text"],
-         form <- socket.assigns.form,
-         updated_form <- Map.update!(form, :params, &Map.put(&1, "content", new_content)) do
-      {:noreply,
-       socket
-       |> assign(:ai_content, new_content)
-       |> assign(:form, updated_form)}
-    else
-      _ -> {:noreply, socket}
+  defp check_and_connect_to_stream(socket) do
+    stream_id = socket.assigns.stream_id
+
+    case Streaming.Manager.get_stream(stream_id) do
+      {:ok, stream_pid} ->
+        Streaming.Manager.register_consumer(stream_pid, self())
+
+        status = Streaming.Manager.get_status(stream_pid)
+        is_writing = status == :streaming
+
+        socket
+        |> assign(:ai_writing, is_writing)
+        |> assign(:ai_writing_complete, status == :completed)
+
+      :not_found ->
+        socket
     end
   end
 end

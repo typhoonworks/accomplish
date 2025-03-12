@@ -183,7 +183,6 @@
       editor.setEditable(true);
 
       updateHiddenInput();
-      pushUpdate();
 
       activeStream = null;
       lastProcessedLength = 0;
