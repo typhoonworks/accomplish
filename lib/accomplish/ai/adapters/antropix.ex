@@ -1,11 +1,15 @@
-defmodule Accomplish.Streaming.Adapters.Anthropic do
+defmodule Accomplish.AI.Adapters.Anthropic do
   @moduledoc """
-  Adapter for handling streaming API responses from Anthropic.
+  Adapter for interfacing with Anthropic's Claude API.
 
-  This module:
-  1. Creates a wrapper for handling Anthropic's streaming format
-  2. Translates messages to a consistent internal format for the Streaming.Manager
-  3. Makes API calls to Anthropic's LLM services
+  This module provides functionality to:
+  1. Generate content using Claude models, with optional streaming
+  2. Handle streaming responses from Anthropic's API
+  3. Process and transform Claude's responses into a consistent format
+
+  The adapter can be used in both streaming and non-streaming modes:
+  - For streaming responses, it creates a wrapper process to handle incoming chunks
+  - For non-streaming, it makes a direct synchronous request to the API
   """
 
   require Logger
@@ -69,21 +73,25 @@ defmodule Accomplish.Streaming.Adapters.Anthropic do
   end
 
   @doc """
-  Generates content using Anthropic's Claude API.
+  Communicates with Anthropic's Claude API to generate content.
 
-  Makes the actual API call to Anthropic with the provided Prompt struct.
+  This function supports both streaming and non-streaming modes:
+  - When `receiver_pid` is provided, responses stream to that process
+  - When `receiver_pid` is false or nil, returns the complete response
 
   ## Parameters
-    - receiver_pid: The PID of the process that will receive streaming updates
-    - prompt: An Accomplish.AI.Prompt struct containing all the parameters
-  """
-  def generate_content(receiver_pid, %Prompt{} = prompt) do
-    api_key = get_env("ANTHROPIC_API_KEY")
+    - prompt: An Accomplish.AI.Prompt struct containing all parameters for generation
+    - receiver_pid: The PID to stream responses to, or false for non-streaming mode
 
+  ## Returns
+    - In streaming mode: sends chunks to the receiver process and returns API response
+    - In non-streaming mode: returns the complete API response directly
+  """
+  def chat(%Prompt{} = prompt, receiver_pid \\ false) do
+    api_key = get_env("ANTHROPIC_API_KEY")
     client = Anthropix.init(api_key)
     Logger.debug("Initializing Anthropix client for content generation")
 
-    # Convert Prompt struct to Anthropix parameters
     Anthropix.chat(client,
       model: prompt.model,
       system: prompt.system,

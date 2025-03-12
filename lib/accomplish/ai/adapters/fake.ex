@@ -1,11 +1,12 @@
-defmodule Accomplish.Streaming.Adapters.Fake do
+defmodule Accomplish.AI.Adapters.Fake do
   @moduledoc """
-  A fake adapter for testing streaming functionality without making actual API calls.
+  A fake adapter for testing AI functionality without making actual API calls.
 
   This adapter:
-  1. Simulates streaming by sending chunks of predefined text over time
-  2. Adheres to the same interface as real adapters (e.g., Anthropic, OpenAI)
-  3. Provides configurable delays and text content for testing different scenarios
+  1. Simulates both streaming and non-streaming LLM responses
+  2. Adheres to the same interface as real adapters (e.g., Anthropic, Ollama)
+  3. Provides configurable delays, text content, and response formats for testing
+  4. Can be used in both streaming and non-streaming modes for test coverage
   """
 
   require Logger
@@ -40,30 +41,52 @@ defmodule Accomplish.Streaming.Adapters.Fake do
   end
 
   @doc """
-  Simulates content generation with streaming output.
+  Simulates LLM responses with configurable content.
 
-  Streams predefined paragraphs of text with configurable timing.
+  This function supports both streaming and non-streaming modes:
+  - When `receiver_pid` is provided, responses stream to that process
+  - When `receiver_pid` is false or nil, returns the complete response synchronously
 
   ## Parameters
-    - stream_pid: The PID that will receive streaming updates (stream manager)
-    - prompt: An Accomplish.AI.Prompt struct
+    - prompt: An Accomplish.AI.Prompt struct containing the configuration
+    - receiver_pid: The PID to stream responses to, or false for non-streaming mode
 
   ## Options in prompt.additional_params:
-    - paragraphs: List of text paragraphs to stream
-    - delay_ms: Milliseconds to wait between chunks
-    - chunk_size: Number of characters to send in each chunk
+    - paragraphs: List of text paragraphs to use in the response
+    - delay_ms: Milliseconds to wait between chunks (streaming mode only)
+    - chunk_size: Number of characters to send in each chunk (streaming mode only)
+    - simulate_error: When true, simulates an error response
+
+  ## Returns
+    - In streaming mode: Task that handles the streaming, response chunks sent to receiver_pid
+    - In non-streaming mode: Complete text response as a formatted map similar to real LLMs
   """
-  def generate_content(stream_pid, %Prompt{} = prompt) do
+  def chat(%Prompt{} = prompt, receiver_pid \\ false) do
     config = prompt.additional_params || %{}
     paragraphs = Map.get(config, :paragraphs, @default_paragraphs)
-    delay_ms = Map.get(config, :delay_ms, @default_delay)
-    chunk_size = Map.get(config, :chunk_size, @default_chunk_size)
 
-    Logger.info("Starting fake content generation with #{length(paragraphs)} paragraphs")
+    # If we're in non-streaming mode, return the full response synchronously
+    if receiver_pid == false do
+      text = Enum.join(paragraphs, "")
 
-    Task.start(fn ->
-      stream_paragraphs(stream_pid, paragraphs, delay_ms, chunk_size)
-    end)
+      # Return a response format similar to real LLM APIs
+      %{
+        "content" => [%{"text" => text}],
+        "model" => prompt.model || "fake-model",
+        "id" => "fake-#{System.unique_integer()}",
+        "type" => "message"
+      }
+    else
+      # In streaming mode, process asynchronously
+      delay_ms = Map.get(config, :delay_ms, @default_delay)
+      chunk_size = Map.get(config, :chunk_size, @default_chunk_size)
+
+      Logger.info("Starting fake content generation with #{length(paragraphs)} paragraphs")
+
+      Task.start(fn ->
+        stream_paragraphs(receiver_pid, paragraphs, delay_ms, chunk_size)
+      end)
+    end
   end
 
   defp stream_paragraphs(stream_pid, paragraphs, delay_ms, chunk_size) do
