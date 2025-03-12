@@ -572,24 +572,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
      })}
   end
 
-  def handle_event("create_ai_cover_letter", %{"application_id" => application_id}, socket) do
-    user = socket.assigns.current_user
-    application = JobApplications.get_application!(user, application_id)
-
-    case CoverLetters.create_cover_letter(application, %{title: "AI-generated Cover Letter"}) do
-      {:ok, cover_letter} ->
-        {:noreply,
-         socket
-         |> push_navigate(
-           to:
-             ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?ai_generate=true"
-         )}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not create AI cover letter.")}
-    end
-  end
-
   def handle_info(%{id: _id, date: date, form: form, field: field}, socket) do
     params = Map.put(form.params || %{}, to_string(field), date)
 

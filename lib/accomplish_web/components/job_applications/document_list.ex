@@ -69,58 +69,59 @@ defmodule AccomplishWeb.Components.JobApplications.DocumentList do
 
   def document_status_select(assigns) do
     ~H"""
-    <.dropdown_menu class="z-90">
-      <.dropdown_menu_trigger id={"#{@document.id}-dropdown-trigger"} class="group">
-        <div
-          class={"h-3 w-3 rounded-full #{document_status_color(@document.status)} hover:scale-110 hover:shadow transition hover:cursor-default"}
-          role="button"
-          aria-haspopup="true"
-          aria-expanded="false"
-          tabindex="0"
-        >
-        </div>
-      </.dropdown_menu_trigger>
-
-      <.dropdown_menu_content side="right">
-        <.menu class="w-56 text-zinc-300 bg-zinc-800">
-          <.menu_group>
-            <.menu_item class="pointer-events-none">
-              <span class="text-zinc-400 font-extralight tracking-tighter">
-                Change document status
-              </span>
-            </.menu_item>
-          </.menu_group>
-
-          <.menu_separator />
-
-          <.menu_group>
-            <%= for option <- options_for_document_status(@type) do %>
-              <.menu_item
-                phx-click="update_document_status"
-                phx-value-id={@document.id}
-                phx-value-status={option.value}
-                phx-value-type={@type}
-              >
-                <div class="w-full flex items-center gap-2">
-                  <%= if Map.has_key?(option, :icon) do %>
-                    <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
-                  <% end %>
-                  <span>{option.label}</span>
-                  <.menu_shortcut>
-                    <div class="w-full flex items-center gap-2 justify-between">
-                      <%= if String.to_atom(option.value) == @document.status do %>
-                        <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
-                      <% end %>
-                      <span>{option.shortcut}</span>
-                    </div>
-                  </.menu_shortcut>
-                </div>
+    <%= if Map.has_key?(@document, :streaming) && @document.streaming do %>
+      <div class="h-3 w-3 rounded-full bg-purple-600 animate-throb"></div>
+    <% else %>
+      <.dropdown_menu class="z-90">
+        <.dropdown_menu_trigger id={"#{@document.id}-dropdown-trigger"} class="group">
+          <div
+            class={"h-3 w-3 rounded-full #{document_status_color(@document.status)} hover:scale-110 hover:shadow transition hover:cursor-default"}
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            tabindex="0"
+          >
+          </div>
+        </.dropdown_menu_trigger>
+        <.dropdown_menu_content side="right">
+          <.menu class="w-56 text-zinc-300 bg-zinc-800">
+            <.menu_group>
+              <.menu_item class="pointer-events-none">
+                <span class="text-zinc-400 font-extralight tracking-tighter">
+                  Change document status
+                </span>
               </.menu_item>
-            <% end %>
-          </.menu_group>
-        </.menu>
-      </.dropdown_menu_content>
-    </.dropdown_menu>
+            </.menu_group>
+            <.menu_separator />
+            <.menu_group>
+              <%= for option <- options_for_document_status(@type) do %>
+                <.menu_item
+                  phx-click="update_document_status"
+                  phx-value-id={@document.id}
+                  phx-value-status={option.value}
+                  phx-value-type={@type}
+                >
+                  <div class="w-full flex items-center gap-2">
+                    <%= if Map.has_key?(option, :icon) do %>
+                      <.icon name={option.icon} class={Enum.join(["size-4", option.color], " ")} />
+                    <% end %>
+                    <span>{option.label}</span>
+                    <.menu_shortcut>
+                      <div class="w-full flex items-center gap-2 justify-between">
+                        <%= if String.to_atom(option.value) == @document.status do %>
+                          <.icon name="hero-check-solid" class="size-5 text-zinc-50" />
+                        <% end %>
+                        <span>{option.shortcut}</span>
+                      </div>
+                    </.menu_shortcut>
+                  </div>
+                </.menu_item>
+              <% end %>
+            </.menu_group>
+          </.menu>
+        </.dropdown_menu_content>
+      </.dropdown_menu>
+    <% end %>
     """
   end
 

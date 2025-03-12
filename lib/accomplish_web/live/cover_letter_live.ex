@@ -8,7 +8,6 @@ defmodule AccomplishWeb.CoverLetterLive do
 
   import AccomplishWeb.StringHelpers
   import AccomplishWeb.CoverLetterHelpers
-
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Tooltip
   import AccomplishWeb.Shadowrun.DropdownMenu
@@ -35,7 +34,6 @@ defmodule AccomplishWeb.CoverLetterLive do
               </span>
             </div>
           </:title>
-
           <:menu>
             <.dropdown_menu>
               <.dropdown_menu_trigger id="resume-dropdown-trigger" class="group">
@@ -82,6 +80,7 @@ defmodule AccomplishWeb.CoverLetterLive do
             class="text-[25px] tracking-tighter hover:cursor-text"
             phx-blur="save_field"
             phx-value-field={@form[:title].field}
+            disabled={@ai_writing}
           />
         </div>
         <div class="flex justify-start items-baseline gap-2 my-2">
@@ -94,12 +93,12 @@ defmodule AccomplishWeb.CoverLetterLive do
               options={options_for_cover_letter_status()}
               on_select="save_field"
               variant="transparent"
+              disabled={@ai_writing}
             />
             <.tooltip_content side="bottom">
               <p>Change status</p>
             </.tooltip_content>
           </.tooltip>
-
           <.tooltip :if={!@ai_writing}>
             <button
               phx-click="generate_cover_letter"
@@ -154,14 +153,15 @@ defmodule AccomplishWeb.CoverLetterLive do
         |> assign_form(cover_letter)
         |> assign(is_saving: false)
         |> assign(autosave: true)
-        |> assign(:ai_writing, false)
-        |> assign(:ai_writing_complete, false)
         |> assign(stream_id: stream_id)
+        |> maybe_start_stream(cover_letter)
+        |> assign(
+          ai_writing: cover_letter.streaming,
+          ai_writing_complete: not cover_letter.streaming
+        )
+        |> check_and_connect_to_stream()
 
-      Generator.start_stream(applicant, application, cover_letter.id)
-      updated_socket = check_and_connect_to_stream(socket)
-
-      {:ok, updated_socket}
+      {:ok, socket}
     else
       :error -> {:ok, push_navigate(socket, to: ~p"/job_applications")}
     end
@@ -184,12 +184,13 @@ defmodule AccomplishWeb.CoverLetterLive do
         |> assign(is_saving: false)
         |> assign(autosave: true)
         |> assign(stream_id: stream_id)
-        |> assign(:ai_writing, false)
-        |> assign(:ai_writing_complete, false)
+        |> assign(
+          ai_writing: cover_letter.streaming,
+          ai_writing_complete: not cover_letter.streaming
+        )
+        |> check_and_connect_to_stream()
 
-      updated_socket = check_and_connect_to_stream(socket)
-
-      {:ok, updated_socket}
+      {:ok, socket}
     else
       :error -> {:ok, push_navigate(socket, to: ~p"/job_applications")}
     end
@@ -201,22 +202,13 @@ defmodule AccomplishWeb.CoverLetterLive do
     else
       cover_letter = socket.assigns.cover_letter
       changes = %{field => value}
-
       socket = assign(socket, :is_saving, true)
 
       case CoverLetters.update_cover_letter(cover_letter, changes) do
         {:ok, updated_cover_letter} ->
-          form =
-            updated_cover_letter
-            |> CoverLetters.change_cover_letter()
-            |> to_form()
-
+          form = updated_cover_letter |> CoverLetters.change_cover_letter() |> to_form()
           Process.send_after(self(), :saved, 500)
-
-          {:noreply,
-           socket
-           |> assign(form: form)
-           |> assign(cover_letter: updated_cover_letter)}
+          {:noreply, socket |> assign(form: form) |> assign(cover_letter: updated_cover_letter)}
 
         {:error, _changeset} ->
           Process.send_after(self(), :saved, 500)
@@ -229,12 +221,19 @@ defmodule AccomplishWeb.CoverLetterLive do
     if socket.assigns.ai_writing do
       {:noreply, socket}
     else
-      application = socket.assigns.application
       cover_letter = socket.assigns.cover_letter
-      user = socket.assigns.current_user
 
-      {:ok, _stream_id} = Generator.start_stream(user, application, cover_letter.id)
-      {:noreply, check_and_connect_to_stream(socket)}
+      case CoverLetters.update_streaming(cover_letter, true) do
+        {:ok, updated_letter} ->
+          socket = assign(socket, cover_letter: updated_letter)
+          application = socket.assigns.application
+          user = socket.assigns.current_user
+          {:ok, _stream_id} = Generator.start_stream(user, application, updated_letter.id)
+          {:noreply, check_and_connect_to_stream(socket)}
+
+        {:error, _reason} ->
+          {:noreply, put_flash(socket, :error, "Failed to generate cover letter content")}
+      end
     end
   end
 
@@ -273,11 +272,19 @@ defmodule AccomplishWeb.CoverLetterLive do
   end
 
   def handle_info({:stream_complete, _final_buffer}, socket) do
-    {:noreply,
-     socket
-     |> assign(:ai_writing, false)
-     |> assign(:ai_writing_complete, true)
-     |> put_flash(:info, "Cover letter written by AI")}
+    cover_letter = socket.assigns.cover_letter
+    {:ok, updated_letter} = CoverLetters.update_streaming(cover_letter, false)
+
+    socket =
+      socket
+      |> assign(cover_letter: updated_letter)
+      |> assign(
+        ai_writing: updated_letter.streaming,
+        ai_writing_complete: not updated_letter.streaming
+      )
+      |> put_flash(:info, "Cover letter streaming stopped")
+
+    {:noreply, socket}
   end
 
   def handle_info({:stream_status, status}, socket) do
@@ -304,16 +311,28 @@ defmodule AccomplishWeb.CoverLetterLive do
     case Streaming.Manager.get_stream(stream_id) do
       {:ok, stream_pid} ->
         Streaming.Manager.register_consumer(stream_pid, self())
-
-        status = Streaming.Manager.get_status(stream_pid)
-        is_writing = status == :streaming
-
         socket
-        |> assign(:ai_writing, is_writing)
-        |> assign(:ai_writing_complete, status == :completed)
 
       :not_found ->
         socket
+    end
+  end
+
+  defp maybe_start_stream(socket, cover_letter) do
+    if cover_letter.streaming do
+      socket
+    else
+      applicant = socket.assigns.current_user
+      application = socket.assigns.application
+
+      with {:ok, updated_letter} <- CoverLetters.update_streaming(cover_letter, true),
+           {:ok, _stream_id} <- Generator.start_stream(applicant, application, cover_letter.id) do
+        assign(socket, :cover_letter, updated_letter)
+      else
+        {:error, _reason} ->
+          socket
+          |> put_flash(:error, "Failed to generate cover letter content")
+      end
     end
   end
 end

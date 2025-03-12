@@ -29,6 +29,9 @@ defmodule Accomplish.CoverLetters.CoverLetter do
     field :status, Ecto.Enum, values: @status_values, default: :draft
     field :submitted_at, :utc_datetime
 
+    field :streaming, :boolean, default: false
+    field :lock_version, :integer, default: 1
+
     belongs_to :application, Application, foreign_key: :application_id
 
     timestamps(type: :utc_datetime)

@@ -235,6 +235,9 @@
     // If we're already streaming when component mounts, start stream
     if (streaming && !activeStream) {
       startStreaming();
+      setTimeout(() => {
+        showPulseIndicator = true;
+      }, 200);
     }
   });
 

@@ -74,68 +74,43 @@ defmodule Accomplish.CoverLetters do
     end
   end
 
-  @doc """
-  Updates a cover letter with content from a streaming source.
-
-  This function is optimized for frequent updates during streaming:
-  - Uses a database transaction with row locking to prevent conflicts
-  - Only updates if the cover letter is still in draft status
-  - Does not broadcast events to reduce overhead during streaming
-
-  ## Parameters
-    - cover_letter: The cover letter to update
-    - content: The new content to set
-
-  ## Returns
-    - {:ok, updated_cover_letter} on success
-    - {:error, reason} on failure
-  """
-  # def update_streaming_content(cover_letter, content) do
-  #   try do
-  #     result =
-  #       Repo.transaction(fn ->
-  #         locked_letter =
-  #           CoverLetter
-  #           |> where(id: ^cover_letter.id)
-  #           |> lock("FOR UPDATE")
-  #           |> Repo.one!()
-
-  #         if locked_letter.status == :draft do
-  #           changeset = CoverLetter.update_changeset(locked_letter, %{content: content})
-  #           Repo.update!(changeset)
-  #         else
-  #           locked_letter
-  #         end
-  #       end)
-
-  #     case result do
-  #       {:ok, updated_letter} -> {:ok, updated_letter}
-  #       {:error, error} -> {:error, error}
-  #     end
-  #   rescue
-  #     e ->
-  #       {:error, :database_error}
-  #   end
-  # end
   def update_streaming_content(cover_letter, content) do
-    try do
-      case Repo.get(CoverLetter, cover_letter.id) do
-        nil ->
-          {:error, :not_found}
+    Repo.transaction(fn ->
+      letter =
+        CoverLetter
+        |> where([c], c.id == ^cover_letter.id)
+        |> lock("FOR UPDATE")
+        |> Repo.one!()
 
-        letter ->
-          if letter.status == :draft do
-            changeset = CoverLetter.update_changeset(letter, %{content: content})
-            Repo.update(changeset)
-          else
-            {:ok, letter}
-          end
+      if letter.status == :draft do
+        changeset =
+          CoverLetter.update_changeset(letter, %{content: content})
+          |> Ecto.Changeset.optimistic_lock(:lock_version)
+
+        case Repo.update(changeset) do
+          {:ok, updated_letter} ->
+            updated_letter
+
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      else
+        letter
       end
-    rescue
-      e ->
-        Logger.error("Error updating streaming content: #{inspect(e)}")
-        {:error, :database_error}
+    end)
+    |> case do
+      {:ok, updated_letter} ->
+        {:ok, updated_letter}
+
+      {:error, error} ->
+        {:error, error}
     end
+  end
+
+  def update_streaming(cover_letter, new_value) do
+    cover_letter
+    |> Ecto.Changeset.change(%{streaming: new_value})
+    |> Repo.update()
   end
 
   def submit_cover_letter(%CoverLetter{} = cover_letter) do

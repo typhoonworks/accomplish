@@ -113,20 +113,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
      })}
   end
 
-  def handle_event("create_ai_cover_letter", _params, socket) do
-    application = socket.assigns.application
-
-    {:ok, cover_letter} =
-      CoverLetters.create_cover_letter(application, %{title: "AI-generated Cover Letter"})
-
-    {:noreply,
-     socket
-     |> push_navigate(
-       to:
-         ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?ai_generate=true"
-     )}
-  end
-
   def handle_event(
         "set_current_stage",
         %{"application_id" => application_id, "stage_id" => stage_id},

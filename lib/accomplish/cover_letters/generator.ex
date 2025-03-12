@@ -6,13 +6,15 @@ defmodule Accomplish.CoverLetters.Generator do
   """
 
   require Logger
-  import Accomplish.ConfigHelpers
 
   alias Accomplish.Profiles
   alias Accomplish.CoverLetters
-  alias Accomplish.AI.StreamAdapter
+  alias Accomplish.Streaming
+  alias Accomplish.AI.Prompt
 
   @model "claude-3-5-haiku-20241022"
+  @max_tokens 800
+  @temperature 0.3
 
   @system_message """
   You are an expert in career coaching with extensive experience crafting compelling, personalized, and highly effective cover letters that resonate with hiring managers. Your task is to write a concise, professional, and highly personalized cover letter that:
@@ -98,12 +100,13 @@ defmodule Accomplish.CoverLetters.Generator do
     - user: The current user
     - application: The job application to generate a cover letter for
     - cover_letter_id: The ID of the cover letter to update
+    - provider: The provider name to select the adapter, defaults to :anthropic
 
   ## Returns
     - {:ok, stream_id} on successful stream initialization
     - {:error, reason} on failure
   """
-  def start_stream(user, application, cover_letter_id) do
+  def start_stream(user, application, cover_letter_id, provider \\ :anthropic) do
     stream_id = "cover_letter_stream_#{cover_letter_id}"
 
     save_fn = fn buffer ->
@@ -111,28 +114,22 @@ defmodule Accomplish.CoverLetters.Generator do
       CoverLetters.update_streaming_content(cover_letter, buffer)
     end
 
-    receiver_pid =
-      StreamAdapter.create_streaming_wrapper(
-        stream_id,
-        save_fn,
-        save_interval: 5_000,
-        ttl: 6_000
+    messages = build_messages(user, application)
+
+    prompt =
+      Prompt.new(
+        messages,
+        @model,
+        @system_message,
+        @max_tokens,
+        @temperature
       )
 
-    Task.start(fn ->
-      try do
-        generate_content(receiver_pid, user, application)
-      rescue
-        e ->
-          Logger.error("Exception in cover letter generation: #{inspect(e)}")
-          send(receiver_pid, {:stream_error, "Failed to generate cover letter: #{inspect(e)}"})
-      end
-    end)
-
-    {:ok, stream_id}
+    stream_opts = [save_interval: 5_000, ttl: 6_000]
+    Streaming.start_streaming(stream_id, save_fn, provider, prompt, stream_opts)
   end
 
-  defp generate_content(receiver_pid, user, application) do
+  defp build_messages(user, application) do
     profile = Profiles.get_profile_by_user(user.id)
     experiences = (profile && Profiles.list_experiences(profile)) || []
     educations = (profile && Profiles.list_educations(profile)) || []
@@ -152,26 +149,8 @@ defmodule Accomplish.CoverLetters.Generator do
       headline: profile && profile.headline,
       bio: profile && profile.bio,
       skills: profile && profile.skills,
-      experiences:
-        Enum.map(relevant_experiences, fn exp ->
-          %{
-            company: exp.company,
-            role: exp.role,
-            start_date: exp.start_date,
-            end_date: exp.end_date,
-            description: exp.description
-          }
-        end),
-      educations:
-        Enum.map(relevant_educations, fn edu ->
-          %{
-            school: edu.school,
-            degree: edu.degree,
-            field_of_study: edu.field_of_study,
-            start_date: edu.start_date,
-            end_date: edu.end_date
-          }
-        end)
+      experiences: relevant_experiences,
+      educations: relevant_educations
     }
 
     job_data = %{
@@ -213,23 +192,7 @@ defmodule Accomplish.CoverLetters.Generator do
     The tone should be enthusiastic and authentic.
     """
 
-    messages = [
-      %{role: "user", content: String.trim(prompt_message)}
-    ]
-
-    api_key = get_env("ANTHROPIC_API_KEY")
-
-    client = Anthropix.init(api_key)
-    Logger.debug("Initializing Anthropix client for cover letter generation")
-
-    Anthropix.chat(client,
-      model: @model,
-      system: @system_message,
-      messages: messages,
-      stream: receiver_pid,
-      max_tokens: 800,
-      temperature: 0.3
-    )
+    [%{role: "user", content: String.trim(prompt_message)}]
   end
 
   defp format_experiences([]), do: "No work experience provided."

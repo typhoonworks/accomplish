@@ -12,6 +12,16 @@ defmodule Accomplish.Streaming.Manager do
   use GenServer
   require Logger
 
+  def child_spec(opts) do
+    %{
+      id: {__MODULE__, opts[:stream_id]},
+      start: {__MODULE__, :start_link, [opts]},
+      restart: :transient,
+      type: :worker,
+      shutdown: 5000
+    }
+  end
+
   # --------------------------------------------------------------------
   #  Public API
   # --------------------------------------------------------------------
@@ -28,7 +38,7 @@ defmodule Accomplish.Streaming.Manager do
       :not_found ->
         DynamicSupervisor.start_child(
           Accomplish.DynamicSupervisor,
-          {__MODULE__,
+          {Accomplish.Streaming.Manager,
            stream_id: stream_id,
            persistence_fn: persistence_fn,
            save_interval: Keyword.get(opts, :save_interval, 5_000),
