@@ -9,8 +9,7 @@ defmodule Accomplish.CoverLetters.Generator do
 
   alias Accomplish.Profiles
   alias Accomplish.CoverLetters
-  alias Accomplish.Streaming
-  alias Accomplish.AI.Prompt
+  alias Accomplish.AI
 
   @default_provider :ollama
   @max_tokens 800
@@ -130,11 +129,11 @@ defmodule Accomplish.CoverLetters.Generator do
       CoverLetters.update_streaming_content(cover_letter, buffer)
     end
 
-    model = Streaming.get_model_for_provider(provider)
+    model = AI.get_model_for_provider(provider)
     messages = build_messages(user, application)
 
     prompt =
-      Prompt.new(
+      AI.Prompt.new(
         messages,
         model,
         @system_message,
@@ -143,7 +142,7 @@ defmodule Accomplish.CoverLetters.Generator do
       )
 
     stream_opts = [save_interval: 5_000, ttl: 6_000]
-    Streaming.start_streaming(stream_id, save_fn, provider, prompt, stream_opts)
+    AI.start_streaming(stream_id, save_fn, provider, prompt, stream_opts)
   end
 
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity

@@ -1,11 +1,16 @@
-defmodule Accomplish.Streaming.Adapters.Ollama do
+defmodule Accomplish.AI.Adapters.Ollama do
   @moduledoc """
-  Adapter for handling streaming API responses from Ollama.
+  Adapter for interfacing with locally running Ollama LLM services.
 
-  This module:
-  1. Creates a wrapper for handling Ollama's streaming format
-  2. Translates messages to a consistent internal format for the Streaming.Manager
-  3. Makes API calls to locally running Ollama LLM services
+  This module provides functionality to:
+  1. Generate content using Ollama models, with optional streaming
+  2. Handle streaming responses from Ollama's API
+  3. Process and transform Ollama's responses into a consistent format
+  4. Support both chat-based (message array) and completion-based (single prompt) workflows
+
+  The adapter can be used in both streaming and non-streaming modes:
+  - For streaming responses, it creates a wrapper process to handle incoming chunks
+  - For non-streaming, it makes a direct synchronous request to the API
   """
 
   require Logger
@@ -67,15 +72,25 @@ defmodule Accomplish.Streaming.Adapters.Ollama do
   end
 
   @doc """
-  Generates content using Ollama API.
+  Communicates with Ollama API to generate content.
 
-  Makes the actual API call to Ollama with the provided Prompt struct.
+  This function supports both streaming and non-streaming modes:
+  - When `receiver_pid` is provided, responses stream to that process
+  - When `receiver_pid` is false or nil, returns the complete response
+
+  The function automatically determines whether to use chat or completion API:
+  - Chat API is used when messages are in the [%{role:, content:}] format
+  - Completion API is used otherwise (with system prompt if provided)
 
   ## Parameters
-    - receiver_pid: The PID of the process that will receive streaming updates
-    - prompt: An Accomplish.AI.Prompt struct containing all the parameters
+    - prompt: An Accomplish.AI.Prompt struct containing all parameters for generation
+    - receiver_pid: The PID to stream responses to, or false for non-streaming mode
+
+  ## Returns
+    - In streaming mode: sends chunks to the receiver process and returns API response
+    - In non-streaming mode: returns the complete API response directly
   """
-  def generate_content(receiver_pid, %Prompt{} = prompt) do
+  def chat(%Prompt{} = prompt, receiver_pid \\ false) do
     base_url = get_env("OLLAMA_BASE_URL", "http://localhost:11434/api")
 
     client = Ollama.init(base_url)

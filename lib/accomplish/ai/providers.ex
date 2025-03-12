@@ -1,15 +1,15 @@
-defmodule Accomplish.Streaming.Providers do
+defmodule Accomplish.AI.Providers do
   @moduledoc """
-  Maps provider names to their corresponding adapter modules and models.
+  Maps AI provider names to their corresponding adapter modules and models.
   """
 
   require Logger
   import Accomplish.ConfigHelpers
 
   @providers %{
-    anthropic: Accomplish.Streaming.Adapters.Anthropic,
-    ollama: Accomplish.Streaming.Adapters.Ollama,
-    fake: Accomplish.Streaming.Adapters.Fake
+    anthropic: Accomplish.AI.Adapters.Anthropic,
+    ollama: Accomplish.AI.Adapters.Ollama,
+    fake: Accomplish.AI.Adapters.Fake
   }
 
   @provider_models %{
@@ -30,7 +30,7 @@ defmodule Accomplish.Streaming.Providers do
   """
   @spec get_provider(atom()) :: module()
   def get_provider(provider_name) do
-    Map.get(@providers, provider_name, Accomplish.Streaming.Adapters.Fake)
+    Map.get(@providers, provider_name, Accomplish.AI.Adapters.Fake)
   end
 
   @doc """
