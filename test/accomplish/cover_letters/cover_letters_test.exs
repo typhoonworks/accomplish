@@ -236,4 +236,44 @@ defmodule Accomplish.CoverLettersTest do
       assert %{title: ["can't be blank"]} = errors_on(changeset)
     end
   end
+
+  describe "update_streaming_content/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+      cover_letter = cover_letter_fixture(application, %{status: :draft})
+      %{cover_letter: cover_letter, application: application}
+    end
+
+    test "updates content when cover letter is in draft status", %{cover_letter: cover_letter} do
+      new_content = "Updated streaming content."
+
+      assert {:ok, updated_letter} =
+               CoverLetters.update_streaming_content(cover_letter, new_content)
+
+      assert updated_letter.content == new_content
+    end
+
+    test "returns error when cover letter is not draft", %{cover_letter: cover_letter} do
+      non_draft_letter = %{cover_letter | status: :submitted}
+      new_content = "Attempt to update non-draft content"
+
+      assert {:error, "Cannot stream content updates when cover letter is not in draft status"} =
+               CoverLetters.update_streaming_content(non_draft_letter, new_content)
+    end
+  end
+
+  describe "update_streaming/2" do
+    setup do
+      applicant = user_fixture()
+      application = job_application_fixture(applicant)
+      cover_letter = cover_letter_fixture(application)
+      %{cover_letter: cover_letter, application: application}
+    end
+
+    test "updates the streaming field on the cover letter", %{cover_letter: cover_letter} do
+      assert {:ok, updated_letter} = CoverLetters.update_streaming(cover_letter, true)
+      assert updated_letter.streaming == true
+    end
+  end
 end

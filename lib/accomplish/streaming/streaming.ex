@@ -5,7 +5,6 @@ defmodule Accomplish.Streaming do
 
   alias Accomplish.Streaming.Manager
   alias Accomplish.Streaming.Service
-  alias Accomplish.Streaming.Providers
 
   @doc """
   Starts a streaming session for content generation.

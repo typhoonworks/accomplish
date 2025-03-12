@@ -2,7 +2,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   use AccomplishWeb, :live_view
 
   alias Accomplish.JobApplications
-  alias Accomplish.CoverLetters
 
   alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
   alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog

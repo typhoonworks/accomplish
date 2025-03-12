@@ -1,7 +1,6 @@
 defmodule AccomplishWeb.JobApplicationsLive.Applications do
   use AccomplishWeb, :live_view
 
-  alias Accomplish.CoverLetters
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Application
   alias Accomplish.URLValidators

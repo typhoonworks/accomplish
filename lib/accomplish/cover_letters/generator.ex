@@ -129,6 +129,7 @@ defmodule Accomplish.CoverLetters.Generator do
     Streaming.start_streaming(stream_id, save_fn, provider, prompt, stream_opts)
   end
 
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp build_messages(user, application) do
     profile = Profiles.get_profile_by_user(user.id)
     experiences = (profile && Profiles.list_experiences(profile)) || []
