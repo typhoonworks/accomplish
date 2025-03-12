@@ -74,6 +74,45 @@ defmodule Accomplish.CoverLetters do
     end
   end
 
+  def update_streaming_content(%{status: :draft} = cover_letter, content) do
+    Repo.transaction(fn ->
+      letter =
+        CoverLetter
+        |> where([c], c.id == ^cover_letter.id)
+        |> lock("FOR UPDATE")
+        |> Repo.one!()
+
+      changeset =
+        CoverLetter.update_changeset(letter, %{content: content})
+        |> Ecto.Changeset.optimistic_lock(:lock_version)
+
+      case Repo.update(changeset) do
+        {:ok, updated_letter} ->
+          updated_letter
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> case do
+      {:ok, updated_letter} ->
+        {:ok, updated_letter}
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  def update_streaming_content(%{status: _status} = _cover_letter, _content) do
+    {:error, "Cannot stream content updates when cover letter is not in draft status"}
+  end
+
+  def update_streaming(cover_letter, new_value) do
+    cover_letter
+    |> Ecto.Changeset.change(%{streaming: new_value})
+    |> Repo.update()
+  end
+
   def submit_cover_letter(%CoverLetter{} = cover_letter) do
     changeset =
       cover_letter

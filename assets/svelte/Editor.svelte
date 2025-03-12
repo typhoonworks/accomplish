@@ -183,7 +183,6 @@
       editor.setEditable(true);
 
       updateHiddenInput();
-      pushUpdate();
 
       activeStream = null;
       lastProcessedLength = 0;
@@ -236,6 +235,9 @@
     // If we're already streaming when component mounts, start stream
     if (streaming && !activeStream) {
       startStreaming();
+      setTimeout(() => {
+        showPulseIndicator = true;
+      }, 200);
     }
   });
 

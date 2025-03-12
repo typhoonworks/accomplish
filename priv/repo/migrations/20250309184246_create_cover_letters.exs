@@ -12,6 +12,8 @@ defmodule Accomplish.Repo.Migrations.CreateCoverLetters do
       add :content, :text, default: "", null: false
       add :status, :string, default: "draft", null: false
       add :submitted_at, :utc_datetime
+      add :streaming, :boolean, default: false
+      add :lock_version, :integer, default: 1, null: false
 
       add :application_id, references(:job_applications, type: :uuid, on_delete: :delete_all),
         null: false

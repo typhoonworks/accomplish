@@ -36,12 +36,12 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
 
         <.dialog_content :if={@application} id={"#{@id}-content"} class="pb-6">
           <div class="flex flex-col gap-4 py-4">
-            <p class="text-zinc-300 text-sm">
+            <p class="text-zinc-300 text-sm font-light">
               I'll create a personalized cover letter for your application to
-              <span class="font-semibold">{@application.role}</span>
-              at <span class="font-semibold"><%= @application.company.name %></span>.
+              <span class="text-zinc-200 font-semibold underline">{@application.role}</span>
+              at <span class="text-zinc-200 font-semibold underline"><%= @application.company.name %></span>.
             </p>
-            <p class="text-zinc-300 text-sm">
+            <p class="text-zinc-300 text-sm font-light">
               The letter will be tailored based on your profile information and the job details.
             </p>
           </div>

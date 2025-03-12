@@ -20,7 +20,9 @@ defmodule Accomplish.Application do
       # Start to serve requests, typically the last entry
       AccomplishWeb.Endpoint,
       AccomplishWeb.NavigationTracker,
-      TwMerge.Cache
+      TwMerge.Cache,
+      {Registry, keys: :unique, name: Accomplish.Registry},
+      {DynamicSupervisor, strategy: :one_for_one, name: Accomplish.DynamicSupervisor}
     ]
 
     children =
