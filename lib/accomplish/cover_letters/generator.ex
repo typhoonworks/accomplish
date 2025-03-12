@@ -12,7 +12,7 @@ defmodule Accomplish.CoverLetters.Generator do
   alias Accomplish.Streaming
   alias Accomplish.AI.Prompt
 
-  @model "claude-3-5-haiku-20241022"
+  @default_provider :ollama
   @max_tokens 800
   @temperature 0.3
 
@@ -88,7 +88,23 @@ defmodule Accomplish.CoverLetters.Generator do
 
   ## 5. Signature line
 
-  - Do NOT add any additional text after the closing salutation and signature line.
+  - Do NOT prepend or append any additional lines such as ‘Here is your cover letter:’ or ‘Hope this helps!’”.
+  - Your response must begin immediately with the greeting and end immediately after the signature line.
+  """
+
+  @prefill_message """
+  Dear Hiring Manager,
+
+  <ersonalized_introduction>
+
+  <experience_paragraphs>
+
+  <personal_alignment_paragraph>
+
+  <closing_paragraph>
+
+  Sincerely,
+  <your_name>
   """
 
   @doc """
@@ -106,7 +122,7 @@ defmodule Accomplish.CoverLetters.Generator do
     - {:ok, stream_id} on successful stream initialization
     - {:error, reason} on failure
   """
-  def start_stream(user, application, cover_letter_id, provider \\ :anthropic) do
+  def start_stream(user, application, cover_letter_id, provider \\ @default_provider) do
     stream_id = "cover_letter_stream_#{cover_letter_id}"
 
     save_fn = fn buffer ->
@@ -114,12 +130,13 @@ defmodule Accomplish.CoverLetters.Generator do
       CoverLetters.update_streaming_content(cover_letter, buffer)
     end
 
+    model = Streaming.get_model_for_provider(provider)
     messages = build_messages(user, application)
 
     prompt =
       Prompt.new(
         messages,
-        @model,
+        model,
         @system_message,
         @max_tokens,
         @temperature
@@ -193,7 +210,10 @@ defmodule Accomplish.CoverLetters.Generator do
     The tone should be enthusiastic and authentic.
     """
 
-    [%{role: "user", content: String.trim(prompt_message)}]
+    [
+      %{role: "user", content: String.trim(prompt_message)},
+      %{role: "user", content: String.trim(@prefill_message)}
+    ]
   end
 
   defp format_experiences([]), do: "No work experience provided."

@@ -4,6 +4,7 @@ defmodule Accomplish.Streaming do
   """
 
   alias Accomplish.Streaming.Manager
+  alias Accomplish.Streaming.Providers
   alias Accomplish.Streaming.Service
 
   @doc """
@@ -39,5 +40,29 @@ defmodule Accomplish.Streaming do
       {:ok, pid} -> Manager.get_status(pid)
       :not_found -> :not_found
     end
+  end
+
+  @doc """
+  Gets the appropriate model name for a given provider.
+  """
+  @spec get_model_for_provider(atom()) :: String.t()
+  def get_model_for_provider(provider) do
+    Providers.get_model_for_provider(provider)
+  end
+
+  @doc """
+  Returns a map of all providers and their default models.
+  """
+  @spec all_provider_models() :: map()
+  def all_provider_models do
+    Providers.all_provider_models()
+  end
+
+  @doc """
+  Returns a list of available provider atoms.
+  """
+  @spec available_providers() :: list(atom())
+  def available_providers do
+    Providers.all_providers() |> Map.keys()
   end
 end

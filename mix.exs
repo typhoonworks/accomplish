@@ -69,6 +69,7 @@ defmodule Accomplish.MixProject do
       {:lucide_live_view, github: "typhoonworks/lucide_live_view", branch: "main"},
       {:oban, "~> 2.19"},
       {:oban_web, "~> 2.11"},
+      {:ollama, "~> 0.8"},
       {:open_api_spex, "~> 3.21"},
       {:phoenix, "~> 1.7.18"},
       {:phoenix_ecto, "~> 4.5"},
