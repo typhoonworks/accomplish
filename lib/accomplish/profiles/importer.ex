@@ -8,6 +8,7 @@ defmodule Accomplish.Profiles.Importer do
 
   import Ecto.Query
 
+  alias Accomplish.Accounts
   alias Accomplish.Profiles
   alias Accomplish.Profiles.Events.ProfileImported
   alias Accomplish.Repo
@@ -29,9 +30,16 @@ defmodule Accomplish.Profiles.Importer do
   """
   def import_profile_data(user, profile_data) do
     Ecto.Multi.new()
+    |> Ecto.Multi.run(:user_name_update, fn _repo, _changes ->
+      handle_full_name_update(user, profile_data)
+    end)
     |> Ecto.Multi.run(:profile, fn _repo, _changes ->
       profile_attrs = Map.get(profile_data, "profile", %{})
-      profile_params = atomize_profile_params(profile_attrs)
+
+      profile_params =
+        atomize_profile_params(profile_attrs)
+        |> Map.drop([:full_name])
+
       Profiles.upsert_profile(user, profile_params)
     end)
     |> Ecto.Multi.run(:experiences, fn _repo, %{profile: profile} ->
@@ -48,6 +56,21 @@ defmodule Accomplish.Profiles.Importer do
 
       {:error, step, changeset, _changes} ->
         {:error, {:import_failed, step, changeset}}
+    end
+  end
+
+  def handle_full_name_update(user, profile_data) do
+    case get_in(profile_data, ["profile", "full_name"]) do
+      full_name when is_binary(full_name) and full_name != "" ->
+        if is_nil(user.first_name) and is_nil(user.last_name) do
+          user_params = %{"full_name" => full_name}
+          Accounts.update_user_profile(user, user_params)
+        else
+          {:ok, user}
+        end
+
+      _ ->
+        {:ok, user}
     end
   end
 
