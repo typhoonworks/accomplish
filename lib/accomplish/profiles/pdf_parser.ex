@@ -24,14 +24,15 @@ defmodule Accomplish.Profiles.PDFParser do
   The data you return will be used to populate database entities for a user's profile, work experiences, and education.
 
   You must extract these profile fields:
-  1) headline (professional title/headline)
-  2) bio (short professional summary)
-  3) location (city, state/country)
-  4) skills (array of skills)
-  5) github_handle (GitHub username, extract from URLs like https://github.com/username)
-  6) linkedin_handle (LinkedIn username, extract from URLs like https://linkedin.com/in/username)
-  7) website_url (Personal website URL, ensure it includes http:// or https://)
-  8) interests (Professional or personal interests and hobbies, with formatting preserved)
+  1) Full name
+  2) headline (professional title/headline)
+  3) bio (short professional summary)
+  4) location (city, state/country)
+  5) skills (array of skills)
+  6) github_handle (GitHub username, extract from URLs like https://github.com/username)
+  7) linkedin_handle (LinkedIn username, extract from URLs like https://linkedin.com/in/username)
+  8) website_url (Personal website URL, ensure it includes http:// or https://)
+  9) interests (Professional or personal interests and hobbies, with formatting preserved)
 
   For each work experience, extract:
   1) company (company name)
@@ -54,6 +55,7 @@ defmodule Accomplish.Profiles.PDFParser do
   Return valid JSON with the following structure:
   {
     "profile": {
+      "full_name": string,
       "headline": string,
       "bio": string,
       "location": string,
@@ -105,6 +107,7 @@ defmodule Accomplish.Profiles.PDFParser do
   @prefill_message """
   {
     "profile": {
+      "full_name": "",
       "headline": "",
       "bio": "",
       "location": "",
