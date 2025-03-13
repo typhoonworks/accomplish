@@ -11,7 +11,7 @@ defmodule Accomplish.CoverLetters.Generator do
   alias Accomplish.CoverLetters
   alias Accomplish.AI
 
-  @default_provider :ollama
+  @default_provider :mistral
   @max_tokens 800
   @temperature 0.3
 

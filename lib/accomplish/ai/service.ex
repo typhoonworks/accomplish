@@ -30,17 +30,19 @@ defmodule Accomplish.AI.Service do
   """
   def chat(provider_name, prompt) do
     adapter_module = Providers.get_provider(provider_name)
-    adapter_module.chat(prompt)
+
+    case adapter_module.chat(prompt, false) do
+      {:ok, payload} ->
+        adapter_module.build_response(payload)
+
+      error ->
+        Logger.debug("Adapter error: #{error}")
+        {:error, :client_error}
+    end
   end
 
   @doc """
   Starts a streaming content generation session.
-
-  This function:
-  1. Creates a stream manager to handle content persistence
-  2. Sets up a provider-specific streaming wrapper
-  3. Delegates to the appropriate provider adapter for content generation
-  4. Handles error recovery for provider failures
 
   ## Parameters
     - stream_id: Unique identifier for this stream

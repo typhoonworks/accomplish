@@ -17,6 +17,7 @@ defmodule Accomplish.AI.Adapters.Anthropic do
 
   alias Accomplish.Streaming.Manager
   alias Accomplish.AI.Prompt
+  alias Accomplish.AI.Response
 
   @doc """
   Creates a streaming wrapper that handles Anthropic's streaming format.
@@ -90,7 +91,7 @@ defmodule Accomplish.AI.Adapters.Anthropic do
   def chat(%Prompt{} = prompt, receiver_pid \\ false) do
     api_key = get_env("ANTHROPIC_API_KEY")
     client = Anthropix.init(api_key)
-    Logger.debug("Initializing Anthropix client for content generation")
+    Logger.debug("Initializing Anthropix client with model: #{prompt.model}")
 
     Anthropix.chat(client,
       model: prompt.model,
@@ -101,4 +102,18 @@ defmodule Accomplish.AI.Adapters.Anthropic do
       temperature: prompt.temperature
     )
   end
+
+  def build_response(payload) when is_map(payload) do
+    with {:ok, model} <- Map.fetch(payload, "model"),
+         {:ok, content} <- Map.fetch(payload, "content"),
+         [message | _] when is_map(message) <- content,
+         {:ok, text} <- Map.fetch(message, "text"),
+         role <- Map.get(payload, "role", "assistant") do
+      {:ok, Response.new(text, model, role)}
+    else
+      _ -> {:error, :missing_required_fields}
+    end
+  end
+
+  def build_response(_), do: {:error, :invalid_response}
 end

@@ -8,12 +8,14 @@ defmodule Accomplish.AI.Providers do
 
   @providers %{
     anthropic: Accomplish.AI.Adapters.Anthropic,
+    mistral: Accomplish.AI.Adapters.Mistral,
     ollama: Accomplish.AI.Adapters.Ollama,
     fake: Accomplish.AI.Adapters.Fake
   }
 
   @provider_models %{
     anthropic: "claude-3-5-haiku-20241022",
+    mistral: "mistral-small-latest",
     ollama: "llama3.2",
     fake: "fake-model"
   }

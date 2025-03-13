@@ -18,6 +18,7 @@ defmodule Accomplish.AI.Adapters.Ollama do
 
   alias Accomplish.Streaming.Manager
   alias Accomplish.AI.Prompt
+  alias Accomplish.AI.Response
 
   @doc """
   Creates a streaming wrapper that handles Ollama's streaming format.
@@ -94,7 +95,7 @@ defmodule Accomplish.AI.Adapters.Ollama do
     base_url = get_env("OLLAMA_BASE_URL", "http://localhost:11434/api")
 
     client = Ollama.init(base_url)
-    Logger.debug("Initializing Ollama client for content generation with model: #{prompt.model}")
+    Logger.debug("Initializing Ollama client with model: #{prompt.model}")
 
     case prompt.messages do
       [%{role: _role, content: _content} | _] = messages ->
@@ -123,6 +124,19 @@ defmodule Accomplish.AI.Adapters.Ollama do
         )
     end
   end
+
+  def build_response(payload) when is_map(payload) do
+    with {:ok, model} <- Map.fetch(payload, "model"),
+         {:ok, message} <- Map.fetch(payload, "message"),
+         {:ok, content} <- Map.fetch(message, "content"),
+         role <- Map.get(message, "role", "assistant") do
+      {:ok, Response.new(content, model, role)}
+    else
+      _ -> {:error, :missing_required_fields}
+    end
+  end
+
+  def build_response(_), do: {:error, :invalid_response}
 
   defp convert_messages(messages) do
     Enum.map(messages, fn message ->
