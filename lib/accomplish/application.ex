@@ -21,6 +21,7 @@ defmodule Accomplish.Application do
       AccomplishWeb.Endpoint,
       AccomplishWeb.NavigationTracker,
       TwMerge.Cache,
+      Accomplish.TokenCache,
       {Registry, keys: :unique, name: Accomplish.Registry},
       {DynamicSupervisor, strategy: :one_for_one, name: Accomplish.DynamicSupervisor}
     ]

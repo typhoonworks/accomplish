@@ -78,11 +78,12 @@ defmodule AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog do
 
   def handle_event("create_ai_cover_letter", _params, socket) do
     application = socket.assigns.application
+    user = socket.assigns.current_user
 
     {:noreply,
      socket
      |> close_modal("cover-letter-dialog")
-     |> JobApplicationActions.handle_ai_cover_letter_create(application)}
+     |> JobApplicationActions.handle_ai_cover_letter_create(application, user)}
   end
 
   defp close_modal(socket, modal_id) do
