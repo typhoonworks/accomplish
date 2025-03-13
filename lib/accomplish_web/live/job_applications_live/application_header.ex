@@ -70,7 +70,12 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
       </:views>
     </.page_header>
 
-    <.live_component module={CoverLetterDialog} id="cover-letter-dialog" application={@application} />
+    <.live_component
+      module={CoverLetterDialog}
+      id="cover-letter-dialog"
+      application={@application}
+      current_user={@current_user}
+    />
     <.live_component
       module={StageDialog}
       id="stage-dialog"

@@ -10,6 +10,7 @@ defmodule AccomplishWeb.EventHandlers.JobApplicationActions do
 
   alias Accomplish.JobApplications
   alias Accomplish.CoverLetters
+  alias Accomplish.TokenCache
 
   @endpoint AccomplishWeb.Endpoint
   @router AccomplishWeb.Router
@@ -54,13 +55,15 @@ defmodule AccomplishWeb.EventHandlers.JobApplicationActions do
   @doc """
   Creates a new AI-generated cover letter and navigates to it with the AI generation flag.
   """
-  def handle_ai_cover_letter_create(socket, application) do
+  def handle_ai_cover_letter_create(socket, application, user) do
     case CoverLetters.create_cover_letter(application, %{title: "AI-generated Cover Letter"}) do
       {:ok, cover_letter} ->
+        token = TokenCache.generate_token(%{user_id: user.id, cover_letter_id: cover_letter.id})
+
         socket
         |> push_navigate(
           to:
-            ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?ai_generate=true"
+            ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?token=#{token}"
         )
 
       {:error, _} ->

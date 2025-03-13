@@ -288,6 +288,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       module={CoverLetterDialog}
       id="cover-letter-dialog"
       application={@application_in_context}
+      current_user={@current_user}
     />
     <.live_component
       module={StageDialog}

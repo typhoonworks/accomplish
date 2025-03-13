@@ -5,6 +5,7 @@ defmodule AccomplishWeb.CoverLetterLive do
   alias Accomplish.CoverLetters
   alias Accomplish.CoverLetters.Generator
   alias Accomplish.Streaming
+  alias Accomplish.TokenCache
 
   import AccomplishWeb.StringHelpers
   import AccomplishWeb.CoverLetterHelpers
@@ -134,7 +135,7 @@ defmodule AccomplishWeb.CoverLetterLive do
   end
 
   def mount(
-        %{"application_slug" => application_slug, "id" => id, "ai_generate" => "true"},
+        %{"application_slug" => application_slug, "id" => id, "token" => token},
         _session,
         socket
       ) do
@@ -154,7 +155,7 @@ defmodule AccomplishWeb.CoverLetterLive do
         |> assign(is_saving: false)
         |> assign(autosave: true)
         |> assign(stream_id: stream_id)
-        |> maybe_start_stream(cover_letter)
+        |> maybe_start_stream(cover_letter, token)
         |> assign(
           ai_writing: cover_letter.streaming,
           ai_writing_complete: not cover_letter.streaming
@@ -318,10 +319,12 @@ defmodule AccomplishWeb.CoverLetterLive do
     end
   end
 
-  defp maybe_start_stream(socket, cover_letter) do
-    if cover_letter.streaming do
-      socket
-    else
+  defp maybe_start_stream(socket, cover_letter, token) do
+    if valid_token?(
+         token,
+         socket.assigns.current_user.id,
+         cover_letter.id
+       ) and not cover_letter.streaming do
       applicant = socket.assigns.current_user
       application = socket.assigns.application
 
@@ -333,6 +336,19 @@ defmodule AccomplishWeb.CoverLetterLive do
           socket
           |> put_flash(:error, "Failed to generate cover letter content")
       end
+    else
+      socket
+    end
+  end
+
+  def valid_token?(token, user_id, cover_letter_id) do
+    case TokenCache.validate_and_consume_token(token) do
+      {:ok, %{user_id: expected_user_id, cover_letter_id: expected_cover_letter_id}} ->
+        user_id == expected_user_id &&
+          cover_letter_id == expected_cover_letter_id
+
+      {:error, _reason} ->
+        false
     end
   end
 end
