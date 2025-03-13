@@ -134,17 +134,14 @@ defmodule AccomplishWeb.CoverLetterLive do
     """
   end
 
-  def mount(
-        %{"application_slug" => application_slug, "id" => id, "token" => token},
-        _session,
-        socket
-      ) do
+  def mount(%{"application_slug" => application_slug, "id" => id} = params, _session, socket) do
     applicant = socket.assigns.current_user
 
     with {:ok, application} <-
            JobApplications.get_application_by_slug(applicant, application_slug),
          cover_letter <- CoverLetters.get_application_cover_letter!(application, id) do
       stream_id = "cover_letter_stream_#{cover_letter.id}"
+      token = Map.get(params, "token", nil)
 
       socket =
         socket
@@ -168,33 +165,20 @@ defmodule AccomplishWeb.CoverLetterLive do
     end
   end
 
-  def mount(%{"application_slug" => application_slug, "id" => id}, _session, socket) do
-    applicant = socket.assigns.current_user
+  def handle_params(params, _uri, socket) do
+    token = Map.get(params, "token", nil)
+    cover_letter = socket.assigns.cover_letter
 
-    with {:ok, application} <-
-           JobApplications.get_application_by_slug(applicant, application_slug),
-         cover_letter <- CoverLetters.get_application_cover_letter!(application, id) do
-      stream_id = "cover_letter_stream_#{cover_letter.id}"
+    socket =
+      socket
+      |> maybe_start_stream(cover_letter, token)
+      |> assign(
+        ai_writing: cover_letter.streaming,
+        ai_writing_complete: not cover_letter.streaming
+      )
+      |> check_and_connect_to_stream()
 
-      socket =
-        socket
-        |> assign(page_title: cover_letter.title)
-        |> assign(application: application)
-        |> assign(cover_letter: cover_letter)
-        |> assign_form(cover_letter)
-        |> assign(is_saving: false)
-        |> assign(autosave: true)
-        |> assign(stream_id: stream_id)
-        |> assign(
-          ai_writing: cover_letter.streaming,
-          ai_writing_complete: not cover_letter.streaming
-        )
-        |> check_and_connect_to_stream()
-
-      {:ok, socket}
-    else
-      :error -> {:ok, push_navigate(socket, to: ~p"/job_applications")}
-    end
+    {:noreply, socket}
   end
 
   def handle_event("save_field", %{"field" => field, "value" => value}, socket) do
@@ -222,19 +206,19 @@ defmodule AccomplishWeb.CoverLetterLive do
     if socket.assigns.ai_writing do
       {:noreply, socket}
     else
+      application = socket.assigns.application
+      user = socket.assigns.current_user
       cover_letter = socket.assigns.cover_letter
+      token = TokenCache.generate_token(%{user_id: user.id, cover_letter_id: cover_letter.id})
 
-      case CoverLetters.update_streaming(cover_letter, true) do
-        {:ok, updated_letter} ->
-          socket = assign(socket, cover_letter: updated_letter)
-          application = socket.assigns.application
-          user = socket.assigns.current_user
-          {:ok, _stream_id} = Generator.start_stream(user, application, updated_letter.id)
-          {:noreply, check_and_connect_to_stream(socket)}
+      socket =
+        socket
+        |> push_patch(
+          to:
+            ~p"/job_application/#{application.slug}/cover_letter/#{cover_letter.id}?token=#{token}"
+        )
 
-        {:error, _reason} ->
-          {:noreply, put_flash(socket, :error, "Failed to generate cover letter content")}
-      end
+      {:noreply, socket}
     end
   end
 
@@ -340,6 +324,8 @@ defmodule AccomplishWeb.CoverLetterLive do
       socket
     end
   end
+
+  def valid_token?(nil, _, _), do: false
 
   def valid_token?(token, user_id, cover_letter_id) do
     case TokenCache.validate_and_consume_token(token) do
