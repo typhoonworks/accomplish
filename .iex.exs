@@ -8,4 +8,6 @@ alias Accomplish.JobApplications
 alias Accomplish.Activities
 alias Accomplish.Profiles
 
+user = Accounts.get_user_by_email("jack@me.local")
+
 IO.puts("Loaded .iex.exs with custom settings!")

@@ -13,6 +13,7 @@ defmodule Accomplish.AI.Adapters.Fake do
 
   alias Accomplish.Streaming.Manager
   alias Accomplish.AI.Prompt
+  alias Accomplish.AI.Response
 
   @default_paragraphs [
     "Dear Hiring Manager,\n\n",
@@ -62,6 +63,8 @@ defmodule Accomplish.AI.Adapters.Fake do
     - In non-streaming mode: Complete text response as a formatted map similar to real LLMs
   """
   def chat(%Prompt{} = prompt, receiver_pid \\ false) do
+    Logger.debug("Running Fake AI adapter")
+
     config = prompt.additional_params || %{}
     paragraphs = Map.get(config, :paragraphs, @default_paragraphs)
 
@@ -87,6 +90,10 @@ defmodule Accomplish.AI.Adapters.Fake do
         stream_paragraphs(receiver_pid, paragraphs, delay_ms, chunk_size)
       end)
     end
+  end
+
+  def build_response(_payload) do
+    {:ok, Response.new("fake content", "fake_model", "assistant")}
   end
 
   defp stream_paragraphs(stream_pid, paragraphs, delay_ms, chunk_size) do
