@@ -37,6 +37,7 @@ defmodule Accomplish.TokenCache do
       context,
       :os.system_time(:millisecond) + @token_ttl
     })
+
     {:reply, :ok, state}
   end
 
