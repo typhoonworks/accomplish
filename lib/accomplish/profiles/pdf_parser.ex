@@ -281,8 +281,9 @@ defmodule Accomplish.Profiles.PDFParser do
   defp process_data(%{} = data) do
     Logger.debug("Processing data: #{inspect(data)}")
 
-    profile = Map.get(data, "profile", %{})
-             |> process_text_field("interests")
+    profile =
+      Map.get(data, "profile", %{})
+      |> process_text_field("interests")
 
     experiences =
       Map.get(data, "experiences", [])
@@ -304,7 +305,7 @@ defmodule Accomplish.Profiles.PDFParser do
 
     {:ok,
      %{
-       "profile" =>  profile,
+       "profile" => profile,
        "experiences" => experiences,
        "education" => education
      }}
