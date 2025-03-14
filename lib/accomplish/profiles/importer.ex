@@ -30,7 +30,7 @@ defmodule Accomplish.Profiles.Importer do
   """
   def import_profile_data(user, profile_data) do
     Ecto.Multi.new()
-    |> Ecto.Multi.run(:user_name_update, fn _repo, _changes ->
+    |> Ecto.Multi.run(:updated_user, fn _repo, _changes ->
       handle_full_name_update(user, profile_data)
     end)
     |> Ecto.Multi.run(:profile, fn _repo, _changes ->
@@ -50,8 +50,14 @@ defmodule Accomplish.Profiles.Importer do
     end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{profile: profile, experiences: experiences, education: educations}} ->
-        broadcast_profile_imported(profile, experiences, educations)
+      {:ok,
+       %{
+         updated_user: updated_user,
+         profile: profile,
+         experiences: experiences,
+         education: educations
+       }} ->
+        broadcast_profile_imported(updated_user, profile, experiences, educations)
         {:ok, %{profile: profile, experiences: experiences, educations: educations}}
 
       {:error, step, changeset, _changes} ->
@@ -194,12 +200,13 @@ defmodule Accomplish.Profiles.Importer do
 
   defp parse_date_string(_), do: nil
 
-  defp broadcast_profile_imported(profile, experiences, educations) do
+  defp broadcast_profile_imported(user, profile, experiences, educations) do
     Phoenix.PubSub.broadcast!(
       @pubsub,
       @notifications_topic <> ":#{profile.user_id}",
       {Profiles,
        %ProfileImported{
+         user: user,
          profile: profile,
          experiences: experiences,
          educations: educations

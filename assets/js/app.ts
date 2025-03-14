@@ -18,6 +18,7 @@ import Clipboard from "./hooks/clipboard";
 import CodeInput from "./hooks/code_input";
 import ContextMenu from "./hooks/context_menu";
 import DropdownMenu from "./hooks/dropdown_menu";
+import Flash from "./hooks/flash";
 import GoBack from "./hooks/go_back";
 import SkillSelector from "./hooks/skill_selector";
 import StackedList from "./hooks/stacked_list";
@@ -32,6 +33,7 @@ const hooks = {
   CodeInput,
   ContextMenu,
   DropdownMenu,
+  Flash,
   GoBack,
   SkillSelector,
   StackedList,

@@ -20,7 +20,7 @@ defmodule AccomplishWeb.ResumeLive.ResumeExperience do
 
   def render(assigns) do
     ~H"""
-    <.layout current_user={@current_user} current_path={@current_path}>
+    <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
       <:page_header>
         {live_render(@socket, ResumeHeader,
           id: "resume-header",

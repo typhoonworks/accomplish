@@ -4,6 +4,6 @@ defmodule Accomplish.Profiles.Events do
   defmodule ProfileImported do
     @moduledoc false
 
-    defstruct name: "profile.imported", profile: nil, experiences: [], educations: []
+    defstruct name: "profile.imported", user: nil, profile: nil, experiences: [], educations: []
   end
 end

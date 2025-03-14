@@ -16,7 +16,7 @@ defmodule AccomplishWeb.CoverLetterLive do
 
   def render(assigns) do
     ~H"""
-    <.layout current_user={@current_user} current_path={@current_path}>
+    <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
       <:page_header>
         <.page_header>
           <:title>
@@ -274,7 +274,6 @@ defmodule AccomplishWeb.CoverLetterLive do
         ai_writing: updated_letter.streaming,
         ai_writing_complete: not updated_letter.streaming
       )
-      |> put_flash(:info, "Cover letter streaming stopped")
 
     {:noreply, socket}
   end

@@ -5,7 +5,12 @@ defmodule AccomplishWeb.SettingsLive.ConnectedAccounts do
 
   def render(assigns) do
     ~H"""
-    <.layout current_user={@current_user} current_path={@current_path} sidebar_context={:settings}>
+    <.layout
+      flash={@flash}
+      current_user={@current_user}
+      current_path={@current_path}
+      sidebar_context={:settings}
+    >
       <section class="max-w-3xl mx-auto px-6 lg:px-8 mt-24">
         <div class="space-y-4">
           <h3 class="text-xl text-zinc-50">Connected accounts</h3>

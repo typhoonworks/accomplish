@@ -22,7 +22,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
   def render(assigns) do
     ~H"""
-    <.layout current_user={@current_user} current_path={@current_path}>
+    <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
       <:page_header>
         <.page_header page_title="Job Applications">
           <:views>
