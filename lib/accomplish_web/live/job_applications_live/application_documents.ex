@@ -151,6 +151,10 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
     {:noreply, stream_insert(socket, :cover_letters, event.cover_letter)}
   end
 
+  defp handle_notification(%{name: "cover_letter.updated"} = event, socket) do
+    {:noreply, stream_insert(socket, :cover_letters, event.cover_letter)}
+  end
+
   defp handle_notification(%{name: "cover_letter.deleted"} = event, socket) do
     {:noreply, stream_delete(socket, :cover_letters, event.cover_letter)}
   end

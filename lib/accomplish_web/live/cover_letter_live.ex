@@ -101,15 +101,22 @@ defmodule AccomplishWeb.CoverLetterLive do
             </.tooltip_content>
           </.tooltip>
           <.tooltip :if={!@ai_writing}>
-            <button
-              phx-click="generate_cover_letter"
-              class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-light transition-colors duration-150 hover:bg-zinc-800 text-zinc-300"
+            <.shadow_button
+              type="button"
+              variant="transparent"
+              phx-click="reset_stage_form"
+              phx-value-id="new-stage-modal"
+              disabled={@cover_letter.status != :draft}
             >
-              <.lucide_icon name="sparkles" class="size-4 text-purple-400" />
-              <span>AI Write</span>
-            </button>
+              <.lucide_icon name="sparkles" class="size-4 text-purple-400" /> AI Write
+            </.shadow_button>
             <.tooltip_content side="bottom">
-              <p>Let AI write this cover letter</p>
+              <%= case @cover_letter.status do %>
+                <% :draft -> %>
+                  <p>Let AI write this cover letter</p>
+                <% _ -> %>
+                  <p>Editing is only available in draft mode.</p>
+              <% end %>
             </.tooltip_content>
           </.tooltip>
         </div>
@@ -124,7 +131,7 @@ defmodule AccomplishWeb.CoverLetterLive do
             phx-value-field={@form[:content].field}
             autosave={@autosave && !@ai_writing}
             autosave_delay={2000}
-            disabled={@ai_writing}
+            disabled={@ai_writing || @cover_letter.status != :draft}
             streaming={@ai_writing}
             streaming_complete={@ai_writing_complete}
           />
@@ -284,6 +291,16 @@ defmodule AccomplishWeb.CoverLetterLive do
         {:noreply, assign(socket, ai_writing: false, ai_writing_complete: false)}
     end
   end
+
+  def handle_info({CoverLetters, event}, socket) do
+    handle_notification(event, socket)
+  end
+
+  defp handle_notification(%{name: "cover_letter.updated"} = event, socket) do
+    {:noreply, assign(socket, cover_letter: event.cover_letter)}
+  end
+
+  defp handle_notification(_, socket), do: {:noreply, socket}
 
   defp assign_form(socket, cover_letter) do
     form = CoverLetters.change_cover_letter(cover_letter)

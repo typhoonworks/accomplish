@@ -324,7 +324,7 @@ defmodule AccomplishWeb.ShadowrunComponents do
         autosaveDelay={@autosave_delay}
         streaming={@streaming}
         streamingComplete={@streaming_complete}
-        editorDisabled={@rest[:disabled] && !@streaming}
+        isDisabled={@rest[:disabled] && !@streaming}
       />
       <.shadow_error :for={msg <- @errors}>{msg}</.shadow_error>
     </div>
