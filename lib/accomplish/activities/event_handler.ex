@@ -8,6 +8,7 @@ defmodule Accomplish.Activities.EventHandler do
 
   alias Accomplish.JobApplications.Events
   alias Accomplish.Activities
+  alias Accomplish.Workers.LogActivityWorker
 
   @pubsub Accomplish.PubSub
   @events_topic "events:all"
@@ -102,7 +103,7 @@ defmodule Accomplish.Activities.EventHandler do
       "metadata" => metadata,
       "occurred_at" => occurred_at
     }
-    |> Accomplish.Workers.LogActivity.new()
+    |> LogActivityWorker.new()
     |> Oban.insert()
   end
 end

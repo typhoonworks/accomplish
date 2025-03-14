@@ -19,6 +19,12 @@ defmodule Accomplish.JobApplications.Events do
     defstruct name: "job_application.updated", application: nil, diff: %{}
   end
 
+  defmodule JobApplicationImported do
+    @moduledoc false
+
+    defstruct name: "job_application.imported", application: nil
+  end
+
   defmodule JobApplicationDeleted do
     @moduledoc false
 
