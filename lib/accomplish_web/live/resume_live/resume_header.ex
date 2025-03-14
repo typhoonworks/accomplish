@@ -124,12 +124,7 @@ defmodule AccomplishWeb.ResumeLive.ResumeHeader do
             >
               Cancel
             </.shadow_button>
-            <.shadow_button
-              type="submit"
-              variant="primary"
-              phx-disable-with="Uploading..."
-              disabled={@uploads.resume.entries == []}
-            >
+            <.shadow_button type="submit" variant="primary" disabled={@uploads.resume.entries == []}>
               Import
             </.shadow_button>
           </div>

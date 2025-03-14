@@ -16,7 +16,7 @@ defmodule Accomplish.AI.Providers do
   @provider_models %{
     anthropic: "claude-3-5-haiku-20241022",
     mistral: "mistral-small-latest",
-    ollama: "llama3.2",
+    ollama: "mistral:7b",
     fake: "fake-model"
   }
 

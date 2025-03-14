@@ -24,7 +24,7 @@ defmodule Accomplish.AI.ProvidersTest do
   describe "get_model_for_provider/1" do
     test "returns the default model for known providers" do
       assert Providers.get_model_for_provider(:anthropic) == "claude-3-5-haiku-20241022"
-      assert Providers.get_model_for_provider(:ollama) == "llama3.2"
+      assert Providers.get_model_for_provider(:ollama) == "mistral:7b"
       assert Providers.get_model_for_provider(:fake) == "fake-model"
     end
 

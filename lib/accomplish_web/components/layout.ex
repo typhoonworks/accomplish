@@ -11,6 +11,7 @@ defmodule AccomplishWeb.Layout do
   import AccomplishWeb.Shadowrun.Sidebar
   import AccomplishWeb.Shadownrun.SlideOver
 
+  attr :flash, :map, default: %{}
   attr :current_user, :map, default: nil
   attr :current_path, :string, default: "/"
   attr :sidebar_context, :atom, default: :main
@@ -40,6 +41,12 @@ defmodule AccomplishWeb.Layout do
           {render_slot(@page_drawer)}
         </div>
       </div>
+    </div>
+    <div
+      aria-live="assertive"
+      class="z-[100] pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6"
+    >
+      <.shadow_flash_group flash={@flash} />
     </div>
     """
   end

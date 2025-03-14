@@ -14,7 +14,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Stage do
 
   def render(assigns) do
     ~H"""
-    <.layout current_user={@current_user} current_path={@current_path}>
+    <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
       <:page_header>
         <.page_header page_drawer?={true} drawer_open={true}>
           <:title>

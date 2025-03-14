@@ -604,4 +604,155 @@ defmodule AccomplishWeb.ShadowrunComponents do
     </div>
     """
   end
+
+  attr :id, :string
+  attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
+  attr :title, :string
+
+  attr :kind, :atom,
+    values: [:info, :error, :success, :warning],
+    doc: "used for styling and flash lookup"
+
+  attr :timeout, :integer,
+    default: 5000,
+    doc: "automatic dismiss timeout in milliseconds, 0 for no auto-dismiss"
+
+  attr :position, :string,
+    default: "bottom-right",
+    values: ["bottom-right", "top-right", "bottom-left", "top-left"]
+
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the flash container"
+
+  slot :inner_block, doc: "the optional inner block that renders the flash message"
+  slot :actions, doc: "slot for action buttons"
+
+  def shadow_flash(assigns) do
+    assigns =
+      assigns
+      |> assign(title: Phoenix.Flash.get(assigns.flash, :title) || assigns.title)
+      |> assign_new(:id, fn -> "flash-#{assigns.kind}" end)
+
+    ~H"""
+    <div
+      :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
+      id={@id}
+      data-timeout={@timeout}
+      phx-hook="Flash"
+      phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+      role="alert"
+      class={[
+        "fixed z-50 pointer-events-auto max-w-sm w-full shadow-lg rounded-md p-4 border border-zinc-700 transition-all duration-300 transform",
+        position_class(@position),
+        @kind == :info && "bg-zinc-800/60 text-zinc-200 border-blue-500/30",
+        @kind == :error && "bg-zinc-800/60 text-zinc-200 border-red-500/20",
+        @kind == :success && "bg-zinc-800/60 text-zinc-200 border-green-500/30",
+        @kind == :warning && "bg-zinc-800/60 text-zinc-200 border-yellow-500/30"
+      ]}
+      {@rest}
+    >
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <.icon
+            :if={@kind == :info}
+            name="hero-information-circle-mini"
+            class="h-5 w-5 text-blue-500"
+          />
+          <.icon
+            :if={@kind == :error}
+            name="hero-exclamation-circle-mini"
+            class="h-5 w-5 text-red-500"
+          />
+          <.icon :if={@kind == :success} name="hero-check-circle-mini" class="h-5 w-5 text-green-500" />
+          <.icon
+            :if={@kind == :warning}
+            name="hero-exclamation-triangle-mini"
+            class="h-5 w-5 text-yellow-500"
+          />
+        </div>
+        <div class="ml-3 w-0 flex-1">
+          <p :if={@title} class="text-sm font-normal text-zinc-200">
+            {@title}
+          </p>
+          <p class="text-sm text-zinc-300 font-extralight mt-1">{msg}</p>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex">
+          <button
+            type="button"
+            class="bg-transparent rounded-md inline-flex text-zinc-400 hover:text-zinc-200 focus:outline-none"
+          >
+            <span class="sr-only">Close</span>
+            <.icon name="hero-x-mark-solid" class="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  @doc """
+  Shows the flash group with standard titles and styling.
+
+  ## Examples
+
+      <.shadow_flash_group flash={@flash} />
+  """
+  attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :id, :string, default: "flash-group", doc: "the optional id of flash container"
+
+  attr :position, :string,
+    default: "bottom-right",
+    values: ["bottom-right", "top-right", "bottom-left", "top-left"]
+
+  def shadow_flash_group(assigns) do
+    ~H"""
+    <div id={@id} class={flash_group_position_class(@position)}>
+      <.shadow_flash kind={:info} title="Information" flash={@flash} position={@position} />
+      <.shadow_flash kind={:success} title="Success" flash={@flash} position={@position} />
+      <.shadow_flash kind={:warning} title="Warning" flash={@flash} position={@position} />
+      <.shadow_flash kind={:error} title="Error" flash={@flash} position={@position} />
+      <.shadow_flash
+        id="client-error"
+        kind={:error}
+        title={gettext("We can't find the internet")}
+        position={@position}
+        phx-disconnected={show(".phx-client-error #client-error")}
+        phx-connected={hide("#client-error")}
+        hidden
+      >
+        {gettext("Attempting to reconnect")}
+        <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
+      </.shadow_flash>
+
+      <.shadow_flash
+        id="server-error"
+        kind={:error}
+        title={gettext("Something went wrong!")}
+        position={@position}
+        phx-disconnected={show(".phx-server-error #server-error")}
+        phx-connected={hide("#server-error")}
+        hidden
+      >
+        {gettext("Hang in there while we get back on track")}
+        <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
+      </.shadow_flash>
+    </div>
+    """
+  end
+
+  defp position_class("top-right"), do: "top-4 right-4"
+  defp position_class("top-left"), do: "top-4 left-4"
+  defp position_class("bottom-left"), do: "bottom-4 left-4"
+  defp position_class("bottom-right"), do: "bottom-4 right-4"
+
+  defp flash_group_position_class("top-right"),
+    do: "fixed z-50 top-4 right-4 flex flex-col gap-3 w-auto max-w-sm"
+
+  defp flash_group_position_class("top-left"),
+    do: "fixed z-50 top-4 left-4 flex flex-col gap-3 w-auto max-w-sm"
+
+  defp flash_group_position_class("bottom-left"),
+    do: "fixed z-50 bottom-4 left-4 flex flex-col gap-3 w-auto max-w-sm"
+
+  defp flash_group_position_class("bottom-right"),
+    do: "fixed z-50 bottom-4 right-4 flex flex-col gap-3 w-auto max-w-sm"
 end
