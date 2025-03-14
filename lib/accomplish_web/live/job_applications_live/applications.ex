@@ -4,6 +4,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   alias Accomplish.JobApplications
   alias Accomplish.JobApplications.Application
   alias Accomplish.URLValidators
+  alias Accomplish.Workers.ExtractJobDetailsWorker
 
   alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
   alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
@@ -44,6 +45,11 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
               active={@filter == "draft"}
             />
           </:views>
+          <:actions>
+            <.shadow_button phx-click="open_import_dialog" variant="transparent" class="text-xs">
+              <.icon name="hero-plus" class="size-3" /> Import from URL
+            </.shadow_button>
+          </:actions>
         </.page_header>
       </:page_header>
 
@@ -399,9 +405,9 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     if changeset.valid? do
       %{
         job_posting_url: url,
-        applicant_id: socket.assigns.current_user.id
+        user_id: socket.assigns.current_user.id
       }
-      |> AccomplishWeb.Workers.CreateJobApplicationFromUrl.new()
+      |> ExtractJobDetailsWorker.new()
       |> Oban.insert()
 
       socket =

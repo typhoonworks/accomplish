@@ -1,4 +1,4 @@
-defmodule Accomplish.Workers.ExtractResumeData do
+defmodule Accomplish.Workers.ExtractResumeDataWorker do
   @moduledoc """
   Worker that extracts structured data from resume PDFs.
 
@@ -13,7 +13,7 @@ defmodule Accomplish.Workers.ExtractResumeData do
   require Logger
 
   alias Accomplish.Profiles.PDFParser
-  alias Accomplish.Workers.ImportResumeData
+  alias Accomplish.Workers.ImportResumeDataWorker
 
   @rate_limit_backoff [1, 5, 15, 30, 60]
 
@@ -28,7 +28,7 @@ defmodule Accomplish.Workers.ExtractResumeData do
     case extract_with_backoff(fn -> PDFParser.extract_from_file(resume_path) end, attempt) do
       {:ok, structured_data} ->
         %{user_id: user_id, structured_data: structured_data}
-        |> ImportResumeData.new()
+        |> ImportResumeDataWorker.new()
         |> Oban.insert()
 
         {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}
@@ -57,7 +57,7 @@ defmodule Accomplish.Workers.ExtractResumeData do
     case extract_with_backoff(fn -> PDFParser.extract_from_text(text_content) end, attempt) do
       {:ok, structured_data} ->
         %{user_id: user_id, structured_data: structured_data}
-        |> ImportResumeData.new()
+        |> ImportResumeDataWorker.new()
         |> Oban.insert()
 
         {:ok, %{user_id: user_id, message: "Resume data extracted successfully"}}

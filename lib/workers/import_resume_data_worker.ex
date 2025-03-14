@@ -1,4 +1,4 @@
-defmodule Accomplish.Workers.ImportResumeData do
+defmodule Accomplish.Workers.ImportResumeDataWorker do
   @moduledoc """
   Worker that imports structured resume data into user profiles.
 

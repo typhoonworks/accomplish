@@ -1,7 +1,7 @@
-defmodule Accomplish.Workers.LogActivityTest do
+defmodule Accomplish.Workers.LogActivityWorkerTest do
   use Accomplish.DataCase, async: true
 
-  alias Accomplish.Workers.LogActivity
+  alias Accomplish.Workers.LogActivityWorker
 
   describe "perform/1" do
     setup do
@@ -30,7 +30,7 @@ defmodule Accomplish.Workers.LogActivityTest do
     test "successfully logs activity", %{valid_job_args: args} do
       job = %Oban.Job{args: args}
 
-      assert :ok = LogActivity.perform(job)
+      assert :ok = LogActivityWorker.perform(job)
 
       activity =
         Accomplish.Repo.get_by(Accomplish.Activities.Activity,
@@ -46,14 +46,14 @@ defmodule Accomplish.Workers.LogActivityTest do
       args = Map.put(args, "actor_id", Ecto.UUID.generate())
       job = %Oban.Job{args: args}
 
-      assert {:error, _reason} = LogActivity.perform(job)
+      assert {:error, _reason} = LogActivityWorker.perform(job)
     end
 
     test "handles missing entity", %{valid_job_args: args} do
       args = Map.put(args, "entity_id", Ecto.UUID.generate())
       job = %Oban.Job{args: args}
 
-      assert {:error, _reason} = LogActivity.perform(job)
+      assert {:error, _reason} = LogActivityWorker.perform(job)
     end
 
     test "logs activity with context", %{valid_job_args: args, stage: stage} do
@@ -64,7 +64,7 @@ defmodule Accomplish.Workers.LogActivityTest do
 
       job = %Oban.Job{args: args}
 
-      assert :ok = LogActivity.perform(job)
+      assert :ok = LogActivityWorker.perform(job)
 
       activity =
         Accomplish.Repo.get_by(Accomplish.Activities.Activity,

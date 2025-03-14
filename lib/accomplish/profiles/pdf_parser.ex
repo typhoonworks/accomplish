@@ -12,9 +12,6 @@ defmodule Accomplish.Profiles.PDFParser do
   alias Accomplish.PDFExtractor
   alias Accomplish.AI
 
-  # If you use a library like Jason for JSON:
-  alias Jason, as: JSON
-
   @default_provider :anthropic
   @max_tokens 2500
   @temperature 0.2
@@ -267,7 +264,6 @@ defmodule Accomplish.Profiles.PDFParser do
       {:ok, decoded} ->
         {:ok, decoded}
 
-      # If JSON decoding fails, we propagate that error
       error ->
         Logger.error("Failed to parse JSON: #{inspect(error)} from content: #{text}")
         error

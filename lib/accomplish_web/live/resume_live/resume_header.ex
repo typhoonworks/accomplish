@@ -1,7 +1,7 @@
 defmodule AccomplishWeb.ResumeLive.ResumeHeader do
   use AccomplishWeb, :live_view
 
-  alias Accomplish.Workers.ExtractResumeData
+  alias Accomplish.Workers.ExtractResumeDataWorker
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
@@ -181,7 +181,7 @@ defmodule AccomplishWeb.ResumeLive.ResumeHeader do
             user_id: socket.assigns.current_user.id,
             resume_text: text_content
           }
-          |> ExtractResumeData.new()
+          |> ExtractResumeDataWorker.new()
           |> Oban.insert()
 
           {:ok, :processed}
