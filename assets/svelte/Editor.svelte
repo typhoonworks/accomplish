@@ -34,6 +34,7 @@
   export let classList = "text-zinc-200";
   export let autosave = false;
   export let autosaveDelay = 1500;
+  export let isDisabled = false;
 
   export let streaming = false;
   export let streamingComplete = false;
@@ -103,6 +104,10 @@
         }, autosaveDelay);
       }
     }
+  }
+
+  $: if (editor) {
+    editor.setEditable(!isDisabled);
   }
 
   // Process content updates during streaming
