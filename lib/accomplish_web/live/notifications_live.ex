@@ -59,9 +59,7 @@ defmodule AccomplishWeb.NotificationsLive do
         </p>
       </div>
       <%= if @notification.status == :unread do %>
-        <div class="flex items-center justify-center">
-          <span class="size-2 rounded-full bg-red-600 ring-1 ring-red-400"></span>
-        </div>
+        <.unread_badge />
       <% end %>
     </.link>
     """

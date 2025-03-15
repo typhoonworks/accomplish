@@ -16,6 +16,17 @@ defmodule AccomplishWeb.ShadowrunComponents do
     TwMerge.merge(input)
   end
 
+  attr :class, :string, default: nil
+
+  def unread_badge(assigns) do
+    ~H"""
+    <div class="flex items-center justify-center">
+      <span class={classes(["size-2 rounded-full bg-purple-600 ring-1 ring-purple-400", @class])}>
+      </span>
+    </div>
+    """
+  end
+
   attr :variant, :string,
     default: "default",
     values: ["default", "info", "success", "warning", "error"]
