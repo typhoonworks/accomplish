@@ -292,14 +292,14 @@ defmodule AccomplishWeb.CoverLetterLive do
   end
 
   def handle_info({CoverLetters, event}, socket) do
-    handle_notification(event, socket)
+    process_pubsub_event(event, socket)
   end
 
-  defp handle_notification(%{name: "cover_letter.updated"} = event, socket) do
+  defp process_pubsub_event(%{name: "cover_letter.updated"} = event, socket) do
     {:noreply, assign(socket, cover_letter: event.cover_letter)}
   end
 
-  defp handle_notification(_, socket), do: {:noreply, socket}
+  defp process_pubsub_event(_, socket), do: {:noreply, socket}
 
   defp assign_form(socket, cover_letter) do
     form = CoverLetters.change_cover_letter(cover_letter)

@@ -28,7 +28,7 @@ defmodule Accomplish.Application do
 
     children =
       if Mix.env() != :test do
-        children ++ [Accomplish.Activities.EventHandler]
+        children ++ [Accomplish.Activities.ActivitiesServer]
       else
         children
       end

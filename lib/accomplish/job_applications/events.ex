@@ -1,6 +1,8 @@
 defmodule Accomplish.JobApplications.Events do
   @moduledoc false
 
+  use Accomplish.Events
+
   defmodule NewJobApplication do
     @moduledoc false
 

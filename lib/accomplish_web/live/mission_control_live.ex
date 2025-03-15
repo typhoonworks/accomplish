@@ -3,11 +3,20 @@ defmodule AccomplishWeb.MissionControlLive do
 
   import AccomplishWeb.Layout
 
+  alias AccomplishWeb.NotificationsLive
+
   def render(assigns) do
     ~H"""
     <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
       <:page_header>
-        <.page_header page_title="Mission Control" />
+        <.page_header page_title="Mission Control">
+          <:actions>
+            {live_render(@socket, NotificationsLive,
+              id: "user-notifications",
+              sticky: true
+            )}
+          </:actions>
+        </.page_header>
       </:page_header>
 
       <div class="p-6 space-y-6">

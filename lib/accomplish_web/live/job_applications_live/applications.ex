@@ -8,6 +8,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
   alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
   alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
+  alias AccomplishWeb.NotificationsLive
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
@@ -16,9 +17,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   import AccomplishWeb.JobApplicationHelpers
   import AccomplishWeb.EventHandlers.JobApplicationActions
   import AccomplishWeb.EventHandlers.JobApplicationStageActions
-
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
 
   def render(assigns) do
     ~H"""
@@ -49,6 +47,10 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
             <.shadow_button phx-click="open_import_dialog" variant="transparent" class="text-xs">
               <.icon name="hero-plus" class="size-3" /> Import from URL
             </.shadow_button>
+            {live_render(@socket, NotificationsLive,
+              id: "user-notifications",
+              sticky: true
+            )}
           </:actions>
         </.page_header>
       </:page_header>
@@ -308,8 +310,6 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   def mount(params, _session, socket) do
     user = socket.assigns.current_user
 
-    if connected?(socket), do: subscribe_to_notifications_topic(user.id)
-
     filter = params["filter"] || "active"
 
     applications =
@@ -345,6 +345,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
       |> assign(:filter_empty, filter_empty)
       |> assign(:application_in_context, nil)
       |> stream_applications(applications_by_status)
+      |> subscribe_to_user_events()
 
     {:ok, socket}
   end
@@ -596,25 +597,25 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   end
 
   def handle_info({JobApplications, event}, socket) do
-    handle_notification(event, socket)
+    process_pubsub_event(event, socket)
   end
 
   def handle_info({Activities, event}, socket) do
-    handle_activity(event, socket)
+    process_pubsub_activity(event, socket)
   end
 
   def handle_info({_, _}, socket) do
     {:noreply, socket}
   end
 
-  defp handle_activity(%{name: "activity.logged"} = event, socket) do
+  defp process_pubsub_activity(%{name: "activity.logged"} = event, socket) do
     activity = %{event.activity | entity: event.entity, context: event.context}
     {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
-  defp handle_activity(_, socket), do: {:noreply, socket}
+  defp process_pubsub_activity(_, socket), do: {:noreply, socket}
 
-  defp handle_notification(%{name: "job_application.created"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.created"} = event, socket) do
     socket =
       socket
       |> assign(:has_applications, true)
@@ -624,7 +625,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, socket}
   end
 
-  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.updated"} = event, socket) do
     user = socket.assigns.current_user
 
     application =
@@ -646,7 +647,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, socket}
   end
 
-  defp handle_notification(%{name: "job_application.changed_current_stage"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.changed_current_stage"} = event, socket) do
     user = socket.assigns.current_user
 
     application =
@@ -659,7 +660,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, socket}
   end
 
-  defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.stage_added"} = event, socket) do
     user = socket.assigns.current_user
 
     application =
@@ -672,11 +673,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
     {:noreply, socket}
   end
 
-  defp handle_notification(_, socket), do: {:noreply, socket}
-
-  defp subscribe_to_notifications_topic(user_id) do
-    Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user_id}")
-  end
+  defp process_pubsub_event(_, socket), do: {:noreply, socket}
 
   defp update_filter_empty_state(socket) do
     matching_applications =
@@ -795,6 +792,14 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
   end
 
   defp stream_key(status), do: String.to_atom("applications_#{status}")
+
+  def subscribe_to_user_events(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket), do: Accomplish.Events.subscribe(user.id)
+
+    socket
+  end
 
   defp close_modal(socket, modal_id) do
     socket

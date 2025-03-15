@@ -1,4 +1,4 @@
-defmodule Accomplish.Activities.EventHandler do
+defmodule Accomplish.Activities.ActivitiesServer do
   @moduledoc """
   Listens for events and logs corresponding activities.
   """
@@ -10,15 +10,12 @@ defmodule Accomplish.Activities.EventHandler do
   alias Accomplish.Activities
   alias Accomplish.Workers.LogActivityWorker
 
-  @pubsub Accomplish.PubSub
-  @events_topic "events:all"
-
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   def init(_) do
-    Phoenix.PubSub.subscribe(@pubsub, @events_topic)
+    Accomplish.Events.subscribe("all")
     {:ok, nil}
   end
 

@@ -88,13 +88,6 @@ defmodule AccomplishWeb.Layout do
           <!-- Right side controls: always in the top row -->
           <div class="flex items-center gap-x-4">
             {render_slot(@actions)}
-            <button
-              type="button"
-              class="-m-2.5 p-2.5 text-zinc-400 hover:text-zinc-500 hidden lg:block"
-            >
-              <span class="sr-only">View notifications</span>
-              <.icon class="size-5" name="hero-bell" />
-            </button>
             <%= if @page_drawer? do %>
               <.separator variant="vertical" size={60} />
               <button
@@ -251,9 +244,9 @@ defmodule AccomplishWeb.Layout do
     </div>
     <nav class="flex flex-1 flex-col">
       <ul role="list" class="flex flex-1 flex-col gap-y-4">
-        <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
-          <li>
-            <ul role="list" class="-mx-2 space-y-1">
+        <li>
+          <ul role="list" class="-mx-2 space-y-1">
+            <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
               <li>
                 <.sidebar_link
                   href={~p"/mission_control"}
@@ -262,8 +255,18 @@ defmodule AccomplishWeb.Layout do
                   active={@current_path == "/mission_control"}
                 />
               </li>
-            </ul>
-          </li>
+            <% end %>
+            <li>
+              <.sidebar_link
+                href={~p"/inbox"}
+                icon="hero-inbox"
+                text="Inbox"
+                active={@current_path == "/inbox"}
+              />
+            </li>
+          </ul>
+        </li>
+        <%= if FunWithFlags.enabled?(:show_dev_ui) do %>
           <.sidebar_group id={"#{@id}-workbench-menu"} name="Workbench">
             <.sidebar_item>
               <.sidebar_link

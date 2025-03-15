@@ -269,17 +269,35 @@ defmodule Accomplish.Activities do
   # BROADCASTING EVENTS
   # ===========================
 
-  defp topic_suffix(:entity, entity) do
+  def subscribe(identifier) when is_binary(identifier) do
+    Phoenix.PubSub.subscribe(@pubsub, topic(identifier))
+  end
+
+  def subscribe({tag, subject}) do
+    subscribe(topic_identifier(tag, subject))
+  end
+
+  def unsubscribe(identifier) when is_binary(identifier) do
+    Phoenix.PubSub.unsubscribe(@pubsub, topic(identifier))
+  end
+
+  def unsubscribe({tag, subject}) do
+    unsubscribe(topic_identifier(tag, subject))
+  end
+
+  defp topic_identifier(:entity, entity) do
     entity_type = get_entity_type(entity)
     topic_name = Map.get(@topic_names, entity_type, "unknown")
     "#{topic_name}:#{entity.id}"
   end
 
-  defp topic_suffix(:context, context) do
+  defp topic_identifier(:context, context) do
     context_type = get_context_type(context)
     topic_name = Map.get(@topic_names, context_type, "unknown")
     "context:#{topic_name}:#{context.id}"
   end
+
+  defp topic(identifier), do: @activities_topic <> ":#{identifier}"
 
   defp broadcast_activity_logged(activity, actor, entity, context) do
     msg = %Events.NewActivity{
@@ -289,16 +307,20 @@ defmodule Accomplish.Activities do
       context: context
     }
 
-    broadcast!(msg, topic_suffix(:entity, entity))
+    broadcast!(msg, topic_identifier(:entity, entity))
 
     if context do
-      broadcast!(msg, topic_suffix(:context, context))
+      broadcast!(msg, topic_identifier(:context, context))
     end
 
     broadcast!(msg, "user:#{actor.id}")
   end
 
-  defp broadcast!(msg, topic_suffix) do
-    Phoenix.PubSub.broadcast!(@pubsub, @activities_topic <> ":#{topic_suffix}", {__MODULE__, msg})
+  defp broadcast!(msg, topic_identifier) do
+    Phoenix.PubSub.broadcast!(
+      @pubsub,
+      @activities_topic <> ":#{topic_identifier}",
+      {__MODULE__, msg}
+    )
   end
 end

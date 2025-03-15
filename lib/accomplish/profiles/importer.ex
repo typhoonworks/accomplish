@@ -10,11 +10,8 @@ defmodule Accomplish.Profiles.Importer do
 
   alias Accomplish.Accounts
   alias Accomplish.Profiles
-  alias Accomplish.Profiles.Events.ProfileImported
+  alias Accomplish.Profiles.Events
   alias Accomplish.Repo
-
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
 
   @doc """
   Imports profile data for a user, updating their profile, experiences, and education entries.
@@ -201,16 +198,15 @@ defmodule Accomplish.Profiles.Importer do
   defp parse_date_string(_), do: nil
 
   defp broadcast_profile_imported(user, profile, experiences, educations) do
-    Phoenix.PubSub.broadcast!(
-      @pubsub,
-      @notifications_topic <> ":#{profile.user_id}",
+    msg =
       {Profiles,
-       %ProfileImported{
+       %Events.ProfileImported{
          user: user,
          profile: profile,
          experiences: experiences,
          educations: educations
        }}
-    )
+
+    Events.broadcast!(profile.user_id, msg)
   end
 end
