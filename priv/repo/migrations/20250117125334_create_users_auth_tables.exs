@@ -20,6 +20,8 @@ defmodule Accomplish.Repo.Migrations.CreateUsersAuthTables do
       # Setttings
       add :preference_settings, :map, default: %{}, null: false
 
+      add :unread_notifications_count, :integer, null: false, default: 0
+
       add :notification_settings, :map,
         default: %{sounds: true, email: %{everything: true}, web: %{everything: true}},
         null: false

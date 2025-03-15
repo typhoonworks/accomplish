@@ -13,9 +13,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   import AccomplishWeb.EventHandlers.JobApplicationActions
   import AccomplishWeb.EventHandlers.JobApplicationStageActions
 
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
-
   def render(assigns) do
     ~H"""
     <.page_header page_drawer?={true} drawer_open={true}>
@@ -98,7 +95,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
       |> assign(:view, view)
       |> assign(:stage_form, to_form(changeset))
       |> assign(show_cover_letter_dialog: false)
-      |> subscribe_to_notifications_topic()
+      |> subscribe_to_user_events()
 
     {:ok, socket}
   end
@@ -146,36 +143,27 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   end
 
   def handle_info({JobApplications, event}, socket) do
-    handle_notification(event, socket)
+    process_pubsub_event(event, socket)
   end
 
   def handle_info(%{event: "stage-created", payload: %{success: true}}, socket) do
     {:noreply, put_flash(socket, :info, "Stage added successfully.")}
   end
 
-  defp handle_notification(%{name: "job_application.updated"}, socket) do
+  defp process_pubsub_event(%{name: "job_application.updated"}, socket) do
     {:noreply, assign_application(socket)}
   end
 
-  defp handle_notification(%{name: "job_application.status_updated"}, socket) do
+  defp process_pubsub_event(%{name: "job_application.status_updated"}, socket) do
     {:noreply, assign_application(socket)}
   end
 
-  defp handle_notification(%{name: "job_application.changed_current_stage"}, socket) do
+  defp process_pubsub_event(%{name: "job_application.changed_current_stage"}, socket) do
     {:noreply, assign_application(socket)}
   end
 
-  defp handle_notification(%{name: "job_application.stage_added"}, socket) do
+  defp process_pubsub_event(%{name: "job_application.stage_added"}, socket) do
     {:noreply, assign_application(socket)}
-  end
-
-  defp subscribe_to_notifications_topic(socket) do
-    user = socket.assigns.current_user
-
-    if connected?(socket),
-      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
-
-    socket
   end
 
   def assign_application(socket) do
@@ -183,5 +171,13 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
     application = socket.assigns.application
     application = JobApplications.get_application!(applicant, application.id, [:stages])
     assign(socket, application: application)
+  end
+
+  def subscribe_to_user_events(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket), do: Accomplish.Events.subscribe(user.id)
+
+    socket
   end
 end

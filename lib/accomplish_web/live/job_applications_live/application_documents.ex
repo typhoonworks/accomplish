@@ -11,9 +11,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
   alias AccomplishWeb.JobApplicationsLive.ApplicationHeader
   alias AccomplishWeb.JobApplicationsLive.ApplicationAside
 
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
-
   def render(assigns) do
     ~H"""
     <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
@@ -109,7 +106,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
         socket
         |> assign(page_title: "#{application.role} • Documents")
         |> assign(application: application)
-        |> subscribe_to_notifications_topic()
+        |> subscribe_to_user_events()
         |> assign_sounds()
         |> assign_play_sounds(true)
         |> stream(:cover_letters, cover_letters)
@@ -136,30 +133,30 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
   end
 
   def handle_info({JobApplications, event}, socket) do
-    handle_notification(event, socket)
+    process_pubsub_event(event, socket)
   end
 
   def handle_info({CoverLetters, event}, socket) do
-    handle_notification(event, socket)
+    process_pubsub_event(event, socket)
   end
 
-  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.updated"} = event, socket) do
     {:noreply, assign(socket, application: event.application)}
   end
 
-  defp handle_notification(%{name: "cover_letter.created"} = event, socket) do
+  defp process_pubsub_event(%{name: "cover_letter.created"} = event, socket) do
     {:noreply, stream_insert(socket, :cover_letters, event.cover_letter)}
   end
 
-  defp handle_notification(%{name: "cover_letter.updated"} = event, socket) do
+  defp process_pubsub_event(%{name: "cover_letter.updated"} = event, socket) do
     {:noreply, stream_insert(socket, :cover_letters, event.cover_letter)}
   end
 
-  defp handle_notification(%{name: "cover_letter.deleted"} = event, socket) do
+  defp process_pubsub_event(%{name: "cover_letter.deleted"} = event, socket) do
     {:noreply, stream_delete(socket, :cover_letters, event.cover_letter)}
   end
 
-  defp handle_notification(_, socket), do: {:noreply, socket}
+  defp process_pubsub_event(_, socket), do: {:noreply, socket}
 
   defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
@@ -171,15 +168,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       :error ->
         {:ok, push_navigate(socket, to: ~p"/job_applications")}
     end
-  end
-
-  defp subscribe_to_notifications_topic(socket) do
-    user = socket.assigns.current_user
-
-    if connected?(socket),
-      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
-
-    socket
   end
 
   defp assign_sounds(socket) do
@@ -202,5 +190,13 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationDocuments do
       true -> push_event(socket, "play-sound", %{name: sound})
       _ -> socket
     end
+  end
+
+  def subscribe_to_user_events(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket), do: Accomplish.Events.subscribe(user.id)
+
+    socket
   end
 end

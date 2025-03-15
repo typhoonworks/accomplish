@@ -216,19 +216,19 @@ defmodule AccomplishWeb.JobApplicationsLive.Stage do
   end
 
   def handle_info({Activities, event}, socket) do
-    handle_activity(event, socket)
+    process_pubsub_activity(event, socket)
   end
 
   def handle_info(_, socket) do
     {:noreply, socket}
   end
 
-  defp handle_activity(%{name: "activity.logged"} = event, socket) do
+  defp process_pubsub_activity(%{name: "activity.logged"} = event, socket) do
     activity = %{event.activity | entity: event.entity, context: event.context}
     {:noreply, stream_insert(socket, :activities, activity, at: 0)}
   end
 
-  defp handle_activity(_, socket), do: {:noreply, socket}
+  defp process_pubsub_activity(_, socket), do: {:noreply, socket}
 
   defp assign_form(socket, stage) do
     form = JobApplications.change_stage_form(Map.from_struct(stage))

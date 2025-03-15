@@ -13,9 +13,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
   alias AccomplishWeb.JobApplicationsLive.ApplicationHeader
   alias AccomplishWeb.JobApplicationsLive.ApplicationAside
 
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
-
   def render(assigns) do
     ~H"""
     <.layout flash={@flash} current_user={@current_user} current_path={@current_path}>
@@ -110,7 +107,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
         |> assign_sounds()
         |> assign_play_sounds(true)
         |> stream_stages(application.stages)
-        |> subscribe_to_notifications_topic()
+        |> subscribe_to_user_events()
 
       {:ok, socket}
     end
@@ -245,14 +242,14 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
   end
 
   def handle_info({JobApplications, event}, socket) do
-    handle_notification(event, socket)
+    process_pubsub_event(event, socket)
   end
 
-  defp handle_notification(%{name: "job_application.updated"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.updated"} = event, socket) do
     {:noreply, assign(socket, application: event.application)}
   end
 
-  defp handle_notification(%{name: "job_application.stage_added"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.stage_added"} = event, socket) do
     stage = event.stage
     key = stream_key(stage.status)
 
@@ -264,11 +261,11 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     {:noreply, socket}
   end
 
-  defp handle_notification(%{name: "job_application.stage_updated"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.stage_updated"} = event, socket) do
     {:noreply, replace_stage(socket, event.stage, event.diff)}
   end
 
-  defp handle_notification(%{name: "job_application.stage_deleted"} = event, socket) do
+  defp process_pubsub_event(%{name: "job_application.stage_deleted"} = event, socket) do
     stage = event.stage
     key = stream_key(stage.status)
 
@@ -280,7 +277,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     {:noreply, socket}
   end
 
-  defp handle_notification(_, socket), do: {:noreply, socket}
+  defp process_pubsub_event(_, socket), do: {:noreply, socket}
 
   defp fetch_application(socket, slug, preloads) do
     applicant = socket.assigns.current_user
@@ -367,15 +364,6 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
     end
   end
 
-  defp subscribe_to_notifications_topic(socket) do
-    user = socket.assigns.current_user
-
-    if connected?(socket),
-      do: Phoenix.PubSub.subscribe(@pubsub, @notifications_topic <> ":#{user.id}")
-
-    socket
-  end
-
   defp stream_key(status), do: String.to_atom("stages_#{status}")
 
   defp close_modal(socket, modal_id) do
@@ -384,5 +372,13 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationStages do
       to: "##{modal_id}",
       attr: "phx-remove"
     })
+  end
+
+  def subscribe_to_user_events(socket) do
+    user = socket.assigns.current_user
+
+    if connected?(socket), do: Accomplish.Events.subscribe(user.id)
+
+    socket
   end
 end

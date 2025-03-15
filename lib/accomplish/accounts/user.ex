@@ -26,6 +26,8 @@ defmodule Accomplish.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
 
+    field :unread_notifications_count, :integer, default: 0
+
     has_many :api_keys, ApiKey
     has_many :oauth_identities, OAuth.Identity, foreign_key: :user_id
 

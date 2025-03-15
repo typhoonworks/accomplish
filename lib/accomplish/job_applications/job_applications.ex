@@ -11,9 +11,6 @@ defmodule Accomplish.JobApplications do
 
   import Accomplish.Utils.Maps, only: [atomize_keys: 1]
 
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
-  @events_topic "events:all"
   @active_statuses ~w(applied interviewing offer)a
 
   def get_application!(applicant, id, preloads \\ []) do
@@ -484,7 +481,7 @@ defmodule Accomplish.JobApplications do
   end
 
   defp broadcast!(msg, user_id) do
-    Phoenix.PubSub.broadcast!(@pubsub, @notifications_topic <> ":#{user_id}", {__MODULE__, msg})
-    Phoenix.PubSub.broadcast!(@pubsub, @events_topic, {__MODULE__, msg})
+    Events.broadcast!(user_id, {__MODULE__, msg})
+    Events.broadcast!("all", {__MODULE__, msg})
   end
 end

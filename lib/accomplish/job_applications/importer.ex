@@ -4,11 +4,8 @@ defmodule Accomplish.JobApplications.Importer do
   """
 
   alias Accomplish.JobApplications
-  alias Accomplish.JobApplications.Events.JobApplicationImported
+  alias Accomplish.JobApplications.Events
   alias Accomplish.URLValidators
-
-  @pubsub Accomplish.PubSub
-  @notifications_topic "notifications:events"
 
   @workplace_types ~w(remote hybrid on_site)a
   @employment_types ~w(full_time part_time contractor employer_of_record internship)a
@@ -86,10 +83,7 @@ defmodule Accomplish.JobApplications.Importer do
   defp normalize_enum(_, _), do: nil
 
   defp broadcast_application_imported(application) do
-    Phoenix.PubSub.broadcast!(
-      @pubsub,
-      @notifications_topic <> ":#{application.applicant_id}",
-      {JobApplications, %JobApplicationImported{application: application}}
-    )
+    msg = %Events.JobApplicationImported{application: application}
+    Events.broadcast!(application.applicant_id, msg)
   end
 end

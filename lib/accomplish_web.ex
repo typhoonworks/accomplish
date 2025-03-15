@@ -61,11 +61,6 @@ defmodule AccomplishWeb do
         end)
       end
 
-      # def handle_event("lv:clear-flash", %{"key" => key}, socket) do
-      #   IO.inspect("XUAPMOS")
-      #   {:noreply, clear_flash(socket, key)}
-      # end
-
       unquote(html_helpers())
     end
   end

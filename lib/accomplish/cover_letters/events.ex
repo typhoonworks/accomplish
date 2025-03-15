@@ -1,6 +1,8 @@
 defmodule Accomplish.CoverLetters.Events do
   @moduledoc false
 
+  use Accomplish.Events
+
   defmodule NewCoverLetter do
     @moduledoc false
 
