@@ -1,4 +1,6 @@
 defmodule Accomplish.Notifications.Notification do
+  @moduledoc false
+
   use Accomplish.Schema
 
   alias Accomplish.Accounts.User

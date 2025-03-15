@@ -105,6 +105,7 @@ defmodule AccomplishWeb.Router do
         {AccomplishWeb.Plugs.Navigation, :track_history}
       ] do
       live "/mission_control", MissionControlLive, :show
+      live "/inbox", InboxLive, :show
 
       live "/job_applications", JobApplicationsLive.Applications, :index
       live "/job_application/:slug/overview", JobApplicationsLive.ApplicationOverview

@@ -12,6 +12,7 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
   import AccomplishWeb.Components.JobApplicationMenu
   import AccomplishWeb.EventHandlers.JobApplicationActions
   import AccomplishWeb.EventHandlers.JobApplicationStageActions
+  alias AccomplishWeb.NotificationsLive
 
   def render(assigns) do
     ~H"""
@@ -65,6 +66,12 @@ defmodule AccomplishWeb.JobApplicationsLive.ApplicationHeader do
           active={@view == :documents}
         />
       </:views>
+      <:actions>
+        {live_render(@socket, NotificationsLive,
+          id: "user-notifications",
+          sticky: true
+        )}
+      </:actions>
     </.page_header>
 
     <.live_component

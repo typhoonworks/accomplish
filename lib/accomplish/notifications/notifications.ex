@@ -88,6 +88,10 @@ defmodule Accomplish.Notifications do
     end
   end
 
+  # ===========================
+  # FETCHING NOTIFICATIONS
+  # ===========================
+
   def list_notifications(recipient, preloads \\ [], order \\ :desc) do
     query =
       from n in Notification,

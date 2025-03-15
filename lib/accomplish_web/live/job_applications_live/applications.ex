@@ -8,6 +8,7 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
 
   alias AccomplishWeb.Components.JobApplicationDialogs.CoverLetterDialog
   alias AccomplishWeb.Components.JobApplicationDialogs.StageDialog
+  alias AccomplishWeb.NotificationsLive
 
   import AccomplishWeb.Layout
   import AccomplishWeb.Shadowrun.Dialog
@@ -46,6 +47,10 @@ defmodule AccomplishWeb.JobApplicationsLive.Applications do
             <.shadow_button phx-click="open_import_dialog" variant="transparent" class="text-xs">
               <.icon name="hero-plus" class="size-3" /> Import from URL
             </.shadow_button>
+            {live_render(@socket, NotificationsLive,
+              id: "user-notifications",
+              sticky: true
+            )}
           </:actions>
         </.page_header>
       </:page_header>
